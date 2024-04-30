@@ -1,15 +1,14 @@
-import { useState } from 'react'
+import { useState } from "react";
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./components/Dashboard";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-  <>
-      <h1 className="text-3xl font-bold underline">
-      Hello world!
-    </h1>
-  </>
-  )
+    <div className="flex">
+      <Sidebar />
+      <Dashboard />
+    </div>
+  );
 }
 
-export default App
+export default App;
