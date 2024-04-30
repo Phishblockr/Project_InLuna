@@ -60,13 +60,13 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-white fixed h-full px-4 py-2">
       <div className="my-2 mb-6">
-        <h1 className=" text-xl text-left text-black font-bold">Phishblokr</h1>
+        <h1 className="text-2xl text-left text-black font-bold tracking-tighter">Phishblokr</h1>
       </div>
-      <ul className="mt-4 text-black font-bold">
+      <ul className="mt-4 text-black font-bold gap-2">
         {links.map((link) => (
           <li
             key={link.id}
-            className="py-5 rounded-lg hover:shadow hover:bg-blue-500 hover:text-white"
+            className="py-5 rounded-xl cursor-pointer hover:shadow hover:bg-[#0364BD] hover:text-white transition"
           >
             <a href={link.url} className="px-3">
               {link.icon}

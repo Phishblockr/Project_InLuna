@@ -7,7 +7,7 @@ import {
 import { FaRegUserCircle } from "react-icons/fa";
 
 const profileBtnStyle =
-  "bg-[#0364BD] m-2 py-2 rounded text-white hover:bg-[#003A70]";
+  "bg-[#0364BD] py-2 rounded-lg text-white transition hover:bg-[#003A70]";
 
 const profileSettings = [
   {
@@ -26,7 +26,7 @@ const profileSettings = [
     id: 3,
     title: "Log Out",
     url: "#",
-    style: "bg-red-500 m-2 py-2 rounded text-white hover:bg-red-700",
+    style: "bg-red-500 py-2 rounded-lg text-white transition hover:bg-red-700",
   },
 ];
 
@@ -34,14 +34,14 @@ const Navbar = () => {
   return (
     <nav className="bg-white px-4 py-3 flex justify-between ml-64">
       <div className="flex items-center text-x1">
-        <div className="relative w-[40svw] md:w-65 border-2 rounded-lg border-black hidden md:block">
+        <div className="relative w-[40svw] md:w-65 rounded-lg hidden md:block">
           <input
-            className="w-full px-4 py-1 pr-12 rounded-lg shadow outline-none"
+            className="w-full px-4 py-1 pr-12 rounded-lg outline-none border-grey border-2"
             type="text"
             placeholder="Search..."
           />
-          <span className="relative md:absolute inset-y-0 right-0 flex items-center pl-2 pr-2 bg-[#0364BD] rounded-r-lg hover:bg-[#003A70] cursor-pointer ">
-            <button className="p-1 focus:outline-none text-white">
+          <span className="relative md:absolute inset-y-0 right-0 flex items-center pl-2 pr-2 bg-[#0364BD] rounded-r-lg hover:bg-[#003A70] cursor-pointer transition">
+            <button className="p-1 px-2 focus:outline-none text-white">
               <RiSearchLine />
             </button>
           </span>
@@ -60,7 +60,7 @@ const Navbar = () => {
           <button className="text-black group">
             <RiArrowDropDownLine className="w-6 h-6 mt-1" />
             <div className="z-10  hidden absolute bg-white rounded-lg shadow w-32 group-focus:block top-full right-0">
-              <ul className="py-2 text-sm text-gray-950">
+              <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                 {profileSettings.map((setting) => (
                   <li key={setting.id} className={setting.style}>
                     <a href={setting.url}>{setting.title}</a>
