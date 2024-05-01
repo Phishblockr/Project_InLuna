@@ -8,9 +8,11 @@ import {
   RiGitRepositoryLine,
 } from "react-icons/ri";
 import { CgInsights } from "react-icons/cg";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const iconStyle = "inline-block w-6 h-6 mr-3 -mt-2";
+const activeLinkStyle = "py-5 px-3 w-full rounded-lg shadow bg-[#0364BD] text-white transition";
+const inactiveLinkStyle = "py-5 px-3 w-full rounded-lg hover:shadow hover:bg-[#0364BD] hover:text-white transition";
 
 const links = [
   {
@@ -62,19 +64,19 @@ const Sidebar = () => {
     <div className="w-64 bg-white fixed h-full px-4 py-2">
       <div className="my-2 mb-6">
         <h1 className="text-2xl text-left text-black font-bold tracking-tighter">
-          <Link to={'/'}>Phishblokr</Link>
+          <NavLink to={'/'}>Phishblokr</NavLink>
         </h1>
       </div>
       <ul className="mt-4 text-black font-bold gap-2">
         {links.map((link) => (
           <li
             key={link.id}
-            className="py-5 rounded-xl cursor-pointer hover:shadow hover:bg-[#0364BD] hover:text-white transition"
+            className="flex"
           >
-            <Link to={link.url} className="px-3">
+            <NavLink to={link.url} className={({isActive}) => (isActive ? activeLinkStyle : inactiveLinkStyle)}>
               {link.icon}
               {link.title}
-            </Link>
+            </NavLink>
           </li>
         ))}
       </ul>

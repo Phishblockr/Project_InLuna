@@ -60,7 +60,7 @@ const Navbar = () => {
           </div>
           <button className="text-black group">
             <RiArrowDropDownLine className="w-6 h-6 mt-1" />
-            <div className="z-10  hidden absolute bg-white rounded-lg shadow w-32 group-focus:block top-full right-0">
+            <div className="z-10 hidden absolute bg-white rounded-lg shadow w-32 group-focus:block top-full right-0">
               <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                 {profileSettings.map((setting) => (
                   <li key={setting.id} className={setting.style}>
