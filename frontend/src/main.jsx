@@ -2,9 +2,30 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import Users from './components/Users.jsx'
+import Insights from './components/Insights.jsx'
+import UrlLists from './components/UrlLists.jsx'
+import Requests from './components/Requests.jsx'
+import Feedbacks from './components/Feedbacks.jsx'
+import Logs from './components/Logs.jsx'
+import Sidebar from './components/Sidebar.jsx'
+import Navbar from './components/Navbar.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <Router>
+      <Sidebar />
+      <Navbar />
+      <Routes>
+        <Route path='/' element={<App />} />
+        <Route path='/users' element={<Users />} />
+        <Route path='/insights' element={<Insights />} />
+        <Route path='/urllists' element={<UrlLists />} />
+        <Route path='/requests' element={<Requests />} />
+        <Route path='/feedbacks' element={<Feedbacks />} />
+        <Route path='/logs' element={<Logs />} />
+      </Routes>
+    </Router>
   </React.StrictMode>,
 )

@@ -4,8 +4,7 @@ import Dashboard from "./components/Dashboard";
 
 function App() {
   return (
-    <div className="flex">
-      <Sidebar />
+    <div className="flex h-full">
       <Dashboard />
     </div>
   );

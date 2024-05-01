@@ -5,6 +5,7 @@ import {
   RiArrowDropDownLine,
 } from "react-icons/ri";
 import { FaRegUserCircle } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const profileBtnStyle =
   "bg-[#0364BD] py-2 rounded-lg text-white transition hover:bg-[#003A70]";
@@ -32,11 +33,11 @@ const profileSettings = [
 
 const Navbar = () => {
   return (
-    <nav className="bg-white px-4 py-3 flex justify-between ml-64">
+    <nav className="bg-white px-4 py-3 flex justify-between fixed left-0 right-0 top-0 ml-64">
       <div className="flex items-center text-x1">
         <div className="relative w-[40svw] md:w-65 rounded-lg hidden md:block">
           <input
-            className="w-full px-4 py-1 pr-12 rounded-lg outline-none border-grey border-2"
+            className="w-full px-4 py-1 pr-12 rounded-lg outline-none focus:outline-blue-400 border-grey border-2"
             type="text"
             placeholder="Search..."
           />
@@ -63,7 +64,7 @@ const Navbar = () => {
               <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                 {profileSettings.map((setting) => (
                   <li key={setting.id} className={setting.style}>
-                    <a href={setting.url}>{setting.title}</a>
+                    <Link to={setting.url}>{setting.title}</Link>
                   </li>
                 ))}
               </ul>
