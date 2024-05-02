@@ -271,11 +271,11 @@ export default function Users() {
                  <MdOutlineArrowBackIos className="w-6 h-6"/> Previous
               </a>
             </div>
-            <div className="flex gap-x-2">
+            <div className="flex gap-x-2 items-center">
             {numbers.map((number, index) => (
               <div
                 key={index}>
-                <a className={`rounded px-2 py-1 items-center hover:bg-[#0364BD] hover:text-white transition ${currentPage === number ? 'bg-[#0364BD] text-white' : 'bg-gray-200'}`} href="#" onClick={ () => changeCPage(number)}>
+                <a className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${currentPage === number ? 'bg-[#0364BD] text-white' : 'bg-gray-200'}`} href="#" onClick={ () => changeCPage(number)}>
                   {number}
                 </a>
               </div>
