@@ -14,8 +14,8 @@ export default function Overview() {
   const options = ['Visited', 'Blocked', 'Clicked', 'Whitelisted']
 
   return (
-    <div className='flex flex-col absolute top-[63px] left-[16rem] right-0 bottom-0 p-4 gap-4'>
-      <div className='w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 h-max'>
+    <div className='z-1 w-[calc(100svw-17rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
+      <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 h-max'>
         <h1 className='text-2xl font-bold tracking-tight'>Overview</h1>
         <div className='grid grid-cols-4 gap-3'>
           {overview_points.map(el => <div key={el.id} className={`${el.bg} shadow-md flex px-4 py-6 items-center text-white rounded-lg`}>

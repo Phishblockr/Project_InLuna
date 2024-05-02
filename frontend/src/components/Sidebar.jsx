@@ -61,7 +61,7 @@ const links = [
 
 const Sidebar = () => {
   return (
-    <div className="w-64 bg-white fixed h-full px-4 py-2">
+    <div className="w-64 l-0 r-0 bg-white fixed h-full px-4 py-2 z-10">
       <div className="my-2 mb-6">
         <h1 className="text-2xl text-left text-black font-bold tracking-tighter">
           <NavLink to={'/'}>Phishblokr</NavLink>
