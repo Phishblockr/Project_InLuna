@@ -11,6 +11,7 @@ import Feedbacks from './components/Feedbacks.jsx'
 import Logs from './components/Logs.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import Navbar from './components/Navbar.jsx'
+import AddUser from './components/AddUser.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path='/' element={<App />} />
         <Route path='/users' element={<Users />} />
+        <Route path='/users/adduser' element={<AddUser />} />
         <Route path='/insights' element={<Insights />} />
         <Route path='/urllists' element={<UrlLists />} />
         <Route path='/requests' element={<Requests />} />
