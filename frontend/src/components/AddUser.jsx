@@ -96,31 +96,31 @@ const AddUser = () => {
           </div>
 
           <div className="mt-3 flex flex-col">
-            <label htmlFor="name">Email: </label>
+            <label htmlFor="email">Email: </label>
             <input
               type="text"
-              id="name"
-              name="name"
+              id="email"
+              name="email"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
             />
           </div>
 
           <div className="mt-3 flex flex-col">
-            <label htmlFor="name">Role: </label>
+            <label htmlFor="role">Role: </label>
             <input
               type="text"
-              id="name"
-              name="name"
+              id="role"
+              name="role"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
             />
           </div>
 
           <div className="mt-3 flex flex-col">
-            <label htmlFor="name">Department: </label>
+            <label htmlFor="department">Department: </label>
             <input
               type="text"
-              id="name"
-              name="name"
+              id="department"
+              name="department"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
             />
           </div>

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { RiAddFill } from "react-icons/ri";
+import { RiAddFill, RiDeleteBinLine } from "react-icons/ri";
 import {
   MdOutlineArrowBackIos,
   MdOutlineArrowForwardIos,
 } from "react-icons/md";
+import { Link } from "react-router-dom";
 
 const users = [
   {
@@ -237,11 +238,11 @@ export default function Users() {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <button className="p-2 bg-[#0364BD] text-white rounded-lg hover:bg-[#003A70] transition">
+          <Link to={'/users/adduser'} className="p-2 bg-[#0364BD] text-white rounded-lg hover:bg-[#003A70] transition">
             <span>
               <RiAddFill className="inline-block w-6 h-6 mr-1 -mt-1" /> Add User
             </span>
-          </button>
+          </Link>
         </div>
       </div>
       {records.length === 0 ? (
@@ -259,6 +260,7 @@ export default function Users() {
               <th className="py-3 text-left">Department</th>
               <th className="py-3 text-left">Role</th>
               <th className="py-3 text-left">Status</th>
+              <th className="py-3 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -292,7 +294,7 @@ export default function Users() {
                     {user.status}
                   </span>
                 </td>
-                {/* <td className='font-bold text-left '><RiDeleteBinLine className='w-6 h-6 text-red-500 cursor-pointer' /></td> */}
+                <td className='text-left '><RiDeleteBinLine className='w-6 h-6 text-red-500 cursor-pointer' /></td>
               </tr>
             ))}
           </tbody>
