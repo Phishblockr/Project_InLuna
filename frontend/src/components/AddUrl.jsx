@@ -1,4 +1,5 @@
 import React from "react";
+import { RiAddFill } from "react-icons/ri";
 
 const AddUrl = () => {
   return (
@@ -30,13 +31,19 @@ const AddUrl = () => {
 
           <div className="mt-3 flex flex-col">
             <label htmlFor="status">Status: </label>
-            <select className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white" name="status" id="status">
+            <select
+              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white"
+              name="status"
+              id="status"
+            >
               <option value="blacklisted">Blacklist</option>
               <option value="whitelisted">Whitelist</option>
             </select>
           </div>
           <button className=" mt-9 mb-2 rounded-lg text-white font-bold w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
-            Submit
+            <span className="flex flex-row justify-center items-center">
+              <RiAddFill className="w-6 h-6 mr-1" /> Submit
+            </span>
           </button>
         </div>
       </div>
