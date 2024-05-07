@@ -147,10 +147,10 @@ export default function Requests() {
         </div>
         {records.map((request) => (
           <div
-            className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max"
+            className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max whitespace-pre-wrap"
             key={request.id}
           >
-            <div className=" flex flex-row  items-center justify-between">
+            <div className=" grid grid-cols-[380px_minmax(10%,_1fr)]  gap-2">
               <div className="flex flex-row gap-x-5 items-center">
                 <img
                   className="w-[5rem] h-[5rem] rounded-full object-cover"
@@ -177,9 +177,9 @@ export default function Requests() {
                   </li>
                 </ul>
               </div>
-              <div className="w-[50%] flex flex-col">
-                <p className="font-bold">
-                  <span>URL: </span> {request.url}
+              <div className="">
+                <p className="font-bold ">
+                  <span>URL: </span> <span>{request.url}</span>
                 </p>
                 <p>
                   <span className="font-bold">Reason: </span> {request.reason}
