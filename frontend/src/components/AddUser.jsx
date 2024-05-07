@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { RiAddFill, RiUploadCloud2Line } from "react-icons/ri";
 import defaultUser from "../assets/default_profile_picture.jpg";
 
 const AddUser = () => {
@@ -81,7 +82,9 @@ const AddUser = () => {
             </div>
           </div>
           <button className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-white">
-            Upload Image
+            <span className="flex flex-row gap-x-1">
+              <RiUploadCloud2Line className="w-6 h-6" /> Upload Image
+            </span>
           </button>
         </div>
         <div className="mt-3 flex flex-col w-full items-center">
@@ -124,8 +127,12 @@ const AddUser = () => {
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
             />
           </div>
-          <button className=" mt-9 mb-2 rounded-lg text-white font-bold w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">Submit</button>
-          
+          <button className=" mt-9 mb-2 rounded-lg text-white font-bold w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+            {" "}
+            <span className="flex flex-row justify-center items-center">
+              <RiAddFill className="w-6 h-6 mr-1" /> Submit
+            </span>
+          </button>
         </div>
       </div>
     </div>

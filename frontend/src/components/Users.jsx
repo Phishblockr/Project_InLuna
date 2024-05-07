@@ -238,7 +238,10 @@ export default function Users() {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <Link to={'/users/adduser'} className="p-2 bg-[#0364BD] text-white rounded-lg hover:bg-[#003A70] transition">
+          <Link
+            to={"/users/adduser"}
+            className="p-2 bg-[#0364BD] text-white rounded-lg hover:bg-[#003A70] transition"
+          >
             <span>
               <RiAddFill className="inline-block w-6 h-6 mr-1 -mt-1" /> Add User
             </span>
@@ -251,95 +254,101 @@ export default function Users() {
         </div>
       ) : (
         <>
-      <div>
-        <table className="w-full">
-          <thead className="border-separate">
-            <tr>
-              <th className="py-3 text-left">Name</th>
-              <th className="py-3 text-left">Email</th>
-              <th className="py-3 text-left">Department</th>
-              <th className="py-3 text-left">Role</th>
-              <th className="py-3 text-left">Status</th>
-              <th className="py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((user) => (
-              <tr key={user.id} className="odd:bg-white even:bg-gray-100">
-                <td className="py-2 pl-2">
-                  <div className="flex items-center gap-x-3">
-                    <img
-                      src={user.profileImage}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <span className="font-bold">{user.name}</span>
-                  </div>
-                </td>
-                <td className="font-bold text-left text-gray-500">
-                  {user.email}
-                </td>
-                <td className="font-bold text-left text-gray-500">
-                  {user.department}
-                </td>
-                <td className="font-bold text-left text-gray-500">
-                  {user.role}
-                </td>
-                <td className="text-left font-bold">
-                  <span
-                    className={
-                      user.status === "Active" ? statusActive : statusInactive
-                    }
-                  >
-                    {user.status}
-                  </span>
-                </td>
-                <td className='text-left '><RiDeleteBinLine className='w-6 h-6 text-red-500 cursor-pointer' /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
-        <nav className="flex gap-x-1 justify-between">
           <div>
-            <a
-              className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
-              href="#"
-              onClick={prePage}
-            >
-              <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-            </a>
+            <table className="w-full">
+              <thead className="border-separate">
+                <tr>
+                  <th className="py-3 text-left">Name</th>
+                  <th className="py-3 text-left">Email</th>
+                  <th className="py-3 text-left">Department</th>
+                  <th className="py-3 text-left">Role</th>
+                  <th className="py-3 text-left">Status</th>
+                  <th className="py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((user) => (
+                  <tr key={user.id} className="odd:bg-white even:bg-gray-100">
+                    <td className="py-2 pl-2">
+                      <Link to={"/users/userDetails"}>
+                        <div className="flex items-center gap-x-3">
+                          <img
+                            src={user.profileImage}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <span className="font-bold">{user.name}</span>
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="font-bold text-left text-gray-500">
+                      {user.email}
+                    </td>
+                    <td className="font-bold text-left text-gray-500">
+                      {user.department}
+                    </td>
+                    <td className="font-bold text-left text-gray-500">
+                      {user.role}
+                    </td>
+                    <td className="text-left font-bold">
+                      <span
+                        className={
+                          user.status === "Active"
+                            ? statusActive
+                            : statusInactive
+                        }
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="text-left ">
+                      <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="flex gap-x-2 items-center">
-            {numbers.map((number, index) => (
-              <div key={index}>
+          <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
+            <nav className="flex gap-x-1 justify-between">
+              <div>
                 <a
-                  className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${
-                    currentPage === number
-                      ? "bg-[#0364BD] text-white"
-                      : "bg-gray-200"
-                  }`}
+                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
                   href="#"
-                  onClick={() => changeCPage(number)}
+                  onClick={prePage}
                 >
-                  {number}
+                  <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
                 </a>
               </div>
-            ))}
+              <div className="flex gap-x-2 items-center">
+                {numbers.map((number, index) => (
+                  <div key={index}>
+                    <a
+                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${
+                        currentPage === number
+                          ? "bg-[#0364BD] text-white"
+                          : "bg-gray-200"
+                      }`}
+                      href="#"
+                      onClick={() => changeCPage(number)}
+                    >
+                      {number}
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <a
+                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
+                  href="#"
+                  onClick={nextPage}
+                >
+                  Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                </a>
+              </div>
+            </nav>
           </div>
-          <div>
-            <a
-              className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
-              href="#"
-              onClick={nextPage}
-            >
-              Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-            </a>
-          </div>
-        </nav>
-      </div>
-      </>
+        </>
       )}
     </div>
   );
