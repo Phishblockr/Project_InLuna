@@ -15,6 +15,7 @@ import AddUser from "./components/AddUser.jsx";
 import AddUrl from "./components/AddUrl.jsx";
 import UrlDetails from "./components/UrlDetails.jsx";
 import UserDetails from "./components/UserDetails.jsx";
+import AddEmp from "./components/AddEmp.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/users/adduser" element={<AddUser />} />
         <Route path="/users/userDetails" element={<UserDetails />} />
         <Route path="/insights" element={<Insights />} />
+        <Route path="/insights/addemp" element={<AddEmp />} />
         <Route path="/urllists" element={<UrlLists />} />
         <Route path="/urllists/addurl" element={<AddUrl />} />
         <Route path="/urllists/urldetails" element={<UrlDetails />} />
