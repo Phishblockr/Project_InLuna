@@ -1,6 +1,6 @@
 ## How to setup (front-end)
 - Change Directory to Dashboard/frontend
-` cd Dashboard/frontend `
+` cd frontend `
 
 - Install packages
 ` npm i `
@@ -14,3 +14,4 @@
 - tailwind
 - react-icons
 - prettier (vscode)
+- redux toolkit

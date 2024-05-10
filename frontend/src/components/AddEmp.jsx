@@ -1,10 +1,21 @@
 import React, { useRef, useState } from "react";
 import { RiAddFill, RiUploadCloud2Line } from "react-icons/ri";
 import defaultUser from "../assets/default_profile_picture.jpg";
+import { useDispatch } from "react-redux";
+import { useNavigate } from 'react-router-dom';
+import { addUser } from "../features/Insights/insightsSlice";
 
 const AddEmp = () => {
   const [image, setImage] = useState(null);
   const hiddenFileInput = useRef(null);
+  const [user, setUser] = useState({ id: "", name: "", email: "", department: "", img: "" })
+  const disp = useDispatch();
+  const nav = useNavigate();
+
+  const handleAddUser = (user) => {
+    disp(addUser(user));
+    nav('/insights');
+  }
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -89,13 +100,14 @@ const AddEmp = () => {
         </div>
         <div className="mt-3 flex flex-col w-full items-center">
           <div className="flex flex-col">
-            <label htmlFor="employee-id">Employee-id: </label>
+            <label htmlFor="id">Employee-id: </label>
             <input
               type="text"
               id="employee-id"
-              name="employee-id"
+              name="id"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
               placeholder="#017523"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
 
@@ -107,6 +119,7 @@ const AddEmp = () => {
               name="name"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
               placeholder="John Doe"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
 
@@ -118,6 +131,7 @@ const AddEmp = () => {
               name="email"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
               placeholder="johndoe@example.com"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
 
@@ -129,9 +143,10 @@ const AddEmp = () => {
               name="department"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
               placeholder="IT"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
-          <button className=" mt-9 mb-2 rounded-lg text-white font-bold w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+          <button onClick={() => handleAddUser(user)} className=" mt-9 mb-2 rounded-lg text-white font-bold w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
             {" "}
             <span className="flex flex-row justify-center items-center">
               <RiAddFill className="w-6 h-6 mr-1" /> add employee
