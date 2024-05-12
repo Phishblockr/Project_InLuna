@@ -9,7 +9,7 @@ const insightsSlice = createSlice({
   reducers: {
     addUser(state, action) {
       const user = {
-        id: action.payload.empId,
+        id: action.payload.id,
         name: action.payload.name,
         email: action.payload.email,
         department: action.payload.department,

@@ -4,6 +4,7 @@ import defaultUser from "../assets/default_profile_picture.jpg";
 import { useDispatch } from "react-redux";
 import { useNavigate } from 'react-router-dom';
 import { addUser } from "../features/Insights/insightsSlice";
+import { toast } from "sonner";
 
 const AddEmp = () => {
   const [image, setImage] = useState(null);
@@ -13,7 +14,9 @@ const AddEmp = () => {
   const nav = useNavigate();
 
   const handleAddUser = (user) => {
+    console.log(user);
     disp(addUser(user));
+    toast.success(`Employee ${user.id} added!!!`)
     nav('/insights');
   }
 
@@ -103,7 +106,7 @@ const AddEmp = () => {
             <label htmlFor="id">Employee-id: </label>
             <input
               type="text"
-              id="employee-id"
+              id="id"
               name="id"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
               placeholder="#017523"

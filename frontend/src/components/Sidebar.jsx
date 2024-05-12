@@ -67,7 +67,7 @@ const Sidebar = () => {
           <NavLink to={'/'}>Phishblokr</NavLink>
         </h1>
       </div>
-      <ul className="mt-4 text-black font-bold gap-2">
+      <ul className="mt-4 text-black flex flex-col font-bold gap-2">
         {links.map((link) => (
           <li
             key={link.id}
