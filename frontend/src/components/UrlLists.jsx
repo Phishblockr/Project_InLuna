@@ -5,49 +5,18 @@ import {
   MdOutlineArrowForwardIos,
 } from "react-icons/md";
 import { Link } from "react-router-dom";
-
-const users = [
-  {
-    id: 1,
-    url:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-    category: "Scam",
-    status: "Whitelisted",
-  },
-  {
-    id: 2,
-    url:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    category: "Fee Fraud",
-    status: "Blacklisted",
-  },
-  {
-    id: 3,
-    url:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    category: "Fee Fraud",
-    status: "Blacklisted",
-  },
-  {
-    id: 4,
-    url:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    category: "Fee Fraud",
-    status: "Blacklisted",
-  },
-  {
-    id: 5,
-    url:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    category: "Fee Fraud  ",
-    status: "Blacklisted",
-  },
-];
-
+import { useDispatch, useSelector } from "react-redux";
+import { remUrl } from "../features/Urls/urlSlice";
+import { toast } from "sonner";
 
 export default function UrlLists() {
+  // Redux
+  const urlData = useSelector((state) => state.urls.urls)
+  const dispatch = useDispatch()
+  // End of Redux
+
   // NOTE: This Logic is for demonstration purposes only and should be replaced to optimise database queries
-  // Start of User Search Logic
+  // Start of Search Logic
   const [query, setQuery] = useState("");
   const keys = ["url", "category", "status"];
   const search = (data) => {
@@ -55,9 +24,9 @@ export default function UrlLists() {
       keys.some((key) => item[key].toLowerCase().includes(query.toLowerCase()))
     );
   };
-  // End of User Search Logic
+  // End of Search Logic
 
-  // Start of User Filter Logic
+  // Start of Filter Logic
   const [dataFilter, setDataFilter] = useState(null);
   const filter = (data) => {
     if (dataFilter === "whitelisted") {
@@ -68,15 +37,15 @@ export default function UrlLists() {
       return data;
     }
   };
-  // End of User Filter Logic
+  // End of Filter Logic
 
   // Start of Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 10;
+  const recordsPerPage = 7;
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
-  const records = filter(search(users)).slice(firstIndex, lastIndex);
-  const npage = Math.ceil(users.length / recordsPerPage);
+  const records = filter(search(urlData)).slice(firstIndex, lastIndex);
+  const npage = Math.ceil(urlData.length / recordsPerPage);
   const numbers = [...Array(npage + 1).keys()].slice(1);
 
   function nextPage() {
@@ -98,6 +67,15 @@ export default function UrlLists() {
 
   const formatUrl = (url , maxLen = 70) => {
     return url.length > maxLen ? url.substring(0, maxLen) + "..." : url;
+  }
+
+  const handleRemUrl = (id, url) => {
+    try{
+      dispatch(remUrl(id))
+      toast.success(`URL ${url} removed`)
+    } catch(e){
+      toast.error(e)
+    }
   }
 
   const statusActive =
@@ -152,24 +130,26 @@ export default function UrlLists() {
             </tr>
           </thead>
           <tbody>
-            {records.map((user) => (
-              <tr key={user.id} className="odd:bg-white even:bg-gray-100">
+            {records.map((url, index) => (
+              <tr key={index} className="odd:bg-white even:bg-gray-100">
                 <td className="font-bold text-left text-gray-500 pl-2 py-4">
-                  <Link to={"/urllists/urldetails"}>{formatUrl(user.url)}</Link>
+                  <Link to={"/urllists/urldetails"}>{formatUrl(url.url)}</Link>
                 </td>
                 <td className="font-bold text-left text-gray-500">
-                  {user.category}
+                  {url.category}
                 </td>
                 <td className="text-left font-bold">
                   <span
                     className={
-                      user.status === "Whitelisted" ? statusActive : statusInactive
+                      url.status === "Whitelisted" ? statusActive : statusInactive
                     }
                   >
-                    {user.status}
+                    {url.status}
                   </span>
                 </td>
-                <td className='text-left '><RiDeleteBinLine className='w-6 h-6 text-red-500 cursor-pointer' /></td>
+                <td className='text-left '>
+                  <button onClick={() => handleRemUrl(url.id, formatUrl(url.url))}><RiDeleteBinLine className='w-6 h-6 text-red-500 cursor-pointer' /></button>
+                  </td>
               </tr>
             ))}
           </tbody>

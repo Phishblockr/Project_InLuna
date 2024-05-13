@@ -5,161 +5,18 @@ import {
   MdOutlineArrowForwardIos,
 } from "react-icons/md";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { remUser } from "../features/Users/usersSlice";
+import { toast } from "sonner";
 
-const users = [
-  {
-    id: 1,
-    profileImage:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "Johnita Doe",
-    email: "johnitadoe@gmail.com",
-    department: "Software",
-    role: "Developer",
-    status: "Active",
-  },
-  {
-    id: 2,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 3,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 4,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 5,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 6,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 7,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 8,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 9,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 10,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 11,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 12,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 13,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 14,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-  {
-    id: 15,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "test user",
-    email: "johndoe@gmail.com",
-    department: "QA",
-    role: "Tester",
-    status: "Inactive",
-  },
-];
+
 
 export default function Users() {
+  // Redux
+  const usersData = useSelector((state) => state.users.users)
+  const dispatch = useDispatch()
+  // End of Redux
+
   // NOTE: This Logic is for demonstration purposes only and should be replaced to optimise database queries
   // Start of User Search Logic
   const [query, setQuery] = useState("");
@@ -186,11 +43,11 @@ export default function Users() {
 
   // Start of Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 10;
+  const recordsPerPage = 7;
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
-  const records = filter(search(users)).slice(firstIndex, lastIndex);
-  const npage = Math.ceil(users.length / recordsPerPage);
+  const records = filter(search(usersData)).slice(firstIndex, lastIndex);
+  const npage = Math.ceil(usersData.length / recordsPerPage);
   const numbers = [...Array(npage + 1).keys()].slice(1);
 
   function nextPage() {
@@ -209,6 +66,15 @@ export default function Users() {
     setCurrentPage(n);
   }
   // End of Pagination Logic
+
+  const handleRemUser = (id, name) => {
+    try{
+      dispatch(remUser(id))
+      toast.success(`User ${name} removed`)
+    } catch(e){
+      toast.error(e)
+    }
+  }
 
   const statusActive =
     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg";
@@ -267,13 +133,13 @@ export default function Users() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((user) => (
-                  <tr key={user.id} className="odd:bg-white even:bg-gray-100">
+                {records.map((user, index) => (
+                  <tr key={index} className="odd:bg-white even:bg-gray-100">
                     <td className="py-2 pl-2">
                       <Link to={"/users/userDetails"}>
                         <div className="flex items-center gap-x-3">
                           <img
-                            src={user.profileImage}
+                            src={user.img}
                             alt={user.name}
                             className="w-10 h-10 rounded-full object-cover"
                           />
@@ -302,7 +168,7 @@ export default function Users() {
                       </span>
                     </td>
                     <td className="text-left ">
-                      <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
+                      <button onClick={() => handleRemUser(user.id, user.name)}><RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" /></button>
                     </td>
                   </tr>
                 ))}

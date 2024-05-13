@@ -1,10 +1,25 @@
 import React, { useRef, useState } from "react";
 import { RiAddFill, RiUploadCloud2Line } from "react-icons/ri";
 import defaultUser from "../assets/default_profile_picture.jpg";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { addUser } from "../features/Users/usersSlice";
+import { toast } from "sonner";
 
 const AddUser = () => {
   const [image, setImage] = useState(null);
   const hiddenFileInput = useRef(null);
+  const [user, setUser] = useState({ img:"", name:"", email:"", department:"", role:"", status:"Inactive"});
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleAddUser = (user) => {
+    dispatch(addUser(user));
+    toast.success(`User ${user.name} added.`);
+    console.log(user)
+    navigate("/users");
+  }
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -95,6 +110,7 @@ const AddUser = () => {
               id="name"
               name="name"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
 
@@ -105,6 +121,7 @@ const AddUser = () => {
               id="email"
               name="email"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
 
@@ -115,6 +132,7 @@ const AddUser = () => {
               id="role"
               name="role"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
 
@@ -125,10 +143,22 @@ const AddUser = () => {
               id="department"
               name="department"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
-          <button className=" mt-9 mb-2 rounded-lg text-white font-bold w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
-            {" "}
+          <div className="mt-3 flex flex-col">
+            <label htmlFor="status">Status: </label>
+            <select
+              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white"
+              name="status"
+              id="status"
+              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
+            >
+              <option value="Inactive">Inactive</option>
+              <option value="Active">Active</option>
+            </select>
+          </div>
+          <button onClick={() => handleAddUser(user)} className=" mt-9 mb-2 rounded-lg text-white font-bold w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
             <span className="flex flex-row justify-center items-center">
               <RiAddFill className="w-6 h-6 mr-1" /> Submit
             </span>
