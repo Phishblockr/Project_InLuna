@@ -230,7 +230,7 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
     <div className='z-50 fixed bg-black/50 top-0 left-0 right-0 bottom-0 flex justify-center items-center'>
       <div className='bg-white rounded-xl p-3 flex flex-col gap-2 justify-center items-center relative'>
         <div className='flex justify-between items-center w-full'>
-          <h1 className='font-bold text-2xl'>Detailed Info</h1>
+          <h1 className='font-normal text-2xl'>Detailed Info</h1>
           <button onClick={onClose}>
             <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth='1.5' stroke='currentColor' className='w-6 h-6'>
               <path strokeLinecap='round' strokeLinejoin='round' d='M6 18 18 6M6 6l12 12' />
@@ -241,7 +241,7 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
         <div className='bg-gray-300 rounded-xl w-full p-4 flex gap-4'>
           <div className='flex flex-col flex-1 gap-4'>
             <div className='bg-white rounded-md p-4 flex flex-col gap-3'>
-              <h1 className='font-bold text-xl'>User Details</h1>
+              <h1 className='font-normal text-xl'>User Details</h1>
               <div className='flex gap-5'>
                 <div className='flex justify-center items-center flex-1'>
                   <img
@@ -251,14 +251,14 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
                   />
                 </div>
                 <div className='flex-[3] w-full flex flex-col gap-2'>
-                  <p className='font-bold text-xl'>{logData.name}</p>
+                  <p className='font-normal text-xl'>{logData.name}</p>
                   <div className='flex gap-1'>
-                    <p className='font-bold text-gray-500'>email:</p>
-                    <p className='font-bold'>{logData.email}</p>
+                    <p className='font-normal text-gray-500'>email:</p>
+                    <p className='font-normal'>{logData.email}</p>
                   </div>
                   <div className='flex gap-1'>
-                    <p className='font-bold text-gray-500'>department:</p>
-                    <p className='font-bold'>{logData.department}</p>
+                    <p className='font-normal text-gray-500'>department:</p>
+                    <p className='font-normal'>{logData.department}</p>
                   </div>
                 </div>
               </div>
@@ -295,7 +295,7 @@ const Logs = () => {
       <LogDetailsModal show={showModal} onClose={() => setShowModal(false)} logData={selectedLog} />
       <div className='bg-white p-4 flex justify-between items-center rounded-xl shadow-xl w-full'>
         <div>
-          <h1 className='font-bold text-2xl'>Logs</h1>
+          <h1 className='font-normal text-2xl'>Logs</h1>
         </div>
         <div className='flex gap-3 justify-evenly items-center'>
           <input
@@ -329,7 +329,7 @@ const Logs = () => {
                     fill='black'
                   />
                 </svg>
-                <p className='text-md font-bold'>to CSV</p>
+                <p className='text-md font-normal'>to CSV</p>
               </button>
             </Link>
           </div>

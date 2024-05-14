@@ -124,7 +124,7 @@ export default function Requests() {
       <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
         <div className="z-1 w-full bg-white rounded-xl shadow-xl flex flex-row p-3 items-center justify-between h-max">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Requests</h1>
+            <h1 className="text-2xl font-normal tracking-tight">Requests</h1>
           </div>
           <div className="flex items-center gap-x-3">
             <input
@@ -158,12 +158,12 @@ export default function Requests() {
                   alt="user Profile"
                 />
                 <ul className="flex flex-col">
-                  <li className="font-bold text-3xl my-2">{request.name}</li>
-                  <li className="font-bold mb-1">
+                  <li className="font-normal text-3xl my-2">{request.name}</li>
+                  <li className="font-normal mb-1">
                     <span className="text-gray-500 mr-2">E-mail:</span>
                     <span>{request.email}</span>
                   </li>
-                  <li className="font-bold mb-1">
+                  <li className="font-normal mb-1">
                     <span className="text-gray-500 mr-2">Status:</span>
                     <span
                       className={
@@ -178,21 +178,21 @@ export default function Requests() {
                 </ul>
               </div>
               <div className="">
-                <p className="font-bold ">
+                <p className="font-normal ">
                   <span>URL: </span> <span>{request.url}</span>
                 </p>
                 <p>
-                  <span className="font-bold">Reason: </span> {request.reason}
+                  <span className="font-normal">Reason: </span> {request.reason}
                 </p>
               </div>
             </div>
             <div className="text-right mt-5">
-              <button className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-bold rounded-lg mr-2">
+              <button className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-normal rounded-lg mr-2">
                 <span className="flex flex-row items-center gap-x-1">
                   <RiLoopLeftLine className="w-6 h-6" /> Update URL Status
                 </span>
               </button>
-              <button className="bg-red-500 hover:bg-red-700 p-2 text-white font-bold rounded-lg">
+              <button className="bg-red-500 hover:bg-red-700 p-2 text-white font-normal rounded-lg">
                 <span className="flex flex-row items-center gap-x-1">
                   <RiDeleteBinLine className="w-6 h-6" /> Remove Request
                 </span>

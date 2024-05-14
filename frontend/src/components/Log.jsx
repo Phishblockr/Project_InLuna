@@ -6,10 +6,10 @@ export default function Log({ blog, setBlog, showBlog }) {
 			<div className='flex'>
 				<div className={`${blog.type === "whitelisted" ? "bg-[#00695C]" : "bg-[#C62828]"} rounded-s-lg p-3`}></div>
 				<div className='p-3 text-right flex gap-5'>
-					<h1 className='text-right font-bold pr-8 border-r-2 border-gray-500'>{blog.day}</h1>
-					<h1 className='text-right font-bold pr-8 border-r-2 border-gray-500'>{blog.date}, {blog.time}</h1>
-					<h1 className='text-right font-bold pr-8 border-r-2 border-gray-500'>{blog.name}</h1>
-					<h1 className='text-right font-bold pr-8'>{blog.phishingUrl}</h1>
+					<h1 className='text-right font-normal pr-8 border-r-2 border-gray-500'>{blog.day}</h1>
+					<h1 className='text-right font-normal pr-8 border-r-2 border-gray-500'>{blog.date}, {blog.time}</h1>
+					<h1 className='text-right font-normal pr-8 border-r-2 border-gray-500'>{blog.name}</h1>
+					<h1 className='text-right font-normal pr-8'>{blog.phishingUrl}</h1>
 				</div>
 			</div>
 			<div className="flex justify-center items-center pr-3">

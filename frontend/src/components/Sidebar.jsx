@@ -63,11 +63,11 @@ const Sidebar = () => {
   return (
     <div className="w-64 l-0 r-0 bg-white fixed h-full px-4 py-2 z-10">
       <div className="my-2 mb-6">
-        <h1 className="text-2xl text-left text-black font-bold tracking-tighter">
+        <h1 className="text-2xl text-left text-black font-normal tracking-tighter">
           <NavLink to={'/'}>Phishblokr</NavLink>
         </h1>
       </div>
-      <ul className="mt-4 text-black flex flex-col font-bold gap-2">
+      <ul className="mt-4 text-black flex flex-col font-normal gap-2">
         {links.map((link) => (
           <li
             key={link.id}

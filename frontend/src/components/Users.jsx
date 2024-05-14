@@ -85,7 +85,7 @@ export default function Users() {
     <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div className="z-1 w-full bg-white rounded-xl shadow-xl flex flex-row p-3 items-center justify-between h-max">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+          <h1 className="text-2xl font-normal tracking-tight">Users</h1>
         </div>
         <div className="flex items-center gap-x-3">
           <input
@@ -115,7 +115,7 @@ export default function Users() {
         </div>
       </div>
       {records.length === 0 ? (
-        <div className="flex justify-center font-bold">
+        <div className="flex justify-center font-normal">
           <span>No Records Found!</span>
         </div>
       ) : (
@@ -143,20 +143,20 @@ export default function Users() {
                             alt={user.name}
                             className="w-10 h-10 rounded-full object-cover"
                           />
-                          <span className="font-bold">{user.name}</span>
+                          <span className="font-normal">{user.name}</span>
                         </div>
                       </Link>
                     </td>
-                    <td className="font-bold text-left text-gray-500">
+                    <td className="font-normal text-left text-gray-500">
                       {user.email}
                     </td>
-                    <td className="font-bold text-left text-gray-500">
+                    <td className="font-normal text-left text-gray-500">
                       {user.department}
                     </td>
-                    <td className="font-bold text-left text-gray-500">
+                    <td className="font-normal text-left text-gray-500">
                       {user.role}
                     </td>
-                    <td className="text-left font-bold">
+                    <td className="text-left font-normal">
                       <span
                         className={
                           user.status === "Active"

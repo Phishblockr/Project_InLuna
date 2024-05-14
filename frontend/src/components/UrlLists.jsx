@@ -87,7 +87,7 @@ export default function UrlLists() {
     <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div className="z-1 w-full bg-white rounded-xl shadow-xl flex flex-row p-3 items-center justify-between h-max">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">URL List</h1>
+          <h1 className="text-2xl font-normal tracking-tight">URL List</h1>
         </div>
         <div className="flex items-center gap-x-3">
           <input
@@ -114,7 +114,7 @@ export default function UrlLists() {
         </div>
       </div>
       {records.length === 0 ? (
-        <div className="flex justify-center font-bold">
+        <div className="flex justify-center font-normal">
           <span>No Records Found!</span>
         </div>
       ) : (
@@ -132,13 +132,13 @@ export default function UrlLists() {
           <tbody>
             {records.map((url, index) => (
               <tr key={index} className="odd:bg-white even:bg-gray-100">
-                <td className="font-bold text-left text-gray-500 pl-2 py-4">
+                <td className="font-normal text-left text-gray-500 pl-2 py-4">
                   <Link to={"/urllists/urldetails"}>{formatUrl(url.url)}</Link>
                 </td>
-                <td className="font-bold text-left text-gray-500">
+                <td className="font-normal text-left text-gray-500">
                   {url.category}
                 </td>
-                <td className="text-left font-bold">
+                <td className="text-left font-normal">
                   <span
                     className={
                       url.status === "Whitelisted" ? statusActive : statusInactive

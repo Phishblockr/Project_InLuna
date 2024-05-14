@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from 'react-icons/md';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { remUser } from '../features/Insights/insightsSlice';
+import { toast } from 'sonner';
 
 const EmployeeRow = ({ id, name, email, department, img, handleRemUser }) => (
-  <tr className='font-bold odd:bg-white even:bg-gray-100'>
+  <tr className='font-normal odd:bg-white even:bg-gray-100'>
     <td className='p-2 pr-0 text-gray-500'>#0175{id}</td>
     <td className='py-2'>
       <div className='flex justify-start items-center gap-3'>
@@ -16,7 +17,7 @@ const EmployeeRow = ({ id, name, email, department, img, handleRemUser }) => (
     <td className='text-gray-500'>{email}</td>
     <td>{department}</td>
     <td>
-      <button className='cursor-pointer' onClick={() => handleRemUser(id)}>
+      <button className='cursor-pointer' onClick={() => handleRemUser(id, name)}>
         <svg
           stroke='currentColor'
           fill='currentColor'
@@ -86,24 +87,50 @@ const Insights = () => {
   const changePage = (n) => setCurrPage(n);
   const nextPage = () => currPage < npage && setCurrPage(currPage + 1);
   const prevPage = () => currPage > 1 && setCurrPage(currPage - 1);
+  const departments = [...new Set(userData.map(user => user.department))];
 
-  const removeUser = (id) => setAllUsers((prev) => prev.filter((el) => el.id !== id));
+
   const searchUsers = (txt) => {
     setQuery(txt.toLowerCase());
     if (txt === '') setAllUsers(userData);
     else setAllUsers(userData.filter((el) => el.name.toLowerCase().includes(txt)));
   };
 
-  const handleRemUser = (id) => {
-    disp(remUser(id))
-    console.log(`User ${id} removed`);
+  const handleRemUser = (id, name) => {
+    const res = confirm(`Do you want to remove user ${name}?`);
+    console.log(res);
+
+    if (res) {
+      try {
+        disp(remUser(id));
+        toast.success(`User ${name} removed`)
+      } catch (error) {
+        console.error(error.message);
+        toast.error(`Unable to remove user ${id}`);
+      }
+    } else {
+      return;
+    }
   }
+
+  const handleDepartmentSort = (dept) => {
+    if (dept === 'default') {
+      setAllUsers(userData);
+    } else {
+      const filteredUsers = userData.filter(user => user.department === dept);
+      setAllUsers(filteredUsers);
+    }
+  };
+
+  useEffect(() => {
+    setAllUsers(userData);
+  }, [userData]);
 
   return (
     <div className='z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] p-4 gap-5'>
       <div className='bg-white p-4 flex justify-between items-center rounded-xl shadow-xl'>
         <div>
-          <h1 className='font-bold text-2xl'>Employees</h1>
+          <h1 className='font-normal text-2xl'>Employees</h1>
         </div>
         <div className='flex gap-5 justify-evenly items-center'>
           <input
@@ -115,11 +142,12 @@ const Insights = () => {
           <select
             defaultValue='Department'
             className='text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg'
+            onChange={e => handleDepartmentSort(e.target.value)}
           >
-            <option value='Department'>Department</option>
-            <option value='Developer'>Developer</option>
-            <option value='QA'>QA</option>
-            <option value='Tester'>Tester</option>
+            <option value="default">Sort by</option>
+            {
+              departments.map(el => <option key={el} value={el}>{el}</option>)
+            }
           </select>
           <Link to='/insights/addemp'>
             <button className='flex justify-center items-center gap-3 px-4 p-2 rounded-lg text-white cursor-pointer bg-[#0364BD]'>
@@ -150,7 +178,7 @@ const Insights = () => {
         </thead>
         <tbody className='mt-3'>
           {records.map(({ id, name, email, department, img }) => (
-            <EmployeeRow handleRemUser={handleRemUser} key={id} id={id} name={name} email={email} department={department} img={img} removeUser={removeUser} />
+            <EmployeeRow handleRemUser={handleRemUser} key={id} id={id} name={name} email={email} department={department} img={img} />
           ))}
         </tbody>
       </table>
