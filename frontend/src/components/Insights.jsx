@@ -6,7 +6,7 @@ import { remUser } from '../features/Insights/insightsSlice';
 import { toast } from 'sonner';
 
 const EmployeeRow = ({ id, name, email, department, img, handleRemUser }) => (
-  <tr className='font-normal odd:bg-white even:bg-gray-100'>
+  <tr className='font-medium odd:bg-white even:bg-gray-100'>
     <td className='p-2 pr-0 text-gray-500'>#0175{id}</td>
     <td className='py-2'>
       <div className='flex justify-start items-center gap-3'>
@@ -98,7 +98,6 @@ const Insights = () => {
 
   const handleRemUser = (id, name) => {
     const res = confirm(`Do you want to remove user ${name}?`);
-    console.log(res);
 
     if (res) {
       try {
@@ -120,7 +119,7 @@ const Insights = () => {
       const filteredUsers = userData.filter(user => user.department === dept);
       setAllUsers(filteredUsers);
     }
-  };
+  }
 
   useEffect(() => {
     setAllUsers(userData);
@@ -130,7 +129,7 @@ const Insights = () => {
     <div className='z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] p-4 gap-5'>
       <div className='bg-white p-4 flex justify-between items-center rounded-xl shadow-xl'>
         <div>
-          <h1 className='font-normal text-2xl'>Employees</h1>
+          <h1 className='font-medium text-2xl'>Employees</h1>
         </div>
         <div className='flex gap-5 justify-evenly items-center'>
           <input

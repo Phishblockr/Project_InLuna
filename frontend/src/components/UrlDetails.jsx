@@ -4,9 +4,9 @@ import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 const UrlDetails = () => {
   return (
     <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className='<div className="z-1 w-full font-normal bg-white rounded-xl shadow-xl p-3 h-max">'>
+      <div className='<div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max">'>
         <div>
-          <h1 className="pt-3 pl-5 text-2xl font-normal">URL Details</h1>
+          <h1 className="pt-3 pl-5 text-2xl font-medium">URL Details</h1>
         </div>
         <div className="mt-3 flex flex-col w-full items-center">
           <div className="flex flex-col">
@@ -41,13 +41,13 @@ const UrlDetails = () => {
             </select>
           </div>
           <div className="flex flex-row gap-x-2">
-            <button className=" mt-9 mb-2 rounded-lg text-white font-normal w-[19rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+            <button className=" mt-9 mb-2 rounded-lg text-white font-medium w-[19rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
               <span className="flex flex-row gap-x-2 items-center justify-center">
                 {" "}
                 <RiLoopLeftLine className="w-6 h-6" /> Update URL{" "}
               </span>
             </button>
-            <button className=" mt-9 mb-2 rounded-lg text-white font-normal w-[19rem] bg-red-500 hover:bg-red-700 transition p-2 ">
+            <button className=" mt-9 mb-2 rounded-lg text-white font-medium w-[19rem] bg-red-500 hover:bg-red-700 transition p-2 ">
               <span className="flex flex-row gap-x-2 items-center justify-center">
                 <RiDeleteBinLine className="w-6 h-6" /> Delete URL
               </span>

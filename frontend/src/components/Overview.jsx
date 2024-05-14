@@ -7,7 +7,7 @@ const categories = ['Visited', 'Blocked', 'Clicked', 'Whitelisted'];
 
 const OverviewCard = ({ bg, count, title }) => (
   <div className={`${bg} shadow-md flex px-4 py-6 items-center text-white rounded-lg`}>
-    <div className='flex flex-col font-normal'>
+    <div className='flex flex-col font-medium'>
       <h4 className='text-xl'>{count}</h4>
       <h4 className='w-3/4'>{title}</h4>
     </div>
@@ -49,7 +49,7 @@ const Overview = () => {
   return (
     <div className='z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] p-4 gap-4'>
       <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2'>
-        <h1 className='text-2xl font-normal tracking-tight'>Overview</h1>
+        <h1 className='text-2xl font-medium tracking-tight'>Overview</h1>
         <OverviewCards points={overviewPoints} />
       </div>
       <div className='w-full bg-white rounded-xl shadow-xl grid grid-cols-2'>

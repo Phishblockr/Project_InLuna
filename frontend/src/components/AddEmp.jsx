@@ -40,9 +40,9 @@ const AddEmp = () => {
 
   return (
     <div className="z-1 w-[calc(100svw-17.5rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4">
-      <div className='z-1 font-normal bg-white rounded-xl shadow-xl p-3 h-max'>
+      <div className='z-1 font-medium bg-white rounded-xl shadow-xl p-3 h-max'>
         <div>
-          <h1 className="pt-3 pl-5 text-2xl font-normal">Add Employee</h1>
+          <h1 className="pt-3 pl-5 text-2xl font-medium">Add Employee</h1>
         </div>
         <div className="flex flex-col items-center justify-between">
           <div>
@@ -129,7 +129,7 @@ const AddEmp = () => {
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />
           </div>
-          <button onClick={() => handleAddUser(user)} className=" mt-9 mb-2 rounded-lg text-white font-normal w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+          <button onClick={() => handleAddUser(user)} className=" mt-9 mb-2 rounded-lg text-white font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
             {" "}
             <span className="flex flex-row justify-center items-center">
               <RiAddFill className="w-6 h-6 mr-1" /> add employee
