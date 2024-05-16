@@ -9,12 +9,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { remUser } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 
-
-
 export default function Users() {
   // Redux
-  const usersData = useSelector((state) => state.users.users)
-  const dispatch = useDispatch()
+  const usersData = useSelector((state) => state.users.users);
+  const dispatch = useDispatch();
   // End of Redux
 
   // NOTE: This Logic is for demonstration purposes only and should be replaced to optimise database queries
@@ -43,11 +41,12 @@ export default function Users() {
 
   // Start of Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 6;
+  const recordsPerPage = 5;
+  const filteredData = filter(search(usersData));
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
-  const records = filter(search(usersData)).slice(firstIndex, lastIndex);
-  const npage = Math.ceil(usersData.length / recordsPerPage);
+  const records = filteredData.slice(firstIndex, lastIndex);
+  const npage = Math.ceil(filteredData.length / recordsPerPage);
   const numbers = [...Array(npage + 1).keys()].slice(1);
 
   function nextPage() {
@@ -68,13 +67,13 @@ export default function Users() {
   // End of Pagination Logic
 
   const handleRemUser = (id, name) => {
-    try{
-      dispatch(remUser(id))
-      toast.success(`User ${name} removed`)
-    } catch(e){
-      toast.error(e)
+    try {
+      dispatch(remUser(id));
+      toast.success(`User ${name} removed`);
+    } catch (e) {
+      toast.error(e);
     }
-  }
+  };
 
   const statusActive =
     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg";
@@ -168,7 +167,9 @@ export default function Users() {
                       </span>
                     </td>
                     <td className="text-left ">
-                      <button onClick={() => handleRemUser(user.id, user.name)}><RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" /></button>
+                      <button onClick={() => handleRemUser(user.id, user.name)}>
+                        <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
+                      </button>
                     </td>
                   </tr>
                 ))}

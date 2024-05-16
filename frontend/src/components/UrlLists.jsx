@@ -11,8 +11,8 @@ import { toast } from "sonner";
 
 export default function UrlLists() {
   // Redux
-  const urlData = useSelector((state) => state.urls.urls)
-  const dispatch = useDispatch()
+  const urlData = useSelector((state) => state.urls.urls);
+  const dispatch = useDispatch();
   // End of Redux
 
   // NOTE: This Logic is for demonstration purposes only and should be replaced to optimise database queries
@@ -41,11 +41,12 @@ export default function UrlLists() {
 
   // Start of Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 6;
+  const recordsPerPage = 5;
+  const filteredData = filter(search(urlData));
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
-  const records = filter(search(urlData)).slice(firstIndex, lastIndex);
-  const npage = Math.ceil(urlData.length / recordsPerPage);
+  const records = filteredData.slice(firstIndex, lastIndex);
+  const npage = Math.ceil(filteredData.length / recordsPerPage);
   const numbers = [...Array(npage + 1).keys()].slice(1);
 
   function nextPage() {
@@ -65,18 +66,18 @@ export default function UrlLists() {
   }
   // End of Pagination Logic
 
-  const formatUrl = (url , maxLen = 70) => {
+  const formatUrl = (url, maxLen = 70) => {
     return url.length > maxLen ? url.substring(0, maxLen) + "..." : url;
-  }
+  };
 
   const handleRemUrl = (id, url) => {
-    try{
-      dispatch(remUrl(id))
-      toast.success(`URL ${url} removed`)
-    } catch(e){
-      toast.error(e)
+    try {
+      dispatch(remUrl(id));
+      toast.success(`URL ${url} removed`);
+    } catch (e) {
+      toast.error(e);
     }
-  }
+  };
 
   const statusActive =
     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg";
@@ -106,7 +107,10 @@ export default function UrlLists() {
             <option value="whitelisted">Whitelisted</option>
             <option value="blacklisted">Blacklisted</option>
           </select>
-          <Link to={'/urllists/addurl'} className="p-2 bg-[#0364BD] text-white rounded-lg hover:bg-[#003A70] transition">
+          <Link
+            to={"/urllists/addurl"}
+            className="p-2 bg-[#0364BD] text-white rounded-lg hover:bg-[#003A70] transition"
+          >
             <span>
               <RiAddFill className="inline-block w-6 h-6 mr-1 -mt-1" /> Add URL
             </span>
@@ -119,82 +123,90 @@ export default function UrlLists() {
         </div>
       ) : (
         <>
-      <div>
-        <table className="w-full">
-          <thead className="border-separate">
-            <tr>
-              <th className="py-3 text-left">URL</th>
-              <th className="py-3 text-left">Category</th>
-              <th className="py-3 text-left">Status</th>
-              <th className="py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((url, index) => (
-              <tr key={index} className="odd:bg-white even:bg-gray-100">
-                <td className="font-medium text-left text-gray-500 pl-2 py-4">
-                  <Link to={"/urllists/urldetails"}>{formatUrl(url.url)}</Link>
-                </td>
-                <td className="font-medium text-left text-gray-500">
-                  {url.category}
-                </td>
-                <td className="text-left font-medium">
-                  <span
-                    className={
-                      url.status === "Whitelisted" ? statusActive : statusInactive
-                    }
-                  >
-                    {url.status}
-                  </span>
-                </td>
-                <td className='text-left '>
-                  <button onClick={() => handleRemUrl(url.id, formatUrl(url.url))}><RiDeleteBinLine className='w-6 h-6 text-red-500 cursor-pointer' /></button>
-                  </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
-        <nav className="flex gap-x-1 justify-between">
           <div>
-            <a
-              className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
-              href="#"
-              onClick={prePage}
-            >
-              <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-            </a>
+            <table className="w-full">
+              <thead className="border-separate">
+                <tr>
+                  <th className="py-3 text-left">URL</th>
+                  <th className="py-3 text-left">Category</th>
+                  <th className="py-3 text-left">Status</th>
+                  <th className="py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((url, index) => (
+                  <tr key={index} className="odd:bg-white even:bg-gray-100">
+                    <td className="font-medium text-left text-gray-500 pl-2 py-4">
+                      <Link to={"/urllists/urldetails"}>
+                        {formatUrl(url.url)}
+                      </Link>
+                    </td>
+                    <td className="font-medium text-left text-gray-500">
+                      {url.category}
+                    </td>
+                    <td className="text-left font-medium">
+                      <span
+                        className={
+                          url.status === "Whitelisted"
+                            ? statusActive
+                            : statusInactive
+                        }
+                      >
+                        {url.status}
+                      </span>
+                    </td>
+                    <td className="text-left ">
+                      <button
+                        onClick={() => handleRemUrl(url.id, formatUrl(url.url))}
+                      >
+                        <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="flex gap-x-2 items-center">
-            {numbers.map((number, index) => (
-              <div key={index}>
+          <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
+            <nav className="flex gap-x-1 justify-between">
+              <div>
                 <a
-                  className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${
-                    currentPage === number
-                      ? "bg-[#0364BD] text-white"
-                      : "bg-gray-200"
-                  }`}
+                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
                   href="#"
-                  onClick={() => changeCPage(number)}
+                  onClick={prePage}
                 >
-                  {number}
+                  <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
                 </a>
               </div>
-            ))}
+              <div className="flex gap-x-2 items-center">
+                {numbers.map((number, index) => (
+                  <div key={index}>
+                    <a
+                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${
+                        currentPage === number
+                          ? "bg-[#0364BD] text-white"
+                          : "bg-gray-200"
+                      }`}
+                      href="#"
+                      onClick={() => changeCPage(number)}
+                    >
+                      {number}
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <a
+                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
+                  href="#"
+                  onClick={nextPage}
+                >
+                  Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                </a>
+              </div>
+            </nav>
           </div>
-          <div>
-            <a
-              className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
-              href="#"
-              onClick={nextPage}
-            >
-              Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-            </a>
-          </div>
-        </nav>
-      </div>
-      </>
+        </>
       )}
     </div>
   );
