@@ -5,65 +5,14 @@ import {
   MdOutlineArrowForwardIos,
 } from "react-icons/md";
 
-const requests = [
-  {
-    id: 1,
-    profileImage:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "Johnita Doe",
-    email: "johnitadoe@gmail.com",
-    url: "http://www.testingmcafeesites.com/index.html",
-    reason:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis accumsan dolor tempor, lacinia risus et, sollicitudin turpis. Pellentesque vestibulum vestibulum lorem eget consequat. ",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    url: "http://www.testingmcafeesites.com/index.html",
-    reason:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis accumsan dolor tempor, lacinia risus et, sollicitudin turpis. Pellentesque vestibulum vestibulum lorem eget consequat. ",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    url: "http://www.testingmcafeesites.com/index.html",
-    reason:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis accumsan dolor tempor, lacinia risus et, sollicitudin turpis. Pellentesque vestibulum vestibulum lorem eget consequat. ",
-    status: "Completed",
-  },
-  {
-    id: 4,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    url: "http://www.testingmcafeesites.com/index.html",
-    reason:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis accumsan dolor tempor, lacinia risus et, sollicitudin turpis. Pellentesque vestibulum vestibulum lorem eget consequat. ",
-    status: "Pending",
-  },
-  {
-    id: 5,
-    profileImage:
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    url: "http://www.testingmcafeesites.com/index.html",
-    reason:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis accumsan dolor tempor, lacinia risus et, sollicitudin turpis. Pellentesque vestibulum vestibulum lorem eget consequat. ",
-    status: "Pending",
-  },
-];
+import { useDispatch, useSelector } from "react-redux";
+import { remReq, updateStatus } from "../features/Requests/requestsSlice";
 
 export default function Requests() {
+
+  const requestData = useSelector((state) => state.requests.requests)
+  const dispatch = useDispatch();
+
   const statusActive =
     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg";
   const statusInactive =
@@ -82,7 +31,6 @@ export default function Requests() {
 
   // Start of Filter Logic
   const [dataFilter, setDataFilter] = useState(null);
-  console.log(dataFilter)
   const filter = (data) => {
     if (dataFilter === "completed") {
       return data.filter((item) => item.status === "Completed");
@@ -99,8 +47,8 @@ export default function Requests() {
   const recordsPerPage = 5;
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
-  const records = filter(search(requests)).slice(firstIndex, lastIndex);
-  const npage = Math.ceil(requests.length / recordsPerPage);
+  const records = filter(search(requestData)).slice(firstIndex, lastIndex);
+  const npage = Math.ceil(requestData.length / recordsPerPage);
   const numbers = [...Array(npage + 1).keys()].slice(1);
 
   function nextPage() {
@@ -119,6 +67,14 @@ export default function Requests() {
     setCurrentPage(n);
   }
   // End of Pagination Logic
+
+  function handleRem(id){
+    dispatch(remReq(id));
+  }
+
+  function handleUpdateStatus(id){
+    dispatch(updateStatus(id))
+  }
 
   return (
       <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -187,12 +143,12 @@ export default function Requests() {
               </div>
             </div>
             <div className="text-right mt-5">
-              <button className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-medium rounded-lg mr-2">
+              <button onClick={() => handleUpdateStatus(request.id)} className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-medium rounded-lg mr-2">
                 <span className="flex flex-row items-center gap-x-1">
                   <RiLoopLeftLine className="w-6 h-6" /> Update URL Status
                 </span>
               </button>
-              <button className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg">
+              <button onClick={() => handleRem(request.id)} className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg">
                 <span className="flex flex-row items-center gap-x-1">
                   <RiDeleteBinLine className="w-6 h-6" /> Remove Request
                 </span>

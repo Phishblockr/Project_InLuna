@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {urls} from "../../urlsData";
-import { toast } from "sonner";
 
 const urlSlice = createSlice({
     name:"urls",
