@@ -14,13 +14,13 @@ const profileSettings = [
   {
     id: 1,
     title: "Profile",
-    url: "#",
+    url: "/profileSettings",
     style: profileBtnStyle,
   },
   {
     id: 2,
     title: "Settings",
-    url: "#",
+    url: "settings",
     style: profileBtnStyle,
   },
   {

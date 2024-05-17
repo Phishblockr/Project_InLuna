@@ -21,8 +21,16 @@ const usersSlice = createSlice({
         remUser(state, action){
             state.users = state.users.filter(user => user.id !== action.payload)
         },
+        updateStatus(state, action) {
+            const user = state.users.find(
+              (user) => user.id === action.payload
+            );
+            if (user) {
+              user.status = user.status === "Inactive" ? "Active" : "Inactive";
+            }
+          },
     },
 });
 
 export default usersSlice.reducer;
-export const {addUser, remUser} = usersSlice.actions;
+export const {addUser, remUser, updateStatus} = usersSlice.actions;

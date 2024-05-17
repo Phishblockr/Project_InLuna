@@ -19,6 +19,8 @@ import AddEmp from "./components/AddEmp.jsx";
 import { Provider } from 'react-redux';
 import store from "./features/store.js";
 import { Toaster } from 'sonner';
+import AdminSettings from "./components/AdminSettings.jsx";
+import Settings from "./components/Settings.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -40,6 +42,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/requests" element={<Requests />} />
             <Route path="/feedbacks" element={<Feedbacks />} />
             <Route path="/logs" element={<Logs />} />
+            <Route path="/profileSettings" element={<AdminSettings />} />
+            <Route path="/settings" element={<Settings />} />
+
+
           </Routes>
         </Provider>
     </Router>
