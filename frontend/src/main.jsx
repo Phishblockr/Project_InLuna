@@ -33,12 +33,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/" element={<App />} />
             <Route path="/users" element={<Users />} />
             <Route path="/users/adduser" element={<AddUser />} />
-            <Route path="/users/userDetails" element={<UserDetails />} />
+            <Route path="/users/userDetails/:id" element={<UserDetails />} />
             <Route path="/insights" element={<Insights />} />
             <Route path="/insights/addemp" element={<AddEmp />} />
             <Route path="/urllists" element={<UrlLists />} />
             <Route path="/urllists/addurl" element={<AddUrl />} />
-            <Route path="/urllists/urldetails" element={<UrlDetails />} />
+            <Route path="/urllists/urldetails/:id" element={<UrlDetails />} />
             <Route path="/requests" element={<Requests />} />
             <Route path="/feedbacks" element={<Feedbacks />} />
             <Route path="/logs" element={<Logs />} />

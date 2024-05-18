@@ -137,7 +137,7 @@ export default function UrlLists() {
                 {records.map((url, index) => (
                   <tr key={index} className="odd:bg-white even:bg-gray-100">
                     <td className="font-medium text-left text-gray-500 pl-2 py-4">
-                      <Link to={"/urllists/urldetails"}>
+                      <Link to={`/urllists/urldetails/${url.id}`}>
                         {formatUrl(url.url)}
                       </Link>
                     </td>

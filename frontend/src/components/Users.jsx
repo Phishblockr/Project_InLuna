@@ -135,7 +135,7 @@ export default function Users() {
                 {records.map((user, index) => (
                   <tr key={index} className="odd:bg-white even:bg-gray-100">
                     <td className="py-2 pl-2">
-                      <Link to={"/users/userDetails"}>
+                      <Link to={`/users/userDetails/${user.id}`}>
                         <div className="flex items-center gap-x-3">
                           <img
                             src={user.img}
