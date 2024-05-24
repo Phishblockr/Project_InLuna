@@ -21,6 +21,7 @@ import store from "./features/store.js";
 import { Toaster } from 'sonner';
 import AdminSettings from "./components/AdminSettings.jsx";
 import Settings from "./components/Settings.jsx";
+import EmpInsights from "./components/EmpInsights.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/users/userDetails/:id" element={<UserDetails />} />
             <Route path="/insights" element={<Insights />} />
             <Route path="/insights/addemp" element={<AddEmp />} />
+            <Route path="/insights/empinsight/:id" element={<EmpInsights/>}/>
             <Route path="/urllists" element={<UrlLists />} />
             <Route path="/urllists/addurl" element={<AddUrl />} />
             <Route path="/urllists/urldetails/:id" element={<UrlDetails />} />

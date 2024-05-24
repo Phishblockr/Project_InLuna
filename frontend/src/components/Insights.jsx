@@ -9,10 +9,10 @@ const EmployeeRow = ({ id, name, email, department, img, handleRemUser }) => (
   <tr className='font-medium odd:bg-white even:bg-gray-100'>
     <td className='p-2 pr-0 text-gray-500'>#0175{id}</td>
     <td className='py-2'>
-      <div className='flex justify-start items-center gap-3'>
+      <Link to={`/insights/empinsight/${id}`} className='flex justify-start items-center gap-3'>
         <img src={img} className='w-10 h-10 rounded-full' alt={`${name}'s profile`} />
         <p>{name}</p>
-      </div>
+      </Link>
     </td>
     <td className='text-gray-500'>{email}</td>
     <td>{department}</td>
