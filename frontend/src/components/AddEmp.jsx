@@ -88,7 +88,7 @@ const AddEmp = () => {
               type="number"
               id="id"
               name="id"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               placeholder="#017523"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />
@@ -100,7 +100,7 @@ const AddEmp = () => {
               type="text"
               id="name"
               name="name"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               placeholder="John Doe"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />
@@ -112,7 +112,7 @@ const AddEmp = () => {
               type="email"
               id="email"
               name="email"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               placeholder="johndoe@example.com"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />
@@ -124,7 +124,7 @@ const AddEmp = () => {
               type="text"
               id="department"
               name="department"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               placeholder="IT"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />

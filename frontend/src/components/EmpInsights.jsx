@@ -4,6 +4,7 @@ import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { remUser } from '../features/Insights/insightsSlice';
 
 const seriesData = [56, 89, 74];
 const categories = ["Blacklisted urls visited", "whitelist urls requests", "visits to requested urls"];
@@ -63,12 +64,32 @@ const PieChart = ({ data, labels }) => (
   />
 );
 
+
 const EmpInsights = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const empData = useSelector((state) =>
     state.insights.users.find((user) => user.id === parseInt(id))
   );
+
+  const handleRemUser = (id, name) => {
+    const res = confirm(`Do you want to remove user ${name}?`);
+  
+    if (res) {
+      try {
+        dispatch(remUser(id));
+        toast.success(`User ${name} removed`)
+        navigate("/insights/")
+      } catch (error) {
+        console.error(error.message);
+        toast.error(`Unable to remove user ${id}`);
+      }
+    } else {
+      return;
+    }
+  }
+
   return (
     <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
@@ -112,12 +133,7 @@ const EmpInsights = () => {
           </div>
         </div>
         <div className="text-right mt-5">
-          <button className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-medium rounded-lg mr-2">
-            <span className="flex flex-row items-center gap-x-1">
-              <RiLoopLeftLine className="w-6 h-6" /> Update Details
-            </span>
-          </button>
-          <button  className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg">
+          <button onClick={() => handleRemUser(empData.id, empData.name)} className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg">
             <span className="flex flex-row items-center gap-x-1">
               <RiDeleteBinLine className="w-6 h-6" /> Remove User
             </span>

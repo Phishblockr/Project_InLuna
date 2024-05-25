@@ -109,7 +109,7 @@ const AddUser = () => {
               type="text"
               id="name"
               name="name"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
@@ -120,7 +120,7 @@ const AddUser = () => {
               type="text"
               id="email"
               name="email"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
@@ -131,7 +131,7 @@ const AddUser = () => {
               type="text"
               id="role"
               name="role"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
@@ -142,14 +142,14 @@ const AddUser = () => {
               type="text"
               id="department"
               name="department"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
           <div className="mt-3 flex flex-col">
             <label htmlFor="status">Status: </label>
             <select
-              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white"
+              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               name="status"
               id="status"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}

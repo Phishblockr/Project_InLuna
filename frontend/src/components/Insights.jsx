@@ -136,11 +136,11 @@ const Insights = () => {
             value={query}
             onChange={(e) => searchUsers(e.target.value)}
             placeholder='Search User'
-            className='border-2 border-gray-300 rounded-lg p-2 focus:outline-none'
+            className='border-2 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]'
           />
           <select
             defaultValue='Department'
-            className='text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg'
+            className='bg-white text-lg text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0364BD] p-2 border-2 border-gray-300 rounded-lg'
             onChange={e => handleDepartmentSort(e.target.value)}
           >
             <option value="default">Sort by</option>

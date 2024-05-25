@@ -86,7 +86,7 @@ export default function UrlLists() {
 
   return (
     <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className="z-1 w-full bg-white rounded-xl shadow-xl flex flex-row p-3 items-center justify-between h-max">
+      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl">
         <div>
           <h1 className="text-2xl font-medium tracking-tight">URL List</h1>
         </div>
@@ -94,13 +94,13 @@ export default function UrlLists() {
           <input
             type="text"
             placeholder="Search Urls..."
-            className="rounded-lg border-grey border-2 p-2"
+            className="rounded-lg border-grey border-2 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
-            className="rounded-lg border-gray-200 border-2 text-gray-400 bg-white p-2"
+            className="rounded-lg border-gray-200 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setDataFilter(e.target.value)}
           >
             <option value="all">Status</option>
@@ -109,10 +109,10 @@ export default function UrlLists() {
           </select>
           <Link
             to={"/urllists/addurl"}
-            className="p-2 bg-[#0364BD] text-white rounded-lg hover:bg-[#003A70] transition"
+            className="className='flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
           >
             <span>
-              <RiAddFill className="inline-block w-6 h-6 mr-1 -mt-1" /> Add URL
+            Add URL <RiAddFill className="inline-block w-6 h-6 -mt-1" />
             </span>
           </Link>
         </div>
@@ -171,7 +171,9 @@ export default function UrlLists() {
             <nav className="flex gap-x-1 justify-between">
               <div>
                 <a
-                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                    currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   href="#"
                   onClick={prePage}
                 >
@@ -197,7 +199,9 @@ export default function UrlLists() {
               </div>
               <div>
                 <a
-                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                    currentPage === npage ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   href="#"
                   onClick={nextPage}
                 >

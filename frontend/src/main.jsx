@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import Users from "./components/Users.jsx";
 import Insights from "./components/Insights.jsx";
 import UrlLists from "./components/UrlLists.jsx";
@@ -22,16 +22,30 @@ import { Toaster } from 'sonner';
 import AdminSettings from "./components/AdminSettings.jsx";
 import Settings from "./components/Settings.jsx";
 import EmpInsights from "./components/EmpInsights.jsx";
+import Login from "./components/Login.jsx";
+
+const MainLayout = ({children}) => {
+  const location  = useLocation();
+  const isLoginPage = location.pathname === "/login";
+
+  return (
+    <>
+      {!isLoginPage && <Sidebar/>}
+      {!isLoginPage && <Navbar/>}
+      {children}
+    </>
+  );
+};
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Router>
       <Toaster richColors/>
         <Provider store={store}>
-          <Sidebar />
-          <Navbar />
+        <MainLayout>
           <Routes>
             <Route path="/" element={<App />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/users" element={<Users />} />
             <Route path="/users/adduser" element={<AddUser />} />
             <Route path="/users/userDetails/:id" element={<UserDetails />} />
@@ -46,9 +60,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/logs" element={<Logs />} />
             <Route path="/profileSettings" element={<AdminSettings />} />
             <Route path="/settings" element={<Settings />} />
-
-
           </Routes>
+          </MainLayout>
         </Provider>
     </Router>
   </React.StrictMode>

@@ -89,7 +89,7 @@ export default function Requests() {
 
   return (
     <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className="z-1 w-full bg-white rounded-xl shadow-xl flex flex-row p-3 items-center justify-between h-max">
+      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl">
         <div>
           <h1 className="text-2xl font-medium tracking-tight">Requests</h1>
         </div>
@@ -97,13 +97,13 @@ export default function Requests() {
           <input
             type="text"
             placeholder="Search Request..."
-            className="rounded-lg border-grey border-2 p-2"
+            className="rounded-lg border-grey border-2 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
-            className="rounded-lg border-gray-200 border-2 text-gray-400 bg-white p-2"
+            className="rounded-lg border-gray-200 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setDataFilter(e.target.value)}
           >
             <option value="all">Status</option>
@@ -186,7 +186,9 @@ export default function Requests() {
             <nav className="flex gap-x-1 justify-between">
               <div>
                 <a
-                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                    currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   href="#"
                   onClick={prePage}
                 >
@@ -212,7 +214,9 @@ export default function Requests() {
               </div>
               <div>
                 <a
-                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition"
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                    currentPage === npage ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   href="#"
                   onClick={nextPage}
                 >

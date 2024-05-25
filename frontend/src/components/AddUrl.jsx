@@ -31,7 +31,7 @@ const AddUrl = () => {
               type="text"
               id="url"
               name="url"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               onChange={e => setUrl({...url, [e.target.name]: e.target.value})}
             />
           </div>
@@ -42,7 +42,7 @@ const AddUrl = () => {
               type="text"
               id="category"
               name="category"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               onChange={e => setUrl({...url, [e.target.name]: e.target.value})}
             />
           </div>
@@ -50,7 +50,7 @@ const AddUrl = () => {
           <div className="mt-3 flex flex-col">
             <label htmlFor="status">Status: </label>
             <select
-              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white"
+              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
               name="status"
               id="status"
               onChange={e => setUrl({...url, [e.target.name]: e.target.value})}

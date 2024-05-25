@@ -15,7 +15,7 @@ export default function Feedbacks() {
               type="text"
               id="url"
               name="url"
-              className=" w-[60rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[60rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             />
           </div>
 
@@ -25,7 +25,7 @@ export default function Feedbacks() {
               type="text"
               id="category"
               name="category"
-              className=" w-[60rem] h-[20rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[60rem] h-[20rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             > </textarea>
           </div>
           <button className="w-[60rem] mt-9 mb-2 rounded-lg text-white font-medium bg-[#0364BD] hover:bg-[#003A70] transition p-4 ">
