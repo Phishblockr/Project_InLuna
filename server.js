@@ -5,7 +5,7 @@ app.use(cors());
 
 // Test route
 app.get('/', (req, res) => {
-  res.send('Hello World');
+  res.json({ msg: "Hello World" })
 })
 
 app.listen(5000, () => console.log('running on 5000'));
