@@ -9,41 +9,44 @@ import { remUser } from '../features/Insights/insightsSlice';
 const seriesData = [56, 89, 74];
 const categories = ["Blacklisted urls visited", "whitelist urls requests", "visits to requested urls"];
 
-const OverviewCard = ({ bg, count, title }) => (
-  <div
-    className={`${bg} shadow-md flex px-4 py-6 items-center text-white rounded-lg`}
-  >
-    <div className="flex flex-col font-medium">
-      <h4 className="text-xl">{count}</h4>
-      <h4 className="w-3/4">{title}</h4>
-    </div>
-  </div>
-);
-
 const overviewPoints = [
   {
     id: 1,
     title: "Clicks On Blacklisted Links",
     count: 118,
-    bg: "bg-[#FF6392] opacity-40",
+    lastMonth:"+20", logo:"bi bi-shield-x"
   },
-  { id: 2, title: "whitelist requests", count: 56, bg: "bg-[#D3B938]" },
+  { id: 2, title: "whitelist requests", count: 56, lastMonth:"+10", logo:"bi bi-shield-exclamation" },
   {
     id: 3,
-    title: "Visits to links have been requested to be whitelisted.",
+    title: "Visits to requested Urls.",
     count: 23,
-    bg: "bg-[#C62828] opacity-80",
+    lastMonth:"+90", logo:"bi bi-shield-shaded"
   },
 ];
 
-const OverviewCards = ({ points }) => (
-  <div className="grid grid-cols-3 gap-3">
-    {points.map(({ id, title, count, bg }) => (
-      <OverviewCard key={id} bg={bg} count={count} title={title} />
-    ))}
+const OverviewCard = ({count, title, logo, lastMonth }) => (
+  <div className={`shadow border-2 border-gray-100 flex px-4 py-6 items-center text-black rounded-lg`}>
+    <div className='w-full flex flex-col font-medium'>
+      <div className='flex flex-row justify-between'>
+        <h4 className=''>{title}</h4>
+        <i className={`${logo}`}></i>
+      </div>
+      <h4 className='mt-2 text-2xl font-bold'>{count}</h4>
+      <div>
+        <span className='text-[12px] text-gray-500'>{lastMonth}% from last month</span>
+      </div>
+    </div>
   </div>
 );
 
+const OverviewCards = ({ points }) => (
+  <div className='grid grid-cols-3 gap-3'>
+    {points.map(({ id, title, count, logo, lastMonth }) => (
+      <OverviewCard key={id} count={count} title={title} logo={logo} lastMonth={lastMonth} />
+    ))}
+  </div>
+);
 const LineChart = ({ data, categories }) => (
   <Chart
     height={300}
