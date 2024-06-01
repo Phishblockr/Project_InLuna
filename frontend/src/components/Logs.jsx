@@ -240,7 +240,7 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
         {/* Details Content Here */}
         <div className='bg-gray-300 rounded-xl w-full p-4 flex gap-4'>
           <div className='flex flex-col flex-1 gap-4'>
-            <div className='bg-white rounded-md p-4 flex flex-col gap-3'>
+            <div className=' bg-white rounded-md p-4 flex flex-col gap-3'>
               <h1 className='font-medium text-xl'>User Details</h1>
               <div className='flex gap-5'>
                 <div className='flex justify-center items-center flex-1'>
@@ -291,7 +291,7 @@ const Logs = () => {
   };
 
   return (
-    <div className='z-1 overflow-x-hidden w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] p-4 gap-5'>
+    <div className='z-1 overflow-x-hidden max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-5'>
       <LogDetailsModal show={showModal} onClose={() => setShowModal(false)} logData={selectedLog} />
       <div className='bg-white p-4 flex justify-between items-center rounded-xl shadow-xl w-full'>
         <div>

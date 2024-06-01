@@ -88,7 +88,7 @@ export default function Requests() {
   }
 
   return (
-    <div className="z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+    <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl">
         <div>
           <h1 className="text-2xl font-medium tracking-tight">Requests</h1>

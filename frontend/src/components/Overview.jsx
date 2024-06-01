@@ -54,7 +54,7 @@ const Overview = () => {
   console.log(overviewPoints);
 
   return (
-    <div className='z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] p-4 gap-4'>
+    <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-4'>
       <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2'>
         <h1 className='text-2xl font-medium tracking-tight'>Overview</h1>
         <OverviewCards points={overviewPoints} />

@@ -126,7 +126,7 @@ const Insights = () => {
   }, [userData]);
 
   return (
-    <div className='z-1 w-[calc(100svw-16rem)] flex flex-col relative left-[16rem] p-4 gap-5'>
+    <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-5'>
       <div className='bg-white p-4 flex justify-between items-center rounded-xl shadow-xl'>
         <div>
           <h1 className='font-medium text-2xl'>Employees</h1>
