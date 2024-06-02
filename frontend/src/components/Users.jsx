@@ -8,10 +8,12 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { remUser } from "../features/Users/usersSlice";
 import { toast } from "sonner";
+import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 
 export default function Users() {
   // Redux
   const usersData = useSelector((state) => state.users.users);
+  const perPageRec = useSelector((state) => state.perPageRec)
   const dispatch = useDispatch();
   // End of Redux
 
@@ -40,8 +42,9 @@ export default function Users() {
   // End of User Filter Logic
 
   // Start of Pagination Logic
+  // const [perPageRec,setPerPageRec] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 5;
+  const recordsPerPage = perPageRec;
   const filteredData = filter(search(usersData));
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
@@ -64,6 +67,11 @@ export default function Users() {
   function changeCPage(n) {
     setCurrentPage(n);
   }
+
+  const handleSetPerPageRec = (value) =>{
+    dispatch(setPerPageRec(value))
+  }
+
   // End of Pagination Logic
 
   const handleRemUser = (id, name) => {
@@ -90,19 +98,34 @@ export default function Users() {
           <input
             type="text"
             placeholder="Search User..."
-            className="rounded-lg border-grey border-2 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
-            className="rounded-lg border-gray-200 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setDataFilter(e.target.value)}
           >
             <option value="all">Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
+
+          <select
+            name="perPageRec"
+            id="perPageRec"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            onChange={(e) => handleSetPerPageRec(e.target.value)}
+            value={perPageRec}
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+
           <Link
             to={"/users/adduser"}
             className="className='flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
@@ -181,7 +204,7 @@ export default function Users() {
               <div>
                 <a
                   className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
-                    currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+                    currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   href="#"
                   onClick={prePage}
@@ -209,7 +232,7 @@ export default function Users() {
               <div>
                 <a
                   className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
-                    currentPage === npage ? 'opacity-50 cursor-not-allowed' : ''
+                    currentPage === npage ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   href="#"
                   onClick={nextPage}

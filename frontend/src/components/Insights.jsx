@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { remUser } from '../features/Insights/insightsSlice';
 import { toast } from 'sonner';
+import { setPerPageRec } from '../features/PerPageRec/perPageRecSlice';
 
 const EmployeeRow = ({ id, name, email, department, img, handleRemUser }) => (
   <tr className='font-medium odd:bg-white even:bg-gray-100'>
@@ -75,10 +76,11 @@ const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPrevP
 const Insights = () => {
   const disp = useDispatch();
   const userData = useSelector(state => state.insights.users);
+  const perPageRec = useSelector((state) => state.perPageRec)
   const [currPage, setCurrPage] = useState(1);
   const [query, setQuery] = useState('');
   const [allUsers, setAllUsers] = useState(userData);
-  const [userPerPage] = useState(5);
+  const userPerPage = perPageRec
   const lastPageIndex = currPage * userPerPage;
   const firstPageIndex = lastPageIndex - userPerPage;
   const records = allUsers.slice(firstPageIndex, lastPageIndex);
@@ -121,6 +123,10 @@ const Insights = () => {
     }
   }
 
+  const handleSetPerPageRec = (value) =>{
+    dispatch(setPerPageRec(value))
+  }
+
   useEffect(() => {
     setAllUsers(userData);
   }, [userData]);
@@ -147,6 +153,19 @@ const Insights = () => {
             {
               departments.map(el => <option key={el} value={el}>{el}</option>)
             }
+          </select>
+          <select
+            name="perPageRec"
+            id="perPageRec"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            onChange={(e) => handleSetPerPageRec(e.target.value)}
+            value={perPageRec}
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
           </select>
           <Link to='/insights/addemp'>
             <button className='flex justify-center items-center gap-3 px-4 p-2 rounded-lg text-white cursor-pointer bg-[#0364BD]'>

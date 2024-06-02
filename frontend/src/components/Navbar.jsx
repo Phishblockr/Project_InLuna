@@ -47,7 +47,7 @@ const Navbar = () => {
       <div className="flex items-center text-x1">
         <div className="relative w-[40svw] max-w-xl md:w-65 rounded-lg hidden md:block">
           <input
-            className="w-full px-4 py-1 pr-12 rounded-lg outline-none focus:outline-blue-400 border-grey border-2"
+            className="w-full px-4 py-1 pr-12 rounded-lg border-gray-300 border-2 text-gray-400 focus:outline-[#0364BD]"
             type="text"
             placeholder="Search..."
           />

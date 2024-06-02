@@ -4,6 +4,7 @@ import insightsSlice from './Insights/insightsSlice';
 import usersSlice from './Users/usersSlice';
 import urlSlice from './Urls/urlSlice';
 import requestsSlice from './Requests/requestsSlice';
+import perPageRecSlice from './PerPageRec/perPageRecSlice';
 
 const store = configureStore({
   reducer: {
@@ -11,7 +12,8 @@ const store = configureStore({
     insights: insightsSlice,
     users: usersSlice,
     urls: urlSlice,
-    requests:requestsSlice,
+    requests: requestsSlice,
+    perPageRec: perPageRecSlice,
   },
 });
 

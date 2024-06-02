@@ -8,9 +8,11 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { remUrl } from "../features/Urls/urlSlice";
 import { toast } from "sonner";
+import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 
 export default function UrlLists() {
   // Redux
+  const perPageRec = useSelector((state) => state.perPageRec);
   const urlData = useSelector((state) => state.urls.urls);
   const dispatch = useDispatch();
   // End of Redux
@@ -41,7 +43,7 @@ export default function UrlLists() {
 
   // Start of Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 5;
+  const recordsPerPage = perPageRec;
   const filteredData = filter(search(urlData));
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
@@ -64,6 +66,10 @@ export default function UrlLists() {
   function changeCPage(n) {
     setCurrentPage(n);
   }
+
+  const handleSetPerPageRec = (value) => {
+    dispatch(setPerPageRec(value));
+  };
   // End of Pagination Logic
 
   const formatUrl = (url, maxLen = 70) => {
@@ -94,25 +100,38 @@ export default function UrlLists() {
           <input
             type="text"
             placeholder="Search Urls..."
-            className="rounded-lg border-grey border-2 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
-            className="rounded-lg border-gray-200 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setDataFilter(e.target.value)}
           >
             <option value="all">Status</option>
             <option value="whitelisted">Whitelisted</option>
             <option value="blacklisted">Blacklisted</option>
           </select>
+          <select
+            name="perPageRec"
+            id="perPageRec"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            onChange={(e) => handleSetPerPageRec(e.target.value)}
+            value={perPageRec}
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
           <Link
             to={"/urllists/addurl"}
-            className="className='flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
+            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
           >
             <span>
-            Add URL <RiAddFill className="inline-block w-6 h-6 -mt-1" />
+              Add URL <RiAddFill className="inline-block w-6 h-6 -mt-1" />
             </span>
           </Link>
         </div>
@@ -172,7 +191,7 @@ export default function UrlLists() {
               <div>
                 <a
                   className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
-                    currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+                    currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   href="#"
                   onClick={prePage}
@@ -200,7 +219,7 @@ export default function UrlLists() {
               <div>
                 <a
                   className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
-                    currentPage === npage ? 'opacity-50 cursor-not-allowed' : ''
+                    currentPage === npage ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   href="#"
                   onClick={nextPage}

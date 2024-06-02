@@ -10,6 +10,8 @@ import { remReq, updateStatus } from "../features/Requests/requestsSlice";
 import { toast } from "sonner";
 
 export default function Requests() {
+  // Redux
+  const perPageRec = useSelector((state) => state.perPageRec)
   const requestData = useSelector((state) => state.requests.requests);
   const dispatch = useDispatch();
 
@@ -44,7 +46,7 @@ export default function Requests() {
 
   // Start of Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 5;
+  const recordsPerPage = perPageRec;
   const filteredData = filter(search(requestData));
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
@@ -66,6 +68,9 @@ export default function Requests() {
 
   function changeCPage(n) {
     setCurrentPage(n);
+  }
+  const handleSetPerPageRec = (value) =>{
+    dispatch(setPerPageRec(value))
   }
   // End of Pagination Logic
 
@@ -93,22 +98,35 @@ export default function Requests() {
         <div>
           <h1 className="text-2xl font-medium tracking-tight">Requests</h1>
         </div>
-        <div className="flex items-center gap-x-3">
+        <div className="flex items-center justify-evenly gap-x-3">
           <input
             type="text"
             placeholder="Search Request..."
-            className="rounded-lg border-grey border-2 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
-            className="rounded-lg border-gray-200 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             onChange={(e) => setDataFilter(e.target.value)}
           >
             <option value="all">Status</option>
             <option value="completed">Completed</option>
             <option value="pending">Pending</option>
+          </select>
+          <select
+            name="perPageRec"
+            id="perPageRec"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            onChange={(e) => handleSetPerPageRec(e.target.value)}
+            value={perPageRec}
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
           </select>
         </div>
       </div>
