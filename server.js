@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const organizationRoutes = require('./routes/organizationRoutes');
+const userRoutes = require('./routes/userRoutes');
 const winston = require('winston');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -28,8 +29,11 @@ mongoose.connect(process.env.MONGO_URI)
     logger.error(err.message);
   });
 
-// Routes
+// Organization Routes
 app.use('/api/org', organizationRoutes);
+
+// Users Routes
+app.use('/api/user', userRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

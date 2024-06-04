@@ -18,29 +18,24 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
-    required: true,
     minlength: 6
   },
   phone: {
     type: String,
-    required: true,
     unique: true,
     match: [/^\+?[1-9]\d{1,14}$/, 'Please fill a valid phone number']
   },
   type: {
     type: String,
-    enum: ['normal', 'admin'],
-    default: 'normal'
+    enum: ['local', 'read-only', 'admin', 'super-admin'],
+    default: 'local'
   },
   role: {
     type: String,
     required: true,
-    enum: ['user', 'manager', 'executive'],
-    default: 'user'
   },
   department: {
-    type: Schema.Types.ObjectId,
-    ref: 'Department',
+    type: String,
     required: true
   },
   status: {
@@ -51,10 +46,13 @@ const userSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  uuid: {
+    type: Number,
+    required: [true, 'Organization ID is required']
   }
 });
 
 // Compile the schema into a model
 const User = mongoose.model('User', userSchema);
-
 module.exports = User;

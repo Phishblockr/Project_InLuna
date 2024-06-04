@@ -42,11 +42,9 @@ const OrganizationSchema = new Schema({
       min: [0, 'Phishing links blocked cannot be negative']
     }
   },
-  orgId: {
-    type: String,
-    required: [true, 'Organization ID is required'],
-    unique: true,
-    trim: true
+  uuid: {
+    type: Number,
+    required: [true, 'Organization ID is required']
   },
   createdAt: {
     type: Date,

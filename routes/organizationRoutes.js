@@ -8,7 +8,8 @@ const {
   updateOrganization,
   searchOrganizations,
   getOrganizationsByAdmin,
-  aggregateStatistics
+  aggregateStatistics,
+  findUsersWithUuid
 } = require('../controllers/organizationController');
 
 router.get('/all', getAllOrganizations);
@@ -19,5 +20,6 @@ router.get('/stats/aggregate', aggregateStatistics);
 router.get('/:id', getOrganization);
 router.delete('/:id', deleteOrganization);
 router.put('/:id', updateOrganization);
+router.get('/getAllUsers/:orgId', findUsersWithUuid);
 
 module.exports = router;
