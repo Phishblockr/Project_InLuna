@@ -5,9 +5,8 @@ export default {
     extend: {},
   },
   plugins: [],
+  darkMode: "class",
   variants: {
-    extend: {
-      display: ["focus-group"],
-    },
+    extend: {},
   },
 };
