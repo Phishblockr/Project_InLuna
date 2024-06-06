@@ -201,7 +201,7 @@ const Pagination = ({
 }) => (
   <nav className="flex gap-x-1 justify-between">
     <a
-      className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+      className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
         currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
       }`}
       href="#"
@@ -213,8 +213,10 @@ const Pagination = ({
       {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
         <a
           key={number}
-          className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${
-            currentPage === number ? "bg-[#0364BD] text-white" : "bg-gray-200"
+          className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${
+            currentPage === number
+              ? "bg-[#0364BD] text-white"
+              : "bg-gray-200 dark:bg-[#001C40]"
           }`}
           href="#"
           onClick={() => onPageChange(number)}
@@ -224,7 +226,7 @@ const Pagination = ({
       ))}
     </div>
     <a
-      className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+      className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
         currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
       }`}
       href="#"
@@ -240,8 +242,8 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
 
   return (
     <div className="z-50 fixed bg-black/50 top-0 left-0 right-0 bottom-0 flex justify-center items-center">
-      <div className="bg-white rounded-xl p-3 flex flex-col gap-2 justify-center items-center relative">
-        <div className="flex justify-between items-center w-full">
+      <div className="bg-white rounded-xl p-3 flex flex-col gap-2 justify-center items-center relative dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+        <div className="flex justify-between items-center w-full ">
           <h1 className="font-medium text-2xl">Detailed Info</h1>
           <button onClick={onClose}>
             <svg
@@ -261,12 +263,12 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
           </button>
         </div>
         {/* Details Content Here */}
-        <div className="bg-gray-300 rounded-xl w-full p-4 flex gap-4">
+        <div className="bg-gray-300 rounded-xl w-full p-4 flex gap-4 dark:bg-[#001733]">
           <div className="flex flex-col flex-1 gap-4">
-            <div className=" bg-white rounded-md p-4 flex flex-col gap-3">
+            <div className=" bg-white rounded-md p-4 flex flex-col gap-3 dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
               <h1 className="font-medium text-xl">User Details</h1>
               <div className="flex gap-5">
-                <div className="flex justify-center items-center flex-1">
+                <div className="flex justify-center items-center flex-1 ">
                   <img
                     alt="user-image"
                     className="rounded-full min-h-24 min-w-24"
@@ -276,11 +278,15 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
                 <div className="flex-[3] w-full flex flex-col gap-2">
                   <p className="font-medium text-xl">{logData.name}</p>
                   <div className="flex gap-1">
-                    <p className="font-medium text-gray-500">email:</p>
+                    <p className="font-medium text-gray-500 dark:text-[#F4F4F4]">
+                      email:
+                    </p>
                     <p className="font-medium">{logData.email}</p>
                   </div>
                   <div className="flex gap-1">
-                    <p className="font-medium text-gray-500">department:</p>
+                    <p className="font-medium text-gray-500 dark:text-[#F4F4F4]">
+                      department:
+                    </p>
                     <p className="font-medium">{logData.department}</p>
                   </div>
                 </div>
@@ -314,10 +320,10 @@ const Logs = () => {
     setSelectedLog(log);
     setShowModal(true);
   };
-  
-  const handleSetPerPageRec = (value) =>{
-    dispatch(setPerPageRec(value))
-  }
+
+  const handleSetPerPageRec = (value) => {
+    dispatch(setPerPageRec(value));
+  };
 
   return (
     <div className="z-1 overflow-x-hidden max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-5">
@@ -326,31 +332,31 @@ const Logs = () => {
         onClose={() => setShowModal(false)}
         logData={selectedLog}
       />
-      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl w-full">
+      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl w-full dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="font-medium text-2xl">Logs</h1>
         </div>
         <div className="flex gap-3 justify-evenly items-center">
           <input
             placeholder="Search Logs"
-            className="border-2 border-gray-300 rounded-lg p-2 focus:outline-none"
+            className="border-2 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
           />
           <select
             defaultValue="default"
-            className=" bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg"
+            className=" bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg dark:bg-[#001733] dark:border-0"
           >
             <option value="default">Sort by</option>
           </select>
           <select
             defaultValue="default"
-            className="bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg"
+            className="bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg dark:bg-[#001733] dark:border-0"
           >
             <option value="default">Date Range Filter</option>
           </select>
           <select
             name="perPageRec"
             id="perPageRec"
-            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
             onChange={(e) => handleSetPerPageRec(e.target.value)}
             value={perPageRec}
           >
@@ -381,7 +387,7 @@ const Logs = () => {
         ))}
       </div>
       {records.length > 0 && (
-        <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
+        <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
           <Pagination
             currentPage={currPage}
             totalPages={npage}

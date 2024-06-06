@@ -37,7 +37,7 @@ const UserDetails = () => {
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
+      <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="text-2xl font-medium tracking-tight mb-5">
             User Details
@@ -52,19 +52,19 @@ const UserDetails = () => {
           <ul className="flex flex-col">
             <li className="font-medium text-3xl my-2">{user.name}</li>
             <li className="font-medium mb-1">
-              <span className="text-gray-500 mr-2">E-mail:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">E-mail:</span>
               <span>{user.email}</span>
             </li>
             <li className="font-medium mb-1">
-              <span className="text-gray-500 mr-2">Department:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Department:</span>
               <span>{user.department}</span>
             </li>
             <li className="font-medium mb-2">
-              <span className="text-gray-500 mr-2">Role:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Role:</span>
               <span>{user.role}</span>
             </li>
             <li className="font-medium mb-1">
-              <span className="text-gray-500 mr-2">Status:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Status:</span>
               <span
                 className={
                   user.status === "Active" ? statusActive : statusInactive

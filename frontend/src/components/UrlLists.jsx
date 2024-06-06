@@ -92,7 +92,7 @@ export default function UrlLists() {
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl">
+      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="text-2xl font-medium tracking-tight">URL List</h1>
         </div>
@@ -100,13 +100,13 @@ export default function UrlLists() {
           <input
             type="text"
             placeholder="Search Urls..."
-            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
-            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
             onChange={(e) => setDataFilter(e.target.value)}
           >
             <option value="all">Status</option>
@@ -116,7 +116,7 @@ export default function UrlLists() {
           <select
             name="perPageRec"
             id="perPageRec"
-            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
             onChange={(e) => handleSetPerPageRec(e.target.value)}
             value={perPageRec}
           >
@@ -137,13 +137,13 @@ export default function UrlLists() {
         </div>
       </div>
       {records.length === 0 ? (
-        <div className="flex justify-center font-medium">
+        <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
           <span>No Records Found!</span>
         </div>
       ) : (
         <>
           <div>
-            <table className="w-full">
+            <table className="w-full dark:text-[#F4F4F4]">
               <thead className="border-separate">
                 <tr>
                   <th className="py-3 text-left">URL</th>
@@ -154,13 +154,13 @@ export default function UrlLists() {
               </thead>
               <tbody>
                 {records.map((url, index) => (
-                  <tr key={index} className="odd:bg-white even:bg-gray-100">
-                    <td className="font-medium text-left text-gray-500 pl-2 py-4">
+                  <tr key={index} className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]">
+                    <td className="font-medium text-left text-gray-500 pl-2 py-4 dark:text-[#F4F4F4]">
                       <Link to={`/urllists/urldetails/${url.id}`}>
                         {formatUrl(url.url)}
                       </Link>
                     </td>
-                    <td className="font-medium text-left text-gray-500">
+                    <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
                       {url.category}
                     </td>
                     <td className="text-left font-medium">
@@ -186,11 +186,11 @@ export default function UrlLists() {
               </tbody>
             </table>
           </div>
-          <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
+          <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
             <nav className="flex gap-x-1 justify-between">
               <div>
                 <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
                     currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   href="#"
@@ -203,10 +203,10 @@ export default function UrlLists() {
                 {numbers.map((number, index) => (
                   <div key={index}>
                     <a
-                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${
+                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${
                         currentPage === number
                           ? "bg-[#0364BD] text-white"
-                          : "bg-gray-200"
+                          : "bg-gray-200 dark:bg-[#001C40]"
                       }`}
                       href="#"
                       onClick={() => changeCPage(number)}
@@ -218,7 +218,7 @@ export default function UrlLists() {
               </div>
               <div>
                 <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
                     currentPage === npage ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   href="#"

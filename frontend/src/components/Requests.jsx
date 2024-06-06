@@ -94,7 +94,7 @@ export default function Requests() {
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl">
+      <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="text-2xl font-medium tracking-tight">Requests</h1>
         </div>
@@ -102,13 +102,13 @@ export default function Requests() {
           <input
             type="text"
             placeholder="Search Request..."
-            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
-            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
             onChange={(e) => setDataFilter(e.target.value)}
           >
             <option value="all">Status</option>
@@ -118,7 +118,7 @@ export default function Requests() {
           <select
             name="perPageRec"
             id="perPageRec"
-            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
             onChange={(e) => handleSetPerPageRec(e.target.value)}
             value={perPageRec}
           >
@@ -138,7 +138,7 @@ export default function Requests() {
         <>
           {records.map((request) => (
             <div
-              className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max whitespace-pre-wrap"
+              className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max whitespace-pre-wrap dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none"
               key={request.id}
             >
               <div className=" grid grid-cols-[380px_minmax(10%,_1fr)]  gap-2">
@@ -200,11 +200,11 @@ export default function Requests() {
               </div>
             </div>
           ))}
-          <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max">
+          <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
             <nav className="flex gap-x-1 justify-between">
               <div>
                 <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
                     currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   href="#"
@@ -217,10 +217,10 @@ export default function Requests() {
                 {numbers.map((number, index) => (
                   <div key={index}>
                     <a
-                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition ${
+                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${
                         currentPage === number
                           ? "bg-[#0364BD] text-white"
-                          : "bg-gray-200"
+                          : "bg-gray-200 dark:bg-[#001C40]"
                       }`}
                       href="#"
                       onClick={() => changeCPage(number)}
@@ -232,7 +232,7 @@ export default function Requests() {
               </div>
               <div>
                 <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition ${
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
                     currentPage === npage ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   href="#"

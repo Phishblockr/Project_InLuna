@@ -4,10 +4,23 @@ import {
   RiLinkedinBoxFill,
   RiGithubFill,
 } from "react-icons/ri";
+import { useDispatch, useSelector } from "react-redux";
+import { setTheme } from "../features/Theme/themeSlice";
 
 const Settings = () => {
+  // Redux
+  const theme = useSelector((state) => state.theme);
+  const dispatch = useDispatch();
+  console.log(theme);
+  // End of Redux
+
+  const handleSetTheme = (value) => {
+    dispatch(setTheme(value))
+  }
+
+
   return (
-    <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-10%)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+    <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[90svh] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div className="z-1 relative w-full font-medium bg-white rounded-xl shadow-xl p-3 h-full dark:bg-[#001C40]">
         <div>
           <h1 className="mb-10 pt-3 pl-5 text-2xl font-medium dark:text-[#F4F4F4]">
@@ -28,14 +41,14 @@ const Settings = () => {
             </div>
             <div>
               <select
-                className="w-full p-2 rounded-lg dark:bg-[#002451] dark:text-[#F4F4F4]"
+                className="w-full p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#002451] dark:text-[#F4F4F4]"
                 name="theme"
                 id="theme"
+                onChange={(e) => handleSetTheme(e.target.value)}
+                value={theme}
               >
-                <option value="default">Theme</option>
-                <option value="default">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
               </select>
             </div>
           </div>

@@ -7,7 +7,7 @@ const seriesData = [128, 56, 89, 74];
 const categories = ['Visited', 'Blocked', 'Clicked', 'Whitelisted'];
 
 const OverviewCard = ({count, title, logo, lastMonth }) => (
-  <div className={`shadow border-2 border-gray-100 flex px-4 py-6 items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#002451] dark:border-0`}>
+  <div className={`shadow border-2 border-gray-100 flex px-4 py-6 items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-0`}>
     <div className='w-full flex flex-col font-medium'>
       <div className='flex flex-row justify-between'>
         <h4 className=''>{title}</h4>
@@ -55,7 +55,7 @@ const Overview = () => {
 
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-4'>
-      <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#001C40]'>
+      <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
         <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
         <OverviewCards points={overviewPoints} />
       

@@ -40,7 +40,7 @@ const AddEmp = () => {
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4">
-      <div className='z-1 font-medium bg-white rounded-xl shadow-xl p-3 h-max'>
+      <div className='z-1 font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none'>
         <div>
           <h1 className="pt-3 pl-5 text-2xl font-medium">Add Employee</h1>
         </div>
@@ -88,7 +88,7 @@ const AddEmp = () => {
               type="number"
               id="id"
               name="id"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
               placeholder="#017523"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />
@@ -100,7 +100,7 @@ const AddEmp = () => {
               type="text"
               id="name"
               name="name"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
               placeholder="John Doe"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />
@@ -112,7 +112,7 @@ const AddEmp = () => {
               type="email"
               id="email"
               name="email"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
               placeholder="johndoe@example.com"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />
@@ -124,7 +124,7 @@ const AddEmp = () => {
               type="text"
               id="department"
               name="department"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
               placeholder="IT"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
             />

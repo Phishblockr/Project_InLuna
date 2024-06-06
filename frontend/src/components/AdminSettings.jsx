@@ -49,7 +49,7 @@ const AdminSettings = () => {
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className='<div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max">'>
+      <div className='z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none'>
         <div>
           <h1 className="pt-3 pl-5 text-2xl font-medium">Admin Account Settings</h1>
         </div>
@@ -95,7 +95,7 @@ const AdminSettings = () => {
               type="text"
               id="name"
               name="name"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
@@ -106,7 +106,7 @@ const AdminSettings = () => {
               type="text"
               id="email"
               name="email"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>
@@ -117,7 +117,7 @@ const AdminSettings = () => {
               type="text"
               id="recoveryEmail"
               name="recoveryEmail"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({...user, [e.target.name]: e.target.value})}
             />
           </div>

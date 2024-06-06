@@ -56,7 +56,7 @@ const UrlDetails = () => {
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max">
+      <div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="pt-3 pl-5 text-2xl font-medium">URL Details</h1>
         </div>
@@ -69,7 +69,7 @@ const UrlDetails = () => {
               name="url"
               value={editUrlData.url}
               onChange={handleChange}
-              className="w-[40rem] p-2 rounded-lg border border-gray-300"
+              className="w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
             />
           </div>
 
@@ -81,14 +81,14 @@ const UrlDetails = () => {
               name="category"
               value={editUrlData.category}
               onChange={handleChange}
-              className="w-[40rem] p-2 rounded-lg border border-gray-300"
+              className="w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
             />
           </div>
 
           <div className="mt-3 flex flex-col">
             <label htmlFor="status">Status: </label>
             <select
-              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white"
+              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white dark:bg-[#001C40] dark:border-0"
               name="status"
               id="status"
               value={editUrlData.status}

@@ -1,12 +1,89 @@
-import { useState } from "react";
-import Sidebar from "./components/Sidebar";
-import Overview from "./components/Overview";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import Users from "./components/Users.jsx";
+import Insights from "./components/Insights.jsx";
+import UrlLists from "./components/UrlLists.jsx";
+import Requests from "./components/Requests.jsx";
+import Feedbacks from "./components/Feedbacks.jsx";
+import Logs from "./components/Logs.jsx";
+import Sidebar from "./components/Sidebar.jsx";
+import Navbar from "./components/Navbar.jsx";
+import AddUser from "./components/AddUser.jsx";
+import AddUrl from "./components/AddUrl.jsx";
+import UrlDetails from "./components/UrlDetails.jsx";
+import UserDetails from "./components/UserDetails.jsx";
+import AddEmp from "./components/AddEmp.jsx";
+import { Toaster } from "sonner";
+import AdminSettings from "./components/AdminSettings.jsx";
+import Settings from "./components/Settings.jsx";
+import EmpInsights from "./components/EmpInsights.jsx";
+import Login from "./components/Login.jsx";
+import Overview from "./components/Overview.jsx";
+import { useSelector } from "react-redux";
+
+const MainLayout = ({ children }) => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+
+  return (
+    <>
+      {!isLoginPage && <Sidebar />}
+      {!isLoginPage && <Navbar />}
+      {children}
+    </>
+  );
+};
 
 function App() {
+  const theme = useSelector((state) => state.theme);
+
   return (
-    <div className="flex h-full">
-      <Overview />
-    </div>
+    <>
+      <Toaster richColors />
+      <div className={`${theme}`}>
+        <div className="w-full h-full min-h-[100svh] bg-[#F7F4F4] dark:bg-[#001733] flex justify-center">
+          <div className="w-full h-full max-w-screen-2xl">
+            <Router>
+              <MainLayout>
+                <Routes>
+                  <Route path="/" element={<Overview />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/users" element={<Users />} />
+                  <Route path="/users/adduser" element={<AddUser />} />
+                  <Route
+                    path="/users/userDetails/:id"
+                    element={<UserDetails />}
+                  />
+                  <Route path="/insights" element={<Insights />} />
+                  <Route path="/insights/addemp" element={<AddEmp />} />
+                  <Route
+                    path="/insights/empinsight/:id"
+                    element={<EmpInsights />}
+                  />
+                  <Route path="/urllists" element={<UrlLists />} />
+                  <Route path="/urllists/addurl" element={<AddUrl />} />
+                  <Route
+                    path="/urllists/urldetails/:id"
+                    element={<UrlDetails />}
+                  />
+                  <Route path="/requests" element={<Requests />} />
+                  <Route path="/feedbacks" element={<Feedbacks />} />
+                  <Route path="/logs" element={<Logs />} />
+                  <Route path="/profileSettings" element={<AdminSettings />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Routes>
+              </MainLayout>
+            </Router>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

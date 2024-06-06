@@ -6,21 +6,24 @@ import { addUrl } from "../features/Urls/urlSlice";
 import { toast } from "sonner";
 
 const AddUrl = () => {
-
-  const [url, setUrl] = useState({url:"", category:"", status:"Blacklisted"})
+  const [url, setUrl] = useState({
+    url: "",
+    category: "",
+    status: "Blacklisted",
+  });
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleAddUrl = (url) =>{
+  const handleAddUrl = (url) => {
     dispatch(addUrl(url));
     toast.success(`URL added.`);
     navigate("/urllists");
-  }
+  };
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      <div className='<div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max">'>
+      <div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="pt-3 pl-5 text-2xl font-medium">Add URL</h1>
         </div>
@@ -31,8 +34,10 @@ const AddUrl = () => {
               type="text"
               id="url"
               name="url"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
-              onChange={e => setUrl({...url, [e.target.name]: e.target.value})}
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+              onChange={(e) =>
+                setUrl({ ...url, [e.target.name]: e.target.value })
+              }
             />
           </div>
 
@@ -42,24 +47,31 @@ const AddUrl = () => {
               type="text"
               id="category"
               name="category"
-              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
-              onChange={e => setUrl({...url, [e.target.name]: e.target.value})}
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+              onChange={(e) =>
+                setUrl({ ...url, [e.target.name]: e.target.value })
+              }
             />
           </div>
 
           <div className="mt-3 flex flex-col">
             <label htmlFor="status">Status: </label>
             <select
-              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+              className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
               name="status"
               id="status"
-              onChange={e => setUrl({...url, [e.target.name]: e.target.value})}
+              onChange={(e) =>
+                setUrl({ ...url, [e.target.name]: e.target.value })
+              }
             >
               <option value="Blacklisted">Blacklist</option>
               <option value="Whitelisted">Whitelist</option>
             </select>
           </div>
-          <button onClick={() => handleAddUrl(url)} className=" mt-9 mb-2 rounded-lg text-white font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+          <button
+            onClick={() => handleAddUrl(url)}
+            className=" mt-9 mb-2 rounded-lg text-white font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 "
+          >
             <span className="flex flex-row justify-center items-center">
               <RiAddFill className="w-6 h-6 mr-1" /> Submit
             </span>
