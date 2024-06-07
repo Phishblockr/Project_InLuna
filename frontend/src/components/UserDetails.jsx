@@ -6,9 +6,9 @@ import { remUser, updateStatus } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 
 const statusActive =
-  "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg";
+"py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
 const statusInactive =
-  "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg";
+"py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
 const UserDetails = () => {
   const {id} = useParams();

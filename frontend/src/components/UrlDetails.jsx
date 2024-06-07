@@ -5,11 +5,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { remUrl, editUrl } from "../features/Urls/urlSlice";
 import { toast } from "sonner";
 
-const statusActive =
-  "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg";
-const statusInactive =
-  "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg";
-
 const UrlDetails = () => {
   const [editUrlData, setEditUrlData] = useState({ url: "", category: "", status: "" });
 

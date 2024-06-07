@@ -1,5 +1,6 @@
 import React from "react";
-import Chart from "react-apexcharts";
+import LineChart from './LineChart';
+import PieChart from './PieChart';
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
@@ -47,25 +48,6 @@ const OverviewCards = ({ points }) => (
     ))}
   </div>
 );
-const LineChart = ({ data, categories }) => (
-  <Chart
-    height={300}
-    width={450}
-    type="line"
-    series={[{ name: "Link Statistics", data }]}
-    options={{ xaxis: { categories } }}
-  />
-);
-
-const PieChart = ({ data, labels }) => (
-  <Chart
-    height={450}
-    width={450}
-    type="pie"
-    series={data}
-    options={{ labels, noData: { text: "Statistics not available" } }}
-  />
-);
 
 
 const EmpInsights = () => {
@@ -75,6 +57,7 @@ const EmpInsights = () => {
   const empData = useSelector((state) =>
     state.insights.users.find((user) => user.id === parseInt(id))
   );
+  const theme = useSelector((state) => state.theme);
 
   const handleRemUser = (id, name) => {
     const res = confirm(`Do you want to remove user ${name}?`);
@@ -129,10 +112,10 @@ const EmpInsights = () => {
         <h1 className="text-2xl font-medium tracking-tight mb-5">Graph</h1>
         <div className="flex flex-row justify-around">
           <div>
-            <LineChart data={seriesData} categories={categories} />
+          <LineChart data={seriesData} categories={categories} theme={theme} />
           </div>
           <div>
-            <PieChart data={seriesData} labels={categories} />
+          <PieChart data={seriesData} labels={categories} theme={theme} />
           </div>
         </div>
         <div className="text-right mt-5">

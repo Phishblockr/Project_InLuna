@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import Chart from 'react-apexcharts';
+import LineChart from './LineChart';
+import PieChart from './PieChart';
 import { useSelector } from 'react-redux';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -29,28 +30,9 @@ const OverviewCards = ({ points }) => (
   </div>
 );
 
-const LineChart = ({ data, categories }) => (
-  <Chart
-    height={300}
-    width={450}
-    type='line'
-    series={[{ name: 'Link Statistics', data }]}
-    options={{ xaxis: { categories } }}
-  />
-);
-
-const PieChart = ({ data, labels }) => (
-  <Chart
-    height={450}
-    width={450}
-    type='pie'
-    series={data}
-    options={{ labels, noData: { text: 'Statistics not available' } }}
-  />
-);
-
 const Overview = () => {
   const overviewPoints = useSelector(state => state.overview.linkData);
+  const theme = useSelector((state) => state.theme);
   console.log(overviewPoints);
 
   return (
@@ -61,15 +43,14 @@ const Overview = () => {
       
       <div className='mt-10 grid grid-cols-2'>
         <div className='flex justify-center items-center'>
-          <LineChart data={seriesData} categories={categories} />
+          <LineChart data={seriesData} categories={categories} theme={theme} />
         </div>
         <div className='flex justify-center items-center'>
-          <PieChart data={seriesData} labels={categories} />
+          <PieChart data={seriesData} labels={categories} theme={theme} />
         </div>
         </div>
       </div>
     </div>
   );
 };
-
 export default Overview;
