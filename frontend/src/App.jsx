@@ -73,7 +73,7 @@ function App() {
                     element={<UrlDetails />}
                   />
                   <Route path="/requests" element={<Requests />} />
-                  <Route path="/feedbacks" element={<Feedbacks />} />
+                  <Route path="/feedback" element={<Feedbacks />} />
                   <Route path="/logs" element={<Logs />} />
                   <Route path="/profileSettings" element={<AdminSettings />} />
                   <Route path="/settings" element={<Settings />} />

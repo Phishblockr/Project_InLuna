@@ -154,9 +154,15 @@ export default function UrlLists() {
               </thead>
               <tbody>
                 {records.map((url, index) => (
-                  <tr key={index} className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]">
+                  <tr
+                    key={index}
+                    className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
+                  >
                     <td className="font-medium text-left text-gray-500 pl-2 py-4 dark:text-[#F4F4F4]">
-                      <Link to={`/urllists/urldetails/${url.id}`}>
+                      <Link
+                        to={`/urllists/urldetails/${url.id}`}
+                        title="Click to view details"
+                      >
                         {formatUrl(url.url)}
                       </Link>
                     </td>

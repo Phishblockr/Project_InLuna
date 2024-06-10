@@ -161,7 +161,10 @@ export default function Users() {
                     className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
                   >
                     <td className="py-2 pl-2">
-                      <Link to={`/users/userDetails/${user.id}`}>
+                      <Link
+                        to={`/users/userDetails/${user.id}`}
+                        title="Click to view details"
+                      >
                         <div className="flex items-center gap-x-3">
                           <img
                             src={user.img}

@@ -14,6 +14,7 @@ const EmployeeRow = ({ id, name, email, department, img, handleRemUser }) => (
     <td className="p-2 pr-0 text-gray-500 dark:text-[#F4F4F4]">#0175{id}</td>
     <td className="py-2">
       <Link
+        title="Click to view details"
         to={`/insights/empinsight/${id}`}
         className="flex justify-start items-center gap-3 dark:text-[#F4F4F4]"
       >

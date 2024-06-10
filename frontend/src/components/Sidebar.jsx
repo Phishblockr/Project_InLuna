@@ -12,7 +12,7 @@ import { NavLink } from "react-router-dom";
 
 const iconStyle = "inline-block w-6 h-6 mr-3 -mt-2";
 const activeLinkStyle = "py-5 px-3 w-full rounded-lg shadow bg-[#0364BD] text-white transition";
-const inactiveLinkStyle = "py-5 px-3 w-full rounded-lg hover:shadow hover:bg-[#0364BD] hover:text-white transition";
+const inactiveLinkStyle = "py-5 px-3 w-full rounded-lg hover:shadow hover:bg-gray-100 dark:hover:bg-[#00285A] transition";
 
 const links = [
   {
@@ -47,12 +47,6 @@ const links = [
   },
   {
     id: 6,
-    icon: <RiFeedbackLine className={iconStyle} />,
-    title: "Feedbacks",
-    url: "/feedbacks",
-  },
-  {
-    id: 7,
     icon: <RiGitRepositoryLine className={iconStyle} />,
     title: "Logs",
     url: "/logs",
@@ -73,7 +67,7 @@ const Sidebar = () => {
             key={link.id}
             className="flex"
           >
-            <NavLink to={link.url} className={({isActive}) => (isActive ? activeLinkStyle : inactiveLinkStyle)}>
+            <NavLink to={link.url} title={link.title} className={({isActive}) => (isActive ? activeLinkStyle : inactiveLinkStyle)}>
               {link.icon}
               {link.title}
             </NavLink>

@@ -3,12 +3,13 @@ import {
   RiSearchLine,
   RiNotificationBadgeLine,
   RiArrowDropDownLine,
+  RiQuestionLine,
 } from "react-icons/ri";
 import { FaRegUserCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const profileBtnStyle =
-  "bg-[#0364BD] rounded-lg text-white transition hover:bg-[#003A70]";
+  "rounded-lg dark:text-white transition hover:bg-gray-100 dark:hover:bg-[#00285A]";
 
 const profileSettings = [
   {
@@ -27,12 +28,41 @@ const profileSettings = [
     id: 3,
     title: "Log Out",
     url: "#",
-    style: "bg-red-500 rounded-lg text-white transition hover:bg-red-700",
+    style:
+      "rounded-lg text-red-500 transition hover:bg-gray-100 dark:hover:bg-[#00285A]",
+  },
+];
+
+const HelpOptions = [
+  {
+    id: 1,
+    title: "Feedback",
+    url: "/feedback",
+    style: profileBtnStyle,
+  },
+  {
+    id: 2,
+    title: "Support",
+    url: "/support",
+    style: profileBtnStyle,
+  },
+  {
+    id: 3,
+    title: "Report a bug",
+    url: "/report",
+    style: profileBtnStyle,
+  },
+  {
+    id: 4,
+    title: "FAQs",
+    url: "/faq",
+    style: profileBtnStyle,
   },
 ];
 
 const Navbar = () => {
   const [dropdown, setDropdown] = useState(false);
+  const [helpDropdown, setHelpDropdown] = useState(false);
 
   const toggleDropdown = () => {
     setDropdown(!dropdown);
@@ -40,6 +70,14 @@ const Navbar = () => {
 
   const closeDropdown = () => {
     setDropdown(false);
+  };
+
+  const toggleHelpDropdown = () => {
+    setHelpDropdown(!helpDropdown);
+  };
+
+  const closeHelpDropdown = () => {
+    setHelpDropdown(false);
   };
 
   return (
@@ -59,6 +97,37 @@ const Navbar = () => {
         </div>
       </div>
       <div className="flex items-center gap-x-5">
+        <button
+          title="help"
+          onClick={toggleHelpDropdown}
+          className="text-black dark:text-[#F4F4F4]"
+        >
+          <RiQuestionLine className="w-6 h-6" />
+        </button>
+        {helpDropdown && (
+          <>
+            <div
+              className="fixed inset-0 z-10"
+              onClick={closeHelpDropdown}
+            ></div>
+            <div className="z-20 absolute bg-white rounded-lg shadow w-32 top-full right-40 dark:bg-[#002451]">
+              <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
+                {HelpOptions.map((option) => (
+                  <li key={option.id} className={option.style}>
+                    <Link
+                      title={option.title}
+                      onClick={closeHelpDropdown}
+                      className="flex items-center justify-center py-2"
+                      to={option.url}
+                    >
+                      {option.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
         <div className="text-black dark:text-[#F4F4F4]">
           <RiNotificationBadgeLine className="w-6 h-6" />
         </div>
@@ -68,20 +137,22 @@ const Navbar = () => {
             <span>User</span>
             <span className="text-[10px]">Admin</span>
           </div>
-          <button onClick={toggleDropdown} className="text-black dark:text-[#F4F4F4]">
+          <button
+            title="settings"
+            onClick={toggleDropdown}
+            className="text-black dark:text-[#F4F4F4]"
+          >
             <RiArrowDropDownLine className="w-6 h-6 mt-1" />
           </button>
           {dropdown && (
             <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={closeDropdown}
-              ></div>
-              <div className="z-20 absolute bg-white rounded-lg shadow w-32 top-full right-0 dark:bg-[#001C40]">
+              <div className="fixed inset-0 z-10" onClick={closeDropdown}></div>
+              <div className="z-20 absolute bg-white rounded-lg shadow w-32 top-full right-0 dark:bg-[#002451]">
                 <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                   {profileSettings.map((setting) => (
                     <li key={setting.id} className={setting.style}>
                       <Link
+                        title={setting.title}
                         onClick={closeDropdown}
                         className="flex items-center justify-center py-2"
                         to={setting.url}
