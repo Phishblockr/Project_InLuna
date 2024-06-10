@@ -1,25 +1,24 @@
-# Dependency directories
-/node_modules
-
-# Build output
-/build
-/dist
-
-# Environment variables
-.env
-
-# IDE and editor files
-/.idea
-/.vscode
-
 # Logs
-/logs
-
-# Compiled output
+logs
 *.log
-*.class
-*.jar
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Miscellaneous
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
-Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
