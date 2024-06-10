@@ -1,5 +1,8 @@
 # Steps to run
 1. Clone the repo
+```bash
+git clone https://github.com/Phishblockr/Dashboard.git
+``` 
 2. Change directory to project's directory
 ```bash
 cd Dashboard
