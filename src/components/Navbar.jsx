@@ -9,8 +9,8 @@ import { FaRegUserCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const profileBtnStyle =
-  "rounded-lg dark:text-white transition hover:bg-gray-100 dark:hover:bg-[#00285A]";
-
+  "rounded-lg dark:text-white transition hover:bg-white dark:hover:bg-[#00285A]";
+const dropdownTheme = "bg-[#f7f4f4] dark:bg-[#182A46]"
 const profileSettings = [
   {
     id: 1,
@@ -29,7 +29,7 @@ const profileSettings = [
     title: "Log Out",
     url: "#",
     style:
-      "rounded-lg text-red-500 transition hover:bg-gray-100 dark:hover:bg-[#00285A]",
+      "rounded-lg text-red-500 transition hover:bg-white dark:hover:bg-[#00285A]",
   },
 ];
 
@@ -110,7 +110,7 @@ const Navbar = () => {
               className="fixed inset-0 z-10"
               onClick={closeHelpDropdown}
             ></div>
-            <div className="z-20 absolute bg-white rounded-lg shadow w-32 top-full right-40 dark:bg-[#002451]">
+            <div className={`z-20 absolute rounded-lg shadow w-32 top-full right-40 ${dropdownTheme}`}>
               <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                 {HelpOptions.map((option) => (
                   <li key={option.id} className={option.style}>
@@ -144,10 +144,11 @@ const Navbar = () => {
           >
             <RiArrowDropDownLine className="w-6 h-6 mt-1" />
           </button>
+          </div>
           {dropdown && (
             <>
               <div className="fixed inset-0 z-10" onClick={closeDropdown}></div>
-              <div className="z-20 absolute bg-white rounded-lg shadow w-32 top-full right-0 dark:bg-[#002451]">
+              <div className={`z-20 absolute rounded-lg shadow w-32 top-full right-0 ${dropdownTheme}`}>
                 <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                   {profileSettings.map((setting) => (
                     <li key={setting.id} className={setting.style}>
@@ -165,7 +166,6 @@ const Navbar = () => {
               </div>
             </>
           )}
-        </div>
       </div>
     </nav>
   );
