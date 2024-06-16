@@ -1,6 +1,9 @@
 const User = require('../models/userModel');
 const asyncHandler = require('../middlewares/asyncHandler');
 const winston = require('winston');
+const bcrypt = require('bcryptjs');
+const dotenv = require('dotenv');
+dotenv.config();
 
 // Logger setup
 const logger = winston.createLogger({
@@ -21,8 +24,10 @@ const getAllUsers = asyncHandler(async (req, res) => {
 // Create a new user
 const createUser = asyncHandler(async (req, res) => {
   try {
-    const { username, email, phone, role, department, orgId } = req.body;
-    console.log(username, email, phone, role, department, orgId );
+    const { username, email, phone, role, department, orgId, password } = req.body;
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(password, salt);
+    console.log(username, email, phone, role, department, orgId, password);
     const newUser = await User.create({
       username,
       email,
@@ -30,6 +35,7 @@ const createUser = asyncHandler(async (req, res) => {
       role,
       department,
       uuid: orgId,
+      password: hashed
     });
     await newUser.save();
     res.status(201).json(newUser)
