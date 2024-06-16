@@ -3,6 +3,7 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const winston = require('winston');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
 dotenv.config();
 
 // Logger setup
@@ -76,10 +77,40 @@ const deleteUser = asyncHandler(async (req, res) => {
   res.status(user ? 200 : 404).json(user ? { message: `User ${user.username} removed successfully` } : { error: 'User not found' });
 });
 
+const loginUser = asyncHandler(async (req, res) => {
+  const { orgId } = req.params;
+  const { username, password } = req.body;
+
+  try {
+    // Find the user by username and orgId
+    const user = await User.findOne({ uuid: orgId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Compare the provided password with the hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user.id, orgId: user.orgId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+})
+
 module.exports = {
   getAllUsers,
   createUser,
   getUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  loginUser,
 };
