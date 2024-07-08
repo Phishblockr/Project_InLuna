@@ -325,6 +325,12 @@ const Logs = () => {
     dispatch(setPerPageRec(value));
   };
 
+  useEffect(() => {
+    if (npage < currPage){
+      setCurrPage(npage || 1);
+    }
+  },[npage, currPage])
+
   return (
     <div className="z-1 overflow-x-hidden max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-5">
       <LogDetailsModal

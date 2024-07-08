@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import {
   MdOutlineArrowBackIos,
@@ -72,6 +72,12 @@ export default function Requests() {
   const handleSetPerPageRec = (value) =>{
     dispatch(setPerPageRec(value))
   }
+
+  useEffect(() => {
+    if (npage < currentPage){
+      setCurrentPage(npage || 1);
+    }
+  },[npage, currentPage])
   // End of Pagination Logic
 
   function handleRem(id) {

@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { RiAddFill, RiDeleteBinLine } from "react-icons/ri";
 import {
   MdOutlineArrowBackIos,
   MdOutlineArrowForwardIos,
 } from "react-icons/md";
-import { PiUserCircleLight } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { remUser } from "../features/Users/usersSlice";
@@ -72,6 +71,12 @@ export default function Users() {
   const handleSetPerPageRec = (value) => {
     dispatch(setPerPageRec(value));
   };
+
+  useEffect(() => {
+    if (npage < currentPage){
+      setCurrentPage(npage || 1);
+    }
+  },[npage, currentPage])
 
   // End of Pagination Logic
 
@@ -141,6 +146,7 @@ export default function Users() {
         <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
           <span>No Records Found!</span>
         </div>
+        
       ) : (
         <>
           <div>

@@ -188,6 +188,12 @@ const Insights = () => {
   };
 
   useEffect(() => {
+    if (npage < currPage){
+      setCurrPage(npage || 1);
+    }
+  },[npage, currPage])
+
+  useEffect(() => {
     setAllUsers(userData);
   }, [userData]);
 
