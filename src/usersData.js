@@ -49,7 +49,7 @@ export const users = [
         name: "Sarah Jones",
         department: "Sales",
         email: "sarah.jones@example.com",
-        img: "https://randomuser.me/api/portraits/women/6.jpg",
+        img: "",
         role: "Sales Representative",
         status: "Active"
       },

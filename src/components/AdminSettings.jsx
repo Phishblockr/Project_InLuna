@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { RiUploadCloud2Line, RiLoopLeftLine } from "react-icons/ri";
-import defaultUser from "../assets/default_profile_picture.jpg";
+import { PiUserCircleLight } from "react-icons/pi";
 
 const AdminSettings = () => {
   const [image, setImage] = useState(null);
@@ -66,11 +66,7 @@ const AdminSettings = () => {
                   className="mt-2 w-[150px] h-[150px] rounded-full"
                 />
               ) : (
-                <img
-                  src={defaultUser}
-                  alt="upload image"
-                  className="mt-2 w-[150px] h-[150px] rounded-full"
-                />
+                <PiUserCircleLight className="mt-2 w-[150px] h-[150px] rounded-full"/>
               )}
 
               <input

@@ -6,20 +6,22 @@ import { remUser, updateStatus } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 
 const statusActive =
-"py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
+  "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
 const statusInactive =
-"py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
+  "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
 const UserDetails = () => {
-  const {id} = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.users.users.find((user) => user.id === parseInt(id)));
+  const user = useSelector((state) =>
+    state.users.users.find((user) => user.id === parseInt(id))
+  );
   const dispatch = useDispatch();
-  
+
   const handleRemUser = (id, name) => {
     try {
       dispatch(remUser(id));
-      navigate("/users")
+      navigate("/users");
       toast.success(`User ${name} removed`);
     } catch (e) {
       toast.error(e);
@@ -27,10 +29,10 @@ const UserDetails = () => {
   };
 
   const handleUpdateStatus = (id, name) => {
-    try{
+    try {
       dispatch(updateStatus(id));
       toast.success(`User ${name} status updated`);
-    } catch (e){
+    } catch (e) {
       toast.error(e);
     }
   };
@@ -44,27 +46,72 @@ const UserDetails = () => {
           </h1>
         </div>
         <div className="flex flex-row gap-x-5 items-center">
-          <img
-            className="w-[10rem] h-[10rem] rounded-full object-cover"
-            src={user.img}
-            alt="user Profile"
-          />
+          {user.img ? (
+            <img
+              className="w-[10rem] h-[10rem] rounded-full object-cover"
+              src={user.img}
+              alt="user Profile"
+            />
+          ) : (
+            <svg
+              className="w-[10rem] h-[10rem] rounded-full object-cover"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="16 16 224 224"
+            >
+              <path
+                d="M63.8,199.37a72,72,0,0,1,128.4,0"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="12"
+              />
+              <circle
+                cx="128"
+                cy="128"
+                r="96"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="12"
+              />
+              <circle
+                cx="128"
+                cy="120"
+                r="40"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="12"
+              />
+            </svg>
+          )}
           <ul className="flex flex-col">
             <li className="font-medium text-3xl my-2">{user.name}</li>
             <li className="font-medium mb-1">
-              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">E-mail:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                E-mail:
+              </span>
               <span>{user.email}</span>
             </li>
             <li className="font-medium mb-1">
-              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Department:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                Department:
+              </span>
               <span>{user.department}</span>
             </li>
             <li className="font-medium mb-2">
-              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Role:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                Role:
+              </span>
               <span>{user.role}</span>
             </li>
             <li className="font-medium mb-1">
-              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Status:</span>
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                Status:
+              </span>
               <span
                 className={
                   user.status === "Active" ? statusActive : statusInactive
@@ -76,12 +123,18 @@ const UserDetails = () => {
           </ul>
         </div>
         <div className="text-right mt-5">
-          <button onClick={() => handleUpdateStatus(parseInt(id), user.name)} className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-medium rounded-lg mr-2">
+          <button
+            onClick={() => handleUpdateStatus(parseInt(id), user.name)}
+            className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-medium rounded-lg mr-2"
+          >
             <span className="flex flex-row items-center gap-x-1">
               <RiLoopLeftLine className="w-6 h-6" /> Update Status
             </span>
           </button>
-          <button onClick={() => handleRemUser(parseInt(id), user.name)} className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg">
+          <button
+            onClick={() => handleRemUser(parseInt(id), user.name)}
+            className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg"
+          >
             <span className="flex flex-row items-center gap-x-1">
               <RiDeleteBinLine className="w-6 h-6" /> Remove User
             </span>

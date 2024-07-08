@@ -4,7 +4,7 @@ export const users = [
     name: "John Doe",
     department: "Marketing",
     email: "john.doe@example.com",
-    img: "https://randomuser.me/api/portraits/men/1.jpg",
+    img: "",
   },
   {
     id: 2,

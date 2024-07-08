@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { RiAddFill, RiUploadCloud2Line } from "react-icons/ri";
-import defaultUser from "../assets/default_profile_picture.jpg";
+import { PiUserCircleLight } from "react-icons/pi";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { addUser } from "../features/Users/usersSlice";
@@ -80,11 +80,7 @@ const AddUser = () => {
                   className="mt-2 w-[150px] h-[150px] rounded-full"
                 />
               ) : (
-                <img
-                  src={defaultUser}
-                  alt="upload image"
-                  className="mt-2 w-[150px] h-[150px] rounded-full"
-                />
+                <PiUserCircleLight className="mt-2 w-[150px] h-[150px] rounded-full"/>
               )}
 
               <input

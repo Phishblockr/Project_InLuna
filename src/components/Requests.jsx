@@ -143,11 +143,48 @@ export default function Requests() {
             >
               <div className=" grid grid-cols-[380px_minmax(10%,_1fr)]  gap-2">
                 <div className="flex flex-row gap-x-5 items-center">
+                  {request.profileImage? (
                   <img
                     className="w-[5rem] h-[5rem] rounded-full object-cover"
                     src={request.profileImage}
                     alt="user Profile"
                   />
+                ) : (
+                  <svg
+              className="w-[5rem] h-[5rem] rounded-full object-cover"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="16 16 224 224"
+            >
+              <path
+                d="M63.8,199.37a72,72,0,0,1,128.4,0"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="12"
+              />
+              <circle
+                cx="128"
+                cy="128"
+                r="96"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="12"
+              />
+              <circle
+                cx="128"
+                cy="120"
+                r="40"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="12"
+              />
+            </svg>
+                )}
                   <ul className="flex flex-col">
                     <li className="font-medium text-3xl my-2">
                       {request.name}
