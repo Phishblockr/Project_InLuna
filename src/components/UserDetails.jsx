@@ -14,8 +14,9 @@ const UserDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = useSelector((state) =>
-    state.users.users.find((user) => user.id === parseInt(id))
+    state.users.users.find((user) => user._id === id)
   );
+
   const dispatch = useDispatch();
 
   const handleRemUser = (id, name) => {
@@ -24,7 +25,7 @@ const UserDetails = () => {
       navigate("/users");
       toast.success(`User ${name} removed`);
     } catch (e) {
-      toast.error(e);
+      toast.error(e.message);
     }
   };
 
@@ -33,9 +34,13 @@ const UserDetails = () => {
       dispatch(updateStatus(id));
       toast.success(`User ${name} status updated`);
     } catch (e) {
-      toast.error(e);
+      toast.error(e.message);
     }
   };
+
+  if (!user) {
+    return <div>User not found</div>;
+  }
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -62,9 +67,9 @@ const UserDetails = () => {
                 d="M63.8,199.37a72,72,0,0,1,128.4,0"
                 fill="none"
                 stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="12"
               />
               <circle
                 cx="128"
@@ -72,9 +77,9 @@ const UserDetails = () => {
                 r="96"
                 fill="none"
                 stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="12"
               />
               <circle
                 cx="128"
@@ -82,9 +87,9 @@ const UserDetails = () => {
                 r="40"
                 fill="none"
                 stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="12"
               />
             </svg>
           )}
@@ -92,9 +97,21 @@ const UserDetails = () => {
             <li className="font-medium text-3xl my-2">{user.name}</li>
             <li className="font-medium mb-1">
               <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                Username:
+              </span>
+              <span>{user.username}</span>
+            </li>
+            <li className="font-medium mb-1">
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
                 E-mail:
               </span>
               <span>{user.email}</span>
+            </li>
+            <li className="font-medium mb-1">
+              <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                Phone:
+              </span>
+              <span>{user.phone}</span>
             </li>
             <li className="font-medium mb-1">
               <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
@@ -114,7 +131,7 @@ const UserDetails = () => {
               </span>
               <span
                 className={
-                  user.status === "Active" ? statusActive : statusInactive
+                  user.status === "active" ? statusActive : statusInactive
                 }
               >
                 {user.status}
@@ -124,7 +141,7 @@ const UserDetails = () => {
         </div>
         <div className="text-right mt-5">
           <button
-            onClick={() => handleUpdateStatus(parseInt(id), user.name)}
+            onClick={() => handleUpdateStatus(id, user.name)}
             className="bg-[#0364BD] hover:bg-[#003A70] p-2 text-white font-medium rounded-lg mr-2"
           >
             <span className="flex flex-row items-center gap-x-1">
@@ -132,7 +149,7 @@ const UserDetails = () => {
             </span>
           </button>
           <button
-            onClick={() => handleRemUser(parseInt(id), user.name)}
+            onClick={() => handleRemUser(id, user.name)}
             className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg"
           >
             <span className="flex flex-row items-center gap-x-1">

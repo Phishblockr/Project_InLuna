@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { RiAddFill, RiDeleteBinLine } from "react-icons/ri";
-import {
-  MdOutlineArrowBackIos,
-  MdOutlineArrowForwardIos,
-} from "react-icons/md";
+import { RiDeleteBinLine, RiAddFill } from "react-icons/ri";
+import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { remUser } from "../features/Users/usersSlice";
+import { delUser, getUsers, remUser } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 
@@ -17,13 +14,17 @@ export default function Users() {
   const dispatch = useDispatch();
   // End of Redux
 
+  useEffect(() => {
+    dispatch(getUsers(69));
+  }, [dispatch]);
+
   // NOTE: This Logic is for demonstration purposes only and should be replaced to optimise database queries
   // Start of User Search Logic
   const [query, setQuery] = useState("");
   const keys = ["name", "email", "department", "role"];
   const search = (data) => {
     return data.filter((item) =>
-      keys.some((key) => item[key].toLowerCase().includes(query.toLowerCase()))
+      keys.some((key) => item[key] && item[key].toLowerCase().includes(query.toLowerCase()))
     );
   };
   // End of User Search Logic
@@ -32,9 +33,9 @@ export default function Users() {
   const [dataFilter, setDataFilter] = useState(null);
   const filter = (data) => {
     if (dataFilter === "active") {
-      return data.filter((item) => item.status === "Active");
+      return data.filter((item) => item.status === "active");
     } else if (dataFilter === "inactive") {
-      return data.filter((item) => item.status === "Inactive");
+      return data.filter((item) => item.status === "inactive");
     } else {
       return data;
     }
@@ -42,7 +43,6 @@ export default function Users() {
   // End of User Filter Logic
 
   // Start of Pagination Logic
-  // const [perPageRec,setPerPageRec] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = perPageRec;
   const filteredData = filter(search(usersData));
@@ -73,17 +73,17 @@ export default function Users() {
   };
 
   useEffect(() => {
-    if (npage < currentPage){
+    if (npage < currentPage) {
       setCurrentPage(npage || 1);
     }
-  },[npage, currentPage])
+  }, [npage, currentPage]);
 
   // End of Pagination Logic
 
-  const handleRemUser = (id, name) => {
+  const handleRemUser = async(id) => {
     try {
-      dispatch(remUser(id));
-      toast.success(`User ${name} removed`);
+      await dispatch(delUser(id));
+      await dispatch(getUsers(69));
     } catch (e) {
       toast.error(e);
     }
@@ -118,6 +118,12 @@ export default function Users() {
             <option value="inactive">Inactive</option>
           </select>
 
+          <div>
+            <button onClick={() => dispatch(getUsers(69))} className="border border-gray-300 rounded-md p-[10px]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#878787" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
+            </button>
+          </div>
+
           <select
             name="perPageRec"
             id="perPageRec"
@@ -134,10 +140,10 @@ export default function Users() {
 
           <Link
             to={"/users/adduser"}
-            className="className='flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
+            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
           >
             <span>
-              Add User <RiAddFill className="inline-block w-6 h-6 -mt-1" />
+              Add User
             </span>
           </Link>
         </div>
@@ -146,7 +152,6 @@ export default function Users() {
         <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
           <span>No Records Found!</span>
         </div>
-        
       ) : (
         <>
           <div>
@@ -169,52 +174,11 @@ export default function Users() {
                   >
                     <td className="py-2 pl-2">
                       <Link
-                        to={`/users/userDetails/${user.id}`}
+                        to={`/users/userDetails/${user._id}`}
                         title="Click to view details"
                       >
                         <div className="flex items-center gap-x-3">
-                          {user.img ? (
-                            <img
-                              src={user.img}
-                              alt="user Profile"
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <svg
-                              className="w-10 h-10 p-0 rounded-full object-cover"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="16 16 224 224"
-                            >
-                              <path
-                                d="M63.8,199.37a72,72,0,0,1,128.4,0"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="12"
-                              />
-                              <circle
-                                cx="128"
-                                cy="128"
-                                r="96"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="12"
-                              />
-                              <circle
-                                cx="128"
-                                cy="120"
-                                r="40"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="12"
-                              />
-                            </svg>
-                          )}
+                          <img src={user.img} alt="" className="h-12 w-12 rounded-full" />
                           <span className="font-medium">{user.name}</span>
                         </div>
                       </Link>
@@ -231,7 +195,7 @@ export default function Users() {
                     <td className="text-left font-medium">
                       <span
                         className={
-                          user.status === "Active"
+                          user.status === "active"
                             ? statusActive
                             : statusInactive
                         }
@@ -240,7 +204,7 @@ export default function Users() {
                       </span>
                     </td>
                     <td className="text-left ">
-                      <button onClick={() => handleRemUser(user.id, user.name)}>
+                      <button onClick={() => handleRemUser(user._id)}>
                         <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
                       </button>
                     </td>
@@ -253,9 +217,8 @@ export default function Users() {
             <nav className="flex gap-x-1 justify-between">
               <div>
                 <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
-                    currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   href="#"
                   onClick={prePage}
                 >
@@ -266,11 +229,10 @@ export default function Users() {
                 {numbers.map((number, index) => (
                   <div key={index}>
                     <a
-                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${
-                        currentPage === number
+                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === number
                           ? "bg-[#0364BD] text-white dark:bg-[#0364BD]"
                           : "bg-gray-200 dark:bg-[#001C40]"
-                      }`}
+                        }`}
                       href="#"
                       onClick={() => changeCPage(number)}
                     >
@@ -281,9 +243,8 @@ export default function Users() {
               </div>
               <div>
                 <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
-                    currentPage === npage ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === npage ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   href="#"
                   onClick={nextPage}
                 >
