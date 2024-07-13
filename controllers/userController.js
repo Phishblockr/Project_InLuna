@@ -18,37 +18,41 @@ const logger = winston.createLogger({
 
 // Get all users
 const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select('-password'); // Exclude password from results
+  const { id } = req.params;
+  const users = await User.find({ uuid: id }).select('-password');
   res.status(users.length > 0 ? 200 : 404).json(users.length > 0 ? users : { error: 'Users not found' });
 });
 
 // Create a new user
 const createUser = asyncHandler(async (req, res) => {
   try {
-    const { username, email, phone, role, department, orgId, password } = req.body;
+    const { name, username, email, phone, role, department, orgId, password, img } = req.body;
     const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(password, salt);
-    console.log(username, email, phone, role, department, orgId, password);
-    const newUser = await User.create({
+    const hashedPassword = await bcrypt.hash('local', salt);
+    console.log(req.body);
+    const newUser = new User({
       username,
+      name,
       email,
-      phone,
+      phone: phone,
       role,
       department,
+      img,
       uuid: orgId,
-      password: hashed
+      password: hashedPassword
     });
     await newUser.save();
-    res.status(201).json(newUser)
+    res.status(201).json(newUser);
   } catch (error) {
     console.log(error.message);
-  };
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Get a single user by ID
 const getUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const user = await User.findById(id).select('-password'); // Exclude password from result
+  const user = await User.findById(id).select('-password');
   res.status(user ? 200 : 404).json(user ? user : { error: 'User not found' });
 });
 
@@ -56,55 +60,53 @@ const getUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { username, email, phone, role, department, orgId, password } = req.body;
-  const updatedUser = await User.findByIdAndUpdate(
-    id,
+  const updates = {
     username,
     email,
     phone,
     role,
     department,
     orgId,
-    password,
-    { new: true, runValidators: true }
-  ).select('-password'); // Exclude password from result
+    password
+  };
+  const updatedUser = await User.findByIdAndUpdate(id, updates, {
+    new: true,
+    runValidators: true
+  }).select('-password');
   res.status(updatedUser ? 200 : 404).json(updatedUser ? updatedUser : { error: 'User not found' });
 });
 
 // Delete a user
 const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const user = await User.findByIdAndDelete(id).select('-password'); // Exclude password from result
+  const user = await User.findByIdAndDelete(id).select('-password');
   res.status(user ? 200 : 404).json(user ? { message: `User ${user.username} removed successfully` } : { error: 'User not found' });
 });
 
+// Login user
 const loginUser = asyncHandler(async (req, res) => {
-  const { orgId } = req.params;
-  const { username, password } = req.body;
-
+  const { id, username, password } = req.body;
   try {
-    // Find the user by username and orgId
-    const user = await User.findOne({ uuid: orgId });
+    const user = await User.findOne({ uuid: id, username });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Compare the provided password with the hashed password
     const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) {
+    if (username === user.username && isMatch) {
+      const token = jwt.sign({ userId: user.id, orgId: user.uuid }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      res.status(200).json({ token });
+    } else {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate JWT token
-    const token = jwt.sign({ userId: user.id, orgId: user.orgId }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    res.status(200).json({ token });
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ error: 'Server error' });
   }
-})
+});
 
 module.exports = {
   getAllUsers,

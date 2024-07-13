@@ -10,11 +10,11 @@ const {
 } = require('../controllers/userController');
 
 // Define routes
-router.get('/', getAllUsers);
+router.get('/:id', getAllUsers);
 router.post('/', createUser);
 router.get('/:id', getUser);
 router.put('/:id', updateUser);
 router.delete('/:id', deleteUser);
-router.post('/login/:orgId', loginUser);
+router.post('/login', loginUser);
 
 module.exports = router;
