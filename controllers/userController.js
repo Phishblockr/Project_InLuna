@@ -87,10 +87,10 @@ const deleteUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { id, username, password } = req.body;
   try {
-    const user = await User.findOne({ uuid: id, username });
+    const user = await User.findOne({ username });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'Invalid Credentials' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
