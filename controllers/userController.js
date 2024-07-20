@@ -85,9 +85,9 @@ const deleteUser = asyncHandler(async (req, res) => {
 
 // Login user
 const loginUser = asyncHandler(async (req, res) => {
-  const { id, username, password } = req.body;
+  const { uuid, username, password } = req.body;
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ uuid, username });
 
     if (!user) {
       return res.status(404).json({ error: 'Invalid Credentials' });
