@@ -4,6 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const organizationRoutes = require('./routes/organizationRoutes');
 const userRoutes = require('./routes/userRoutes');
+const urlRoutes = require("./routes/urlRoutes");
 const winston = require('winston');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -34,6 +35,9 @@ app.use('/api/org', organizationRoutes);
 
 // Users Routes
 app.use('/api/user', userRoutes);
+
+// Url Routes
+app.use("/api/url", urlRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
