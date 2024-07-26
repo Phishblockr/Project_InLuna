@@ -1,6 +1,6 @@
 const Url = require("../models/urlModel");
 
-const addUrl = async (req, res) => {
+const addUrlExt = async (req, res) => {
     try{
         const {url, visitedBy, orgId, isVerified, isPhishing } = req.body;
 
@@ -37,4 +37,34 @@ const addUrl = async (req, res) => {
     }
 }
 
-module.exports = {addUrl};
+const fetchUrlStatsExt = async (req, res) => {
+    const {username, orgId} = req.query;
+    try{
+        const result = await Url.aggregate([
+            {$match: {"orgId":parseInt(orgId)}},
+            {$unwind: "$visitedBy"},
+            {$match: {"visitedBy.username": username}},
+            {$group: {
+                _id: "$isBlacklisted",
+                totalVisits:{$sum:"$visitedBy.totalVisits"}
+            }}
+        ]);
+
+        let response = {
+            blacklistedUrls: 0,
+            visitedUrls: 0,
+        };
+        result.forEach(item => {
+            if(item._id){
+                response.blacklistedUrls = item.totalVisits;
+            } else {
+                response.visitedUrls = item.totalVisits;
+            }
+        });
+        res.status(200).send(response);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+module.exports = {addUrlExt, fetchUrlStatsExt};

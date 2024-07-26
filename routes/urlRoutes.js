@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const {addUrl} = require("../controllers/urlController");
+const {addUrlExt, fetchUrlStatsExt} = require("../controllers/urlController");
 
-router.route("/addUrl").post(addUrl)
+router.route("/addUrlExt").post(addUrlExt);
+router.route("/urlStatsExt").get(fetchUrlStatsExt);
 
 module.exports = router;

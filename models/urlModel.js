@@ -29,6 +29,14 @@ const urlSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    isBlacklisted:{
+        type: Boolean,
+        default: false,
+    },
+    isUserAdded:{
+        type: Boolean,
+        default: false,
+    },
     orgId: {
         type: Number,
         required: [true, 'Organization ID cannot be empty'],
