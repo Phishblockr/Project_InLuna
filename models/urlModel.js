@@ -1,46 +1,58 @@
 const mongoose = require("mongoose");
 
-const urlSchema = new mongoose.Schema({
-    url:{
-        type: String,
-        required : [true, 'Url cannot be empty'],
+const urlSchema = new mongoose.Schema(
+  {
+    url: {
+      type: String,
+      required: [true, "Url cannot be empty"],
     },
-    visitedBy:[{
+    visitedBy: [
+      {
         username: {
-            type:String,
-            required: [true, 'Username cannot be empty'],
+          type: String,
+          required: [true, "Username cannot be empty"],
         },
-        visits:[{
-            timestamp:{
-                type: Date,
-                default: Date.now,
+        visits: [
+          {
+            timestamp: {
+              type: Date,
+              default: Date.now,
             },
-        }],
+          },
+        ],
         totalVisits: {
-            type: Number,
-            default: 1,
+          type: Number,
+          default: 1,
         },
+      },
+    ],
+    tags: [{
+        type: String,
+        default: "general",
     }],
-    isVerified:{
-        type: Boolean,
-        default: false,
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     isPhishing: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true,
     },
-    isBlacklisted:{
-        type: Boolean,
-        default: false,
+    isBlacklisted: {
+      type: Boolean,
+      default: false,
     },
-    isUserAdded:{
-        type: Boolean,
-        default: false,
+    isUserAdded: {
+      type: Boolean,
+      default: false,
     },
     orgId: {
-        type: Number,
-        required: [true, 'Organization ID cannot be empty'],
-    }
-})
-const Url  = new mongoose.model("Url", urlSchema);
+      type: Number,
+      required: [true, "Organization ID cannot be empty"],
+    },
+  },
+  { timestamps: true }
+);
+urlSchema.index({ url: 1, orgId: 1 });
+const Url = new mongoose.model("Url", urlSchema);
 module.exports = Url;

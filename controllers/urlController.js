@@ -2,7 +2,7 @@ const Url = require("../models/urlModel");
 
 const addUrlExt = async (req, res) => {
     try{
-        const {url, visitedBy, orgId, isVerified, isPhishing } = req.body;
+        const {url, visitedBy, orgId, isVerified, isPhishing, isUserAdded, tags} = req.body;
 
         const existingUrl = await Url.findOne({url: url, orgId: orgId});
 
@@ -25,8 +25,10 @@ const addUrlExt = async (req, res) => {
                     visits:[{timestamp: new Date()}],
                     totalVisits: 1,
                 }],
+                tags: tags,
                 isVerified: isVerified,
                 isPhishing: isPhishing,
+                isUserAdded: isUserAdded,
                 orgId: orgId
             });
             await newUrl.save();
