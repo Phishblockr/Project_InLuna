@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const organizationRoutes = require('./routes/organizationRoutes');
 const userRoutes = require('./routes/userRoutes');
 const urlRoutes = require("./routes/urlRoutes");
+const whitelistReqRoutes = require("./routes/whitelistReqRoutes");
 const winston = require('winston');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -38,6 +39,9 @@ app.use('/api/user', userRoutes);
 
 // Url Routes
 app.use("/api/url", urlRoutes);
+
+// Whitelist URL Request Routes
+app.use("/api/whitelistReq", whitelistReqRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
