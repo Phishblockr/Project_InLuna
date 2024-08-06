@@ -7,13 +7,17 @@ const addUrlExt = async (req, res) => {
         const existingUrl = await Url.findOne({url: url, orgId: orgId});
 
         if (existingUrl){
-            let visitor = existingUrl.visitedBy.find(v => v.username === visitedBy[0].username);
+            let visitor = existingUrl.visitedBy.find(v => v.userId.equals(visitedBy[0].userId));
             if(visitor){
                 visitor.visits.push({timestamp:new Date()})
                 visitor.totalVisits += 1;
             } else {
-                visitedBy[0].visits = [{timestamp: new Date()}];
-                existingUrl.visitedBy.push(visitedBy[0]);
+                existingUrl.visitedBy.push({
+                    userId: visitedBy[0].userId,
+                    username: visitedBy[0].username,
+                    visits: [{ timestamp: new Date() }],
+                    totalVisits: 1
+                });
             }
             await existingUrl.save();
             res.status(200).send(existingUrl);
@@ -21,6 +25,7 @@ const addUrlExt = async (req, res) => {
             const newUrl = new Url({
                 url: url,
                 visitedBy:[{
+                    userId: visitedBy[0].userId,
                     username: visitedBy[0].username,
                     visits:[{timestamp: new Date()}],
                     totalVisits: 1,

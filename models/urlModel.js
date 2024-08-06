@@ -8,9 +8,15 @@ const urlSchema = new mongoose.Schema(
     },
     visitedBy: [
       {
+        userId:{
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "user",
+          required: [true, "UserId cannot be empty"],
+        },
         username: {
           type: String,
           required: [true, "Username cannot be empty"],
+          trim: true
         },
         visits: [
           {
