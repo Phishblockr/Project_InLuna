@@ -1,13 +1,10 @@
-const { mongoose } = require("mongoose");
+import mongoose from 'mongoose';
 
-const getAllLogs = async () => {
+export const getAllLogs = async () => {
   try {
-    const logs = mongoose
+    const logs = await mongoose.connection.db.collection('logs').find().toArray(); // Example to get all logs from the 'logs' collection
+    return logs;
   } catch (error) {
     console.log(error.message);
   }
-}
-
-module.exports = {
-  getAllLogs,
-}
+};

@@ -1,8 +1,10 @@
-const express = require("express");
+import express from 'express';
+import { addUrlExt, fetchUrlStatsExt, unshortenUrl } from '../controllers/urlController.js';
+
 const router = express.Router();
-const {addUrlExt, fetchUrlStatsExt} = require("../controllers/urlController");
 
 router.route("/addUrlExt").post(addUrlExt);
 router.route("/urlStatsExt").get(fetchUrlStatsExt);
+router.route("/unshortenUrl").get(unshortenUrl);
 
-module.exports = router;
+export default router;

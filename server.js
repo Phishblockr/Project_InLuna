@@ -1,13 +1,14 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const organizationRoutes = require('./routes/organizationRoutes');
-const userRoutes = require('./routes/userRoutes');
-const urlRoutes = require("./routes/urlRoutes");
-const whitelistReqRoutes = require("./routes/whitelistReqRoutes");
-const winston = require('winston');
-const errorHandler = require('./middlewares/errorHandler');
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+import organizationRoutes from './routes/organizationRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import urlRoutes from './routes/urlRoutes.js';
+import whitelistReqRoutes from './routes/whitelistReqRoutes.js';
+import winston from 'winston';
+import errorHandler from './middlewares/errorHandler.js';
 
 dotenv.config();
 

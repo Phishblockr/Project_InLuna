@@ -1,6 +1,5 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
   getAllOrganizations,
   createOrganization,
   getOrganization,
@@ -10,7 +9,9 @@ const {
   getOrganizationsByAdmin,
   aggregateStatistics,
   findUsersWithUuid
-} = require('../controllers/organizationController');
+} from '../controllers/organizationController.js';
+
+const router = express.Router();
 
 router.get('/all', getAllOrganizations);
 router.post('/', createOrganization);
@@ -22,4 +23,4 @@ router.delete('/:id', deleteOrganization);
 router.put('/:id', updateOrganization);
 router.get('/getAllUsers/:orgId', findUsersWithUuid);
 
-module.exports = router;
+export default router;

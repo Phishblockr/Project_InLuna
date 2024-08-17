@@ -10,10 +10,12 @@
     "joi": "^17.13.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.0",
+    "node-fetch": "^3.3.2",
     "winston": "^3.13.0"
   },
   "name": "backend-node",
   "version": "1.0.0",
+  "type": "module",
   "main": "server.js",
   "keywords": [],
   "author": "",

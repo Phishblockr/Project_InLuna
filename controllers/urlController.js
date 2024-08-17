@@ -1,15 +1,16 @@
-const Url = require("../models/urlModel");
+import Url from '../models/urlModel.js';
+import fetch from 'node-fetch';
 
-const addUrlExt = async (req, res) => {
-    try{
-        const {url, visitedBy, orgId, isVerified, isPhishing, isUserAdded, tags} = req.body;
+export const addUrlExt = async (req, res) => {
+    try {
+        const { url, visitedBy, orgId, isVerified, isPhishing, isUserAdded, tags } = req.body;
 
-        const existingUrl = await Url.findOne({url: url, orgId: orgId});
+        const existingUrl = await Url.findOne({ url: url, orgId: orgId });
 
-        if (existingUrl){
+        if (existingUrl) {
             let visitor = existingUrl.visitedBy.find(v => v.userId.equals(visitedBy[0].userId));
-            if(visitor){
-                visitor.visits.push({timestamp:new Date()})
+            if (visitor) {
+                visitor.visits.push({ timestamp: new Date() });
                 visitor.totalVisits += 1;
             } else {
                 existingUrl.visitedBy.push({
@@ -24,10 +25,10 @@ const addUrlExt = async (req, res) => {
         } else {
             const newUrl = new Url({
                 url: url,
-                visitedBy:[{
+                visitedBy: [{
                     userId: visitedBy[0].userId,
                     username: visitedBy[0].username,
-                    visits:[{timestamp: new Date()}],
+                    visits: [{ timestamp: new Date() }],
                     totalVisits: 1,
                 }],
                 tags: tags,
@@ -39,21 +40,21 @@ const addUrlExt = async (req, res) => {
             await newUrl.save();
             res.status(201).send(newUrl);
         }
-    } catch(error) {
+    } catch (error) {
         res.status(400).send(error.message);
     }
-}
+};
 
-const fetchUrlStatsExt = async (req, res) => {
-    const {username, orgId} = req.query;
-    try{
+export const fetchUrlStatsExt = async (req, res) => {
+    const { username, orgId } = req.query;
+    try {
         const result = await Url.aggregate([
-            {$match: {"orgId":parseInt(orgId)}},
-            {$unwind: "$visitedBy"},
-            {$match: {"visitedBy.username": username}},
-            {$group: {
+            { $match: { "orgId": parseInt(orgId) } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.username": username } },
+            { $group: {
                 _id: "$isBlacklisted",
-                totalVisits:{$sum:"$visitedBy.totalVisits"}
+                totalVisits: { $sum: "$visitedBy.totalVisits" }
             }}
         ]);
 
@@ -62,7 +63,7 @@ const fetchUrlStatsExt = async (req, res) => {
             visitedUrls: 0,
         };
         result.forEach(item => {
-            if(item._id){
+            if (item._id) {
                 response.blacklistedUrls = item.totalVisits;
             } else {
                 response.visitedUrls = item.totalVisits;
@@ -72,6 +73,26 @@ const fetchUrlStatsExt = async (req, res) => {
     } catch (error) {
         res.status(500).send(error.message);
     }
-}
+};
 
-module.exports = {addUrlExt, fetchUrlStatsExt};
+export const unshortenUrl = async (req, res) => {
+    const shortUrl = req.query.url;
+    if (!shortUrl) {
+        return res.status(400).json({ error: 'No URL provided' });
+    }
+    try {
+        const response = await fetch(shortUrl, {
+            method: "HEAD",
+            redirect: "manual"
+        });
+        if (response.status === 301 || response.status === 302) {
+            const expandedUrl = response.headers.get("Location");
+            return res.json({ requested_url: shortUrl, resolved_url: expandedUrl, success: true });
+        } else {
+            return res.json({ request_url: shortUrl, resolved_url: shortUrl, success: false });
+        }
+    } catch (error) {
+        console.log("Error expanding URL: ", error);
+        return res.status(500).json({ error: "Failed to expand URL" });
+    }
+};

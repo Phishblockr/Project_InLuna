@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
 
 const whitelistReqSchema = new mongoose.Schema(
     {
-        userProfileImg:{
-            type:String,
+        userProfileImg: {
+            type: String,
             default: ""
         },
         userId: {
@@ -11,14 +11,14 @@ const whitelistReqSchema = new mongoose.Schema(
             ref: "user",
             required: [true, "UserId cannot be empty"],
         },
-        username:{
-            type:String,
-            required:[true, "username cannot be empty"],
+        username: {
+            type: String,
+            required: [true, "Username cannot be empty"],
             trim: true
         },
-        url:{
+        url: {
             type: String,
-            required:[true, "Url cannot be empty"],
+            required: [true, "Url cannot be empty"],
         },
         reason: {
             type: String,
@@ -30,13 +30,16 @@ const whitelistReqSchema = new mongoose.Schema(
             enum: ['pending', 'approved', 'rejected'],
             default: 'pending'
         },
-        orgId:{
+        orgId: {
             type: Number,
             required: [true, "Organization ID cannot be empty"],
         },
     },
     { timestamps: true }
 );
-whitelistReqSchema.index({orgId: 1});
-const whitelistReq = new mongoose.model("whitelistReq", whitelistReqSchema);
-module.exports = whitelistReq;
+
+whitelistReqSchema.index({ orgId: 1 });
+
+const WhitelistReq = mongoose.model("whitelistReq", whitelistReqSchema);
+
+export default WhitelistReq;

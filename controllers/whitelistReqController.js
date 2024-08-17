@@ -1,9 +1,9 @@
-const whitelistReq = require("../models/whitelistReqModel");
+import WhitelistReq from '../models/whitelistReqModel.js';
 
-const addWhitelistReqExt = async (req, res) => {
-    try{
-        const {userProfileImg, userId, username, url, reason, orgId} = req.body;
-        const newWhitelistReq = new whitelistReq({
+export const addWhitelistReqExt = async (req, res) => {
+    try {
+        const { userProfileImg, userId, username, url, reason, orgId } = req.body;
+        const newWhitelistReq = new WhitelistReq({
             userProfileImg,
             userId,
             username,
@@ -13,9 +13,7 @@ const addWhitelistReqExt = async (req, res) => {
         });
         await newWhitelistReq.save();
         res.status(201).send(newWhitelistReq);
-    } catch (error){
+    } catch (error) {
         res.status(400).send(error.message);
     }
-}
-
-module.exports = {addWhitelistReqExt};
+};

@@ -1,9 +1,10 @@
-const User = require('../models/userModel');
-const asyncHandler = require('../middlewares/asyncHandler');
-const winston = require('winston');
-const bcrypt = require('bcryptjs');
-const dotenv = require('dotenv');
-const jwt = require('jsonwebtoken');
+import User from '../models/userModel.js';
+import asyncHandler from '../middlewares/asyncHandler.js';
+import winston from 'winston';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+
 dotenv.config();
 
 // Logger setup
@@ -17,14 +18,14 @@ const logger = winston.createLogger({
 });
 
 // Get all users
-const getAllUsers = asyncHandler(async (req, res) => {
+export const getAllUsers = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const users = await User.find({ uuid: id }).select('-password');
   res.status(users.length > 0 ? 200 : 404).json(users.length > 0 ? users : { error: 'Users not found' });
 });
 
 // Create a new user
-const createUser = asyncHandler(async (req, res) => {
+export const createUser = asyncHandler(async (req, res) => {
   try {
     const { name, username, email, phone, role, department, orgId, password, img } = req.body;
     const salt = await bcrypt.genSalt(10);
@@ -50,14 +51,14 @@ const createUser = asyncHandler(async (req, res) => {
 });
 
 // Get a single user by ID
-const getUser = asyncHandler(async (req, res) => {
+export const getUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = await User.findById(id).select('-password');
   res.status(user ? 200 : 404).json(user ? user : { error: 'User not found' });
 });
 
 // Update a user
-const updateUser = asyncHandler(async (req, res) => {
+export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { username, email, phone, role, department, orgId, password } = req.body;
   const updates = {
@@ -77,14 +78,14 @@ const updateUser = asyncHandler(async (req, res) => {
 });
 
 // Delete a user
-const deleteUser = asyncHandler(async (req, res) => {
+export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = await User.findByIdAndDelete(id).select('-password');
   res.status(user ? 200 : 404).json(user ? { message: `User ${user.username} removed successfully` } : { error: 'User not found' });
 });
 
 // Login user
-const loginUser = asyncHandler(async (req, res) => {
+export const loginUser = asyncHandler(async (req, res) => {
   const { uuid, username, password } = req.body;
   try {
     const user = await User.findOne({ uuid, username });
@@ -97,7 +98,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     if (username === user.username && isMatch) {
       const token = jwt.sign({ userId: user.id, orgId: user.uuid }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      res.status(200).json({ token, userId: user.id, profileImg: user.img, });
+      res.status(200).json({ token, userId: user.id, profileImg: user.img });
     } else {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -107,12 +108,3 @@ const loginUser = asyncHandler(async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
-module.exports = {
-  getAllUsers,
-  createUser,
-  getUser,
-  updateUser,
-  deleteUser,
-  loginUser,
-};

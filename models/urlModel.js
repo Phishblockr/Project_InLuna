@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
 
 const urlSchema = new mongoose.Schema(
   {
@@ -8,7 +8,7 @@ const urlSchema = new mongoose.Schema(
     },
     visitedBy: [
       {
-        userId:{
+        userId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "user",
           required: [true, "UserId cannot be empty"],
@@ -59,6 +59,9 @@ const urlSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 urlSchema.index({ url: 1, orgId: 1 });
-const Url = new mongoose.model("Url", urlSchema);
-module.exports = Url;
+
+const Url = mongoose.model("Url", urlSchema);
+
+export default Url;

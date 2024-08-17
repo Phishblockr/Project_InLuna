@@ -1,7 +1,8 @@
-const Organization = require('../models/organisationModel');
-const winston = require("winston");
-const User = require('../models/userModel');
+import Organization from '../models/organisationModel.js';
+import winston from 'winston';
+import User from '../models/userModel.js';
 
+// Logger setup
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
@@ -11,7 +12,8 @@ const logger = winston.createLogger({
   ]
 });
 
-const getAllOrganizations = async (req, res) => {
+// Get all organizations
+export const getAllOrganizations = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const orgs = await Organization.find()
@@ -30,7 +32,8 @@ const getAllOrganizations = async (req, res) => {
   }
 };
 
-const createOrganization = async (req, res) => {
+// Create a new organization
+export const createOrganization = async (req, res) => {
   try {
     const newOrg = new Organization(req.body);
     await newOrg.save();
@@ -45,7 +48,8 @@ const createOrganization = async (req, res) => {
   }
 };
 
-const getOrganization = async (req, res) => {
+// Get a single organization by ID
+export const getOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     const org = await Organization.findOne({ orgId: id });
@@ -56,7 +60,8 @@ const getOrganization = async (req, res) => {
   }
 };
 
-const deleteOrganization = async (req, res) => {
+// Delete an organization
+export const deleteOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     const org = await Organization.findOneAndDelete({ orgId: id });
@@ -67,7 +72,8 @@ const deleteOrganization = async (req, res) => {
   }
 };
 
-const updateOrganization = async (req, res) => {
+// Update an organization
+export const updateOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     const updatedOrg = await Organization.findOneAndUpdate(
@@ -86,7 +92,8 @@ const updateOrganization = async (req, res) => {
   }
 };
 
-const searchOrganizations = async (req, res) => {
+// Search organizations
+export const searchOrganizations = async (req, res) => {
   try {
     const { name, adminName } = req.query;
     const query = {};
@@ -100,7 +107,8 @@ const searchOrganizations = async (req, res) => {
   }
 };
 
-const getOrganizationsByAdmin = async (req, res) => {
+// Get organizations by admin name
+export const getOrganizationsByAdmin = async (req, res) => {
   try {
     const { adminName } = req.params;
     const orgs = await Organization.find({ adminName });
@@ -111,7 +119,8 @@ const getOrganizationsByAdmin = async (req, res) => {
   }
 };
 
-const aggregateStatistics = async (req, res) => {
+// Aggregate statistics
+export const aggregateStatistics = async (req, res) => {
   try {
     const stats = await Organization.aggregate([
       {
@@ -132,7 +141,7 @@ const aggregateStatistics = async (req, res) => {
 };
 
 // Find all users with UUID
-const findUsersWithUuid = async (req, res) => {
+export const findUsersWithUuid = async (req, res) => {
   try {
     const { orgId } = req.params;
     console.log(orgId);
@@ -142,16 +151,4 @@ const findUsersWithUuid = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-};
-
-module.exports = {
-  getAllOrganizations,
-  createOrganization,
-  getOrganization,
-  deleteOrganization,
-  updateOrganization,
-  searchOrganizations,
-  getOrganizationsByAdmin,
-  aggregateStatistics,
-  findUsersWithUuid,
 };

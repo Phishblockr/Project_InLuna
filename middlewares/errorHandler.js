@@ -1,4 +1,4 @@
-const winston = require('winston');
+import winston from 'winston';
 
 const logger = winston.createLogger({
   level: 'error',
@@ -14,4 +14,4 @@ const errorHandler = (err, req, res, next) => {
   res.status(500).json({ error: 'Server error' });
 };
 
-module.exports = errorHandler;
+export default errorHandler;

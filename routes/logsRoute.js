@@ -1,6 +1,6 @@
-import { getAllLogs } from '../controllers/logsController';
+import express from 'express';
+import { getAllLogs } from '../controllers/logsController.js';
 
-const express = require('express');
 const router = express.Router();
 
 router.get('/api/logs/getAllLogs', getAllLogs);
