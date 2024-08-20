@@ -7,6 +7,7 @@ import organizationRoutes from './routes/organizationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import urlRoutes from './routes/urlRoutes.js';
 import whitelistReqRoutes from './routes/whitelistReqRoutes.js';
+import feedbackRoutes from "./routes/feedbackRoutes.js"
 import winston from 'winston';
 import errorHandler from './middlewares/errorHandler.js';
 
@@ -43,6 +44,9 @@ app.use("/api/url", urlRoutes);
 
 // Whitelist URL Request Routes
 app.use("/api/whitelistReq", whitelistReqRoutes);
+
+// Feedback Routes
+app.use("/api/feedback", feedbackRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
