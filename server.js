@@ -10,6 +10,7 @@ import whitelistReqRoutes from './routes/whitelistReqRoutes.js';
 import feedbackRoutes from "./routes/feedbackRoutes.js"
 import winston from 'winston';
 import errorHandler from './middlewares/errorHandler.js';
+import authenticateToken from "./middlewares/authenticateToken.js"
 
 dotenv.config();
 
@@ -40,13 +41,13 @@ app.use('/api/org', organizationRoutes);
 app.use('/api/user', userRoutes);
 
 // Url Routes
-app.use("/api/url", urlRoutes);
+app.use("/api/url", authenticateToken, urlRoutes);
 
 // Whitelist URL Request Routes
-app.use("/api/whitelistReq", whitelistReqRoutes);
+app.use("/api/whitelistReq", authenticateToken, whitelistReqRoutes);
 
 // Feedback Routes
-app.use("/api/feedback", feedbackRoutes);
+app.use("/api/feedback", authenticateToken, feedbackRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
