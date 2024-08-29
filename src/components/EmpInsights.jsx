@@ -5,7 +5,7 @@ import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { remUser } from "../features/Insights/insightsSlice";
+import { removeEmployee } from "../features/Insights/insightsSlice";
 import { PiUserCircleLight } from "react-icons/pi";
 
 const seriesData = [56, 89, 74];
@@ -76,17 +76,17 @@ const EmpInsights = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const empData = useSelector((state) =>
-    state.insights.users.find((user) => user.id === parseInt(id))
-  );
+  const empData = useSelector(state => state.insights.users.find(user => user._id === id))
+  console.log(empData);
+  
   const theme = useSelector((state) => state.theme);
 
-  const handleRemUser = (id, name) => {
+  const handleRemEmplremoveEmployee = (id, name) => {
     const res = confirm(`Do you want to remove user ${name}?`);
 
     if (res) {
       try {
-        dispatch(remUser(id));
+        dispatch(removeEmployee(id));
         toast.success(`User ${name} removed`);
         navigate("/insights/");
       } catch (error) {
@@ -122,7 +122,7 @@ const EmpInsights = () => {
               <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
                 Id:
               </span>
-              <span>{empData.id}</span>
+              <span>{empData._id}</span>
             </li>
             <li className="font-medium mb-1">
               <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
@@ -156,7 +156,7 @@ const EmpInsights = () => {
         </div>
         <div className="text-right mt-5">
           <button
-            onClick={() => handleRemUser(empData.id, empData.name)}
+            onClick={() => handleRemEmplremoveEmployee(empData.id, empData.name)}
             className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg"
           >
             <span className="flex flex-row items-center gap-x-1">
