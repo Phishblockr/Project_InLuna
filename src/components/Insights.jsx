@@ -6,95 +6,10 @@ import {
 import { PiUserCircleLight } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { remUser } from "../features/Insights/insightsSlice";
+import { fetchEmployees, removeEmployee, addUser } from "../features/Insights/insightsSlice";
 import { toast } from "sonner";
-import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 
-const EmployeeRow = ({ id, name, email, department, img, handleRemUser }) => (
-  <tr className="font-medium odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40] dark:text-[#F4F4F4]">
-    <td className="p-2 pr-0 text-gray-500 dark:text-[#F4F4F4]">#0175{id}</td>
-    <td className="py-2">
-      <Link
-        title="Click to view details"
-        to={`/insights/empinsight/${id}`}
-        className="flex justify-start items-center gap-3 dark:text-[#F4F4F4]"
-      >
-        {img ? (
-          <img
-            src={img}
-            alt={name}
-            className="w-10 h-10 rounded-full object-cover"
-          />
-        ) : (
-          <svg
-            className="w-10 h-10 p-0 rounded-full object-cover"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="16 16 224 224"
-          >
-            <path
-              d="M63.8,199.37a72,72,0,0,1,128.4,0"
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="12"
-            />
-            <circle
-              cx="128"
-              cy="128"
-              r="96"
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="12"
-            />
-            <circle
-              cx="128"
-              cy="120"
-              r="40"
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="12"
-            />
-          </svg>
-        )}
-        <p>{name}</p>
-      </Link>
-    </td>
-    <td className="text-gray-500 dark:text-[#F4F4F4]">{email}</td>
-    <td>{department}</td>
-    <td>
-      <button
-        className="cursor-pointer"
-        onClick={() => handleRemUser(id, name)}
-      >
-        <svg
-          stroke="currentColor"
-          fill="currentColor"
-          strokeWidth="0"
-          viewBox="0 0 24 24"
-          className="w-6 h-6 text-red-500 cursor-pointer"
-          height="1em"
-          width="1em"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z"></path>
-        </svg>
-      </button>
-    </td>
-  </tr>
-);
-
-const Pagination = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-  onNextPage,
-  onPrevPage,
-}) => (
+const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPrevPage }) => (
   <nav className="flex gap-x-1 justify-between">
     <a
       className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${
@@ -133,164 +48,165 @@ const Pagination = ({
   </nav>
 );
 
+const EmployeeRow = ({ _id, name, email, department, img, handleRemove }) => (
+  <tr className="font-medium odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40] dark:text-[#F4F4F4]">
+    <td className="p-2 pr-0 text-gray-500 dark:text-[#F4F4F4]">{_id}</td>
+    <td className="py-2">
+      <Link
+        title="Click to view details"
+        to={`/insights/empinsight/${_id}`}
+        className="flex justify-start items-center gap-3 dark:text-[#F4F4F4]"
+      >
+        {img ? (
+          <img
+            src={img}
+            alt={name}
+            className="w-10 h-10 rounded-full object-cover"
+          />
+        ) : (
+          <PiUserCircleLight className="w-10 h-10 p-0 rounded-full object-cover" />
+        )}
+      </Link>
+    </td>
+    <td>{name}</td>
+    <td>{email}</td>
+    <td>{department}</td>
+    <td>
+      <button
+        onClick={() => handleRemove(_id)}
+        className="text-red-500 hover:text-red-700"
+      >
+        Remove
+      </button>
+    </td>
+  </tr>
+);
+
 const Insights = () => {
-  const disp = useDispatch();
-  const userData = useSelector((state) => state.insights.users);
-  const perPageRec = useSelector((state) => state.perPageRec);
-  const [currPage, setCurrPage] = useState(1);
+  const dispatch = useDispatch();
+  const employees = useSelector((state) => state.insights.users);
+  const currentPage = useSelector((state) => state.insights.currentPage);
+  const totalPages = useSelector((state) => state.insights.totalPages);
   const [query, setQuery] = useState("");
-  const [allUsers, setAllUsers] = useState(userData);
-  const userPerPage = perPageRec;
-  const lastPageIndex = currPage * userPerPage;
-  const firstPageIndex = lastPageIndex - userPerPage;
-  const records = allUsers.slice(firstPageIndex, lastPageIndex);
-  const npage = Math.ceil(allUsers.length / userPerPage);
-
-  const changePage = (n) => setCurrPage(n);
-  const nextPage = () => currPage < npage && setCurrPage(currPage + 1);
-  const prevPage = () => currPage > 1 && setCurrPage(currPage - 1);
-  const departments = [...new Set(userData.map((user) => user.department))];
-
-  const searchUsers = (txt) => {
-    setQuery(txt.toLowerCase());
-    if (txt === "") setAllUsers(userData);
-    else
-      setAllUsers(userData.filter((el) => el.name.toLowerCase().includes(txt)));
-  };
-
-  const handleRemUser = (id, name) => {
-    const res = confirm(`Do you want to remove user ${name}?`);
-
-    if (res) {
-      try {
-        disp(remUser(id));
-        toast.success(`User ${name} removed`);
-      } catch (error) {
-        console.error(error.message);
-        toast.error(`Unable to remove user ${id}`);
-      }
-    } else {
-      return;
-    }
-  };
-
-  const handleDepartmentSort = (dept) => {
-    if (dept === "default") {
-      setAllUsers(userData);
-    } else {
-      const filteredUsers = userData.filter((user) => user.department === dept);
-      setAllUsers(filteredUsers);
-    }
-  };
-
-  const handleSetPerPageRec = (value) => {
-    dispatch(setPerPageRec(value));
-  };
+  const [dataFilter, setDataFilter] = useState("all");
 
   useEffect(() => {
-    if (npage < currPage){
-      setCurrPage(npage || 1);
-    }
-  },[npage, currPage])
+    dispatch(fetchEmployees(69));
+  }, [dispatch, currentPage]);
 
-  useEffect(() => {
-    setAllUsers(userData);
-  }, [userData]);
+  const handleRemoveEmployee = (id) => {
+    dispatch(removeEmployee(id)).then(() => {
+      toast.success("Employee removed successfully");
+      dispatch(fetchEmployees(currentPage));
+    });
+  };
+
+  const handleAddEmployee = (employee) => {
+    dispatch(addUser(employee)).then(() => {
+      toast.success("Employee added successfully");
+      dispatch(fetchEmployees(currentPage));
+    });
+  };
+
+  const handlePageChange = (page) => {
+    dispatch(fetchEmployees(page));
+  };
+
+  const handleSearch = () => {
+    const filteredData = employees.filter((emp) =>
+      Object.keys(emp).some((key) =>
+        String(emp[key]).toLowerCase().includes(query.toLowerCase())
+      )
+    );
+    return filteredData;
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
 
   return (
-    <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-5">
+    <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
-          <h1 className="font-medium text-2xl">Employees</h1>
+          <h1 className="text-2xl font-medium tracking-tight">Insights</h1>
         </div>
-        <div className="flex gap-5 justify-evenly items-center">
+        <div className="flex items-center gap-x-3">
           <input
-            value={query}
-            onChange={(e) => searchUsers(e.target.value)}
-            placeholder="Search User"
-            className="border-2 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+            type="text"
+            placeholder="Search Employee..."
+            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+            onChange={(e) => setQuery(e.target.value)}
           />
           <select
-            defaultValue="Department"
-            className="bg-white text-lg text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0364BD] p-2 border-2 border-gray-300 rounded-lg dark:bg-[#001733] dark:border-0"
-            onChange={(e) => handleDepartmentSort(e.target.value)}
-          >
-            <option value="default">Sort by</option>
-            {departments.map((el) => (
-              <option key={el} value={el}>
-                {el}
-              </option>
-            ))}
-          </select>
-          <select
-            name="perPageRec"
-            id="perPageRec"
+            name="filters"
+            id="filters"
             className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-            onChange={(e) => handleSetPerPageRec(e.target.value)}
-            value={perPageRec}
+            onChange={(e) => setDataFilter(e.target.value)}
           >
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+            <option value="all">Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
-          <Link to="/insights/addemp">
-            <button className="flex justify-center items-center gap-3 px-4 p-2 rounded-lg text-white cursor-pointer bg-[#0364BD]">
-              <p className="text-lg">Add Emp</p>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-6 h-6 text-white"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
-              </svg>
-            </button>
+          <button
+            onClick={handleSearch}
+            className="border border-gray-300 rounded-md p-[10px]"
+          >
+            Search
+          </button>
+          <Link
+            to={"/insights/addemployee"}
+            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
+          >
+            <MdOutlineArrowForwardIos />
+            <span>Add Employee</span>
           </Link>
         </div>
       </div>
-      <table>
-        <thead>
-          <tr className="text-left mb-3 dark:text-[#F4F4F4]">
-            <th>Employee-id</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Department</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody className="mt-3">
-          {records.map(({ id, name, email, department, img }) => (
-            <EmployeeRow
-              handleRemUser={handleRemUser}
-              key={id}
-              id={id}
-              name={name}
-              email={email}
-              department={department}
-              img={img}
-            />
-          ))}
-        </tbody>
-      </table>
-      {allUsers.length > 0 && (
-        <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
-          <Pagination
-            currentPage={currPage}
-            totalPages={npage}
-            onPageChange={changePage}
-            onNextPage={nextPage}
-            onPrevPage={prevPage}
-          />
+      {employees.length === 0 ? (
+        <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
+          <span>No Insights Found!</span>
+        </div>
+      ) : (
+        <div>
+          <table className="w-full dark:text-[#F4F4F4]">
+            <thead>
+              <tr className="text-left mb-3 dark:text-[#F4F4F4]">
+                <th className="border-b p-2">Employee-id</th>
+                <th className="border-b p-2">Name</th>
+                <th className="border-b p-2">Email</th>
+                <th className="border-b p-2">Department</th>
+                <th className="border-b p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="mt-3">
+              {handleSearch().map((employee) => (
+                <EmployeeRow
+                  key={employee._id}
+                  {...employee}
+                  handleRemove={handleRemoveEmployee}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        onNextPage={handleNextPage}
+        onPrevPage={handlePrevPage}
+      />
     </div>
   );
 };
