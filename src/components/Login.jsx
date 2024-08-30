@@ -1,12 +1,46 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../utils/AuthProvider';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [orgId, setOrgId] = useState("");
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Handle login logic here
+    const loginData = {
+      uuid: orgId,
+      username: username,
+      password: password
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/user/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      });
+      if (!response.ok) {
+        throw new Error("Login failed!");
+      }
+      const data = await response.json();
+      console.log(data)
+      if (data.isDashboardAdmin) {
+        login(data);
+        navigate('/');
+      } else {
+        setError("Unauthorized")
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError('Login failed. Please check your credentials.');
+    }
   };
 
   return (
@@ -19,14 +53,27 @@ const Login = () => {
           <form onSubmit={handleSubmit}>
             <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
             <div className="mb-4">
-              <label htmlFor="email" className="block text-gray-700 mb-2 dark:text-[#F4F4F4]">
-                Email:
+              <label htmlFor="orgId" className="block text-gray-700 mb-2 dark:text-[#F4F4F4]">
+                Organization Id:
               </label>
               <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="orgId"
+                id="orgId"
+                value={orgId}
+                onChange={(e) => setOrgId(e.target.value)}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="username" className="block text-gray-700 mb-2 dark:text-[#F4F4F4]">
+                Username:
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
               />

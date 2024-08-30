@@ -6,6 +6,8 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
+import ProtectedRoute from "./utils/ProtectedRoute.jsx";
+import { AuthProvider } from "./utils/AuthProvider.jsx";
 import Users from "./components/Users.jsx";
 import Insights from "./components/Insights.jsx";
 import UrlLists from "./components/UrlLists.jsx";
@@ -26,6 +28,7 @@ import EmpInsights from "./components/EmpInsights.jsx";
 import Login from "./components/Login.jsx";
 import Overview from "./components/Overview.jsx";
 import { useSelector } from "react-redux";
+import Logout from "./components/Logout.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -50,35 +53,43 @@ function App() {
         <div className="w-full h-full min-h-[100svh] bg-[#F7F4F4] dark:bg-[#001733] flex justify-center">
           <div className="w-full h-full max-w-screen-2xl">
             <Router>
-              <MainLayout>
-                <Routes>
-                  <Route path="/" element={<Overview />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/users" element={<Users />} />
-                  <Route path="/users/adduser" element={<AddUser />} />
-                  <Route
-                    path="/users/userDetails/:id"
-                    element={<UserDetails />}
-                  />
-                  <Route path="/insights" element={<Insights />} />
-                  <Route path="/insights/addemp" element={<AddEmp />} />
-                  <Route
-                    path="/insights/empinsight/:id"
-                    element={<EmpInsights />}
-                  />
-                  <Route path="/urllists" element={<UrlLists />} />
-                  <Route path="/urllists/addurl" element={<AddUrl />} />
-                  <Route
-                    path="/urllists/urldetails/:id"
-                    element={<UrlDetails />}
-                  />
-                  <Route path="/requests" element={<Requests />} />
-                  <Route path="/feedback" element={<Feedbacks />} />
-                  <Route path="/logs" element={<Logs />} />
-                  <Route path="/profileSettings" element={<AdminSettings />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Routes>
-              </MainLayout>
+              <AuthProvider>
+                <MainLayout>
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/logout" element={<Logout />} />
+
+                    {/* Protected Routes */}
+                    <Route element={<ProtectedRoute />}>
+                      <Route path="/" element={<Overview />} />
+
+                      <Route path="/users" element={<Users />} />
+                      <Route path="/users/adduser" element={<AddUser />} />
+                      <Route
+                        path="/users/userDetails/:id"
+                        element={<UserDetails />}
+                      />
+                      <Route path="/insights" element={<Insights />} />
+                      <Route path="/insights/addemp" element={<AddEmp />} />
+                      <Route
+                        path="/insights/empinsight/:id"
+                        element={<EmpInsights />}
+                      />
+                      <Route path="/urllists" element={<UrlLists />} />
+                      <Route path="/urllists/addurl" element={<AddUrl />} />
+                      <Route
+                        path="/urllists/urldetails/:id"
+                        element={<UrlDetails />}
+                      />
+                      <Route path="/requests" element={<Requests />} />
+                      <Route path="/feedback" element={<Feedbacks />} />
+                      <Route path="/logs" element={<Logs />} />
+                      <Route path="/profileSettings" element={<AdminSettings />} />
+                      <Route path="/settings" element={<Settings />} />
+                    </Route>
+                  </Routes>
+                </MainLayout>
+              </AuthProvider>
             </Router>
           </div>
         </div>
