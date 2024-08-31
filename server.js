@@ -8,9 +8,11 @@ import userRoutes from './routes/userRoutes.js';
 import urlRoutes from './routes/urlRoutes.js';
 import whitelistReqRoutes from './routes/whitelistReqRoutes.js';
 import feedbackRoutes from "./routes/feedbackRoutes.js"
+import overviewRoutes from "./routes/overviewRoutes.js"
 import winston from 'winston';
 import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js"
+import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js"
 
 dotenv.config();
 
@@ -48,6 +50,11 @@ app.use("/api/whitelistReq", authenticateToken, whitelistReqRoutes);
 
 // Feedback Routes
 app.use("/api/feedback", authenticateToken, feedbackRoutes);
+
+// Dashboard Routes
+
+// Overview Page Routes
+app.use("/api/overview",dashboardAdminMiddleware, overviewRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
