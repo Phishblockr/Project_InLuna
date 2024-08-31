@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthProvider';
+import { toast } from "sonner";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [orgId, setOrgId] = useState("");
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -27,19 +27,22 @@ const Login = () => {
         body: JSON.stringify(loginData),
       });
       if (!response.ok) {
-        throw new Error("Login failed!");
+        throw new Error("Login failed. Please check your credentials!");
       }
       const data = await response.json();
       console.log(data)
       if (data.isDashboardAdmin) {
+        data.username = username;
+        data.orgId = orgId;
         login(data);
         navigate('/');
+        toast.success("Login successful")
       } else {
-        setError("Unauthorized")
+        toast.error("Unauthorized");
       }
     } catch (error) {
-      console.error('Error:', error);
-      setError('Login failed. Please check your credentials.');
+      toast.error("Unable to communicate with server");
+    
     }
   };
 
