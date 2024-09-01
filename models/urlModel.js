@@ -60,7 +60,7 @@ const urlSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-urlSchema.index({ url: 1, orgId: 1 });
+urlSchema.index({ url: 1, orgId: 1, createdAt: 1});
 
 const Url = mongoose.model("Url", urlSchema);
 

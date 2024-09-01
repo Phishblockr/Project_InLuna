@@ -38,7 +38,7 @@ const whitelistReqSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-whitelistReqSchema.index({ orgId: 1 });
+whitelistReqSchema.index({ orgId: 1, createdAt: 1 });
 
 const WhitelistReq = mongoose.model("whitelistReq", whitelistReqSchema);
 
