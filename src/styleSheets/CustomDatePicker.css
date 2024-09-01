@@ -1,0 +1,51 @@
+/* CustomDatePicker.css */
+.react-datepicker__month-container {
+    @apply bg-white dark:bg-[#001C40];
+  }
+  
+  .react-datepicker__header {
+    @apply bg-gray-100 dark:bg-[#001C40];
+  }
+  
+  /* Stronger selector to ensure the year text in the header is styled correctly */
+  .react-datepicker__current-month,
+  .react-datepicker__current-month.react-datepicker__current-month--hasYearDropdown,
+  .react-datepicker__current-month.react-datepicker__current-month--hasMonthDropdown {
+    @apply text-black dark:text-[#F4F4F4];
+  }
+  
+  .react-datepicker__year-dropdown-container,
+  .react-datepicker__month-dropdown-container,
+  .react-datepicker__year-read-view,
+  .react-datepicker__month-read-view,
+  .react-datepicker__year-read-view--down-arrow,
+  .react-datepicker__month-read-view--down-arrow {
+    @apply text-black dark:text-[#F4F4F4];
+  }
+  
+  .react-datepicker__day-name,
+  .react-datepicker__day,
+  .react-datepicker__time-name,
+  .react-datepicker__month-text,
+  .react-datepicker__year-text {
+    @apply text-gray-700 dark:text-[#F4F4F4];
+  }
+  
+  .react-datepicker__day--selected,
+  .react-datepicker__month-text--selected,
+  .react-datepicker__year-text--selected {
+    @apply bg-blue-500 text-white dark:bg-blue-700 dark:text-white;
+  }
+  
+  .react-datepicker__day:hover,
+  .react-datepicker__month-text:hover,
+  .react-datepicker__year-text:hover {
+    @apply bg-gray-200 dark:bg-[#2D3E50];
+  }
+  
+  /* For the selected month in darker color in dark mode */
+  .react-datepicker__month-text--keyboard-selected,
+  .react-datepicker__year-text--keyboard-selected {
+    @apply bg-blue-600 text-white dark:bg-blue-900 dark:text-white;
+  }
+  
