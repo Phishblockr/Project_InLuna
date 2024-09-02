@@ -1,11 +1,15 @@
 import Feedback from "../models/feedbackModel.js";
+import mongoose from 'mongoose';
+
 export const addFeedbackExt = async (req, res) => {
     try {
-        const {userProfileImg, userId, username, feedback, orgId} = req.body;
+
+        const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
+        const orgId = parseInt(req.user.orgId);
+
+        const {feedback} = req.body;
         const newFeedback = new Feedback({
-            userProfileImg,
             userId,
-            username,
             feedback,
             orgId,
         });

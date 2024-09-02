@@ -2,19 +2,10 @@ import mongoose from 'mongoose';
 
 const whitelistReqSchema = new mongoose.Schema(
     {
-        userProfileImg: {
-            type: String,
-            default: ""
-        },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "user",
             required: [true, "UserId cannot be empty"],
-        },
-        username: {
-            type: String,
-            required: [true, "Username cannot be empty"],
-            trim: true
         },
         url: {
             type: String,

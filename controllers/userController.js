@@ -98,7 +98,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 
     if (username === user.username && isMatch) {
       const payload = {
-        userId: user.id, 
+        userId: user.id,
         orgId: user.uuid,
         isDashboardAdmin: user.isDashboardAdmin
       }

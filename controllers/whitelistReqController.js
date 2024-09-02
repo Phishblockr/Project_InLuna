@@ -1,12 +1,15 @@
 import WhitelistReq from '../models/whitelistReqModel.js';
+import mongoose from 'mongoose';
+
 
 export const addWhitelistReqExt = async (req, res) => {
     try {
-        const { userProfileImg, userId, username, url, reason, orgId } = req.body;
+        const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
+        const orgId = parseInt(req.user.orgId);
+
+        const { url, reason } = req.body;
         const newWhitelistReq = new WhitelistReq({
-            userProfileImg,
             userId,
-            username,
             url,
             reason,
             orgId,

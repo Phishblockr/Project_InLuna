@@ -1,9 +1,16 @@
 import Url from '../models/urlModel.js';
 import fetch from 'node-fetch';
+import mongoose from 'mongoose';
 
 export const addUrlExt = async (req, res) => {
     try {
-        const { url, visitedBy, orgId, isVerified, isPhishing, isUserAdded, tags } = req.body;
+        
+        const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
+        const orgId = parseInt(req.user.orgId);
+
+        const visitedBy =  [{ userId }]
+
+        const { url, isVerified, isPhishing, isUserAdded, tags } = req.body;
 
         const existingUrl = await Url.findOne({ url: url, orgId: orgId });
 
@@ -15,7 +22,6 @@ export const addUrlExt = async (req, res) => {
             } else {
                 existingUrl.visitedBy.push({
                     userId: visitedBy[0].userId,
-                    username: visitedBy[0].username,
                     visits: [{ timestamp: new Date() }],
                     totalVisits: 1
                 });
@@ -27,7 +33,6 @@ export const addUrlExt = async (req, res) => {
                 url: url,
                 visitedBy: [{
                     userId: visitedBy[0].userId,
-                    username: visitedBy[0].username,
                     visits: [{ timestamp: new Date() }],
                     totalVisits: 1,
                 }],
@@ -46,15 +51,18 @@ export const addUrlExt = async (req, res) => {
 };
 
 export const fetchUrlStatsExt = async (req, res) => {
-    const { username, orgId } = req.query;
+    const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);  
+    const orgId = parseInt(req.user.orgId);
+
+    console.log(userId, orgId);
     try {
         const result = await Url.aggregate([
-            { $match: { "orgId": parseInt(orgId) } },
-            { $unwind: "$visitedBy" },
-            { $match: { "visitedBy.username": username } },
+            { $match: { orgId: orgId } },  
+            { $unwind: "$visitedBy" },  
+            { $match: { "visitedBy.userId": userId } },  
             { $group: {
-                _id: "$isBlacklisted",
-                totalVisits: { $sum: "$visitedBy.totalVisits" }
+                _id: "$isBlacklisted",  
+                totalVisits: { $sum: "$visitedBy.totalVisits" }  
             }}
         ]);
 
@@ -62,6 +70,7 @@ export const fetchUrlStatsExt = async (req, res) => {
             blacklistedUrls: 0,
             visitedUrls: 0,
         };
+
         result.forEach(item => {
             if (item._id) {
                 response.blacklistedUrls = item.totalVisits;
@@ -69,6 +78,7 @@ export const fetchUrlStatsExt = async (req, res) => {
                 response.visitedUrls = item.totalVisits;
             }
         });
+
         res.status(200).send(response);
     } catch (error) {
         res.status(500).send(error.message);

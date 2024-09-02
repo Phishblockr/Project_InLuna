@@ -13,11 +13,6 @@ const urlSchema = new mongoose.Schema(
           ref: "user",
           required: [true, "UserId cannot be empty"],
         },
-        username: {
-          type: String,
-          required: [true, "Username cannot be empty"],
-          trim: true
-        },
         visits: [
           {
             timestamp: {
