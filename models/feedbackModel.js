@@ -12,7 +12,7 @@ const FeedbackSchema = new Schema({
         required: [true, "Url cannot be empty"],
     },
     orgId: {
-        type: Number,
+        type: String,
         required: [true, "Organization ID cannot be empty"],
     },
 },

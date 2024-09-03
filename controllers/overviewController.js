@@ -2,7 +2,9 @@ import Url from "../models/urlModel.js";
 import WhitelistReq from "../models/whitelistReqModel.js";
 
 export const fetchOrgMetrics = async (req, res) => {
-    const { orgId, month, year } = req.query;
+    const { month, year } = req.query;
+
+    const orgId = req.user.orgId;
 
     try {
         const startOfMonth = new Date(year, month - 1, 1);
@@ -14,25 +16,25 @@ export const fetchOrgMetrics = async (req, res) => {
         const endOfPreviousMonth = new Date(previousYear, previousMonth, 0);
 
         const approvedWhitelistCount = await WhitelistReq.countDocuments({
-            orgId: parseInt(orgId),
+            orgId: orgId,
             status: "approved",
             createdAt: { $gte: startOfMonth, $lt: endOfMonth }
         });
 
         const previousApprovedWhitelistCount = await WhitelistReq.countDocuments({
-            orgId: parseInt(orgId),
+            orgId: orgId,
             status: "approved",
             createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
         });
 
         const blacklistedUrlsCount = await Url.countDocuments({
-            orgId: parseInt(orgId),
+            orgId: orgId,
             isBlacklisted: true,
             createdAt: { $gte: startOfMonth, $lt: endOfMonth }
         });
 
         const previousBlacklistedUrlsCount = await Url.countDocuments({
-            orgId: parseInt(orgId),
+            orgId: orgId,
             isBlacklisted: true,
             createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
         });
@@ -40,7 +42,7 @@ export const fetchOrgMetrics = async (req, res) => {
         const orgMetrics = await Url.aggregate([
             {
                 $match: {
-                    orgId: parseInt(orgId),
+                    orgId: orgId,
                     createdAt: { $gte: startOfMonth, $lt: endOfMonth }
                 }
             },
@@ -66,7 +68,7 @@ export const fetchOrgMetrics = async (req, res) => {
         const previousOrgMetrics = await Url.aggregate([
             {
                 $match: {
-                    orgId: parseInt(orgId),
+                    orgId: orgId,
                     createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
                 }
             },

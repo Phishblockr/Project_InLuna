@@ -43,9 +43,10 @@ const OrganizationSchema = new Schema({
       min: [0, 'Phishing links blocked cannot be negative']
     }
   },
-  uuid: {
-    type: Number,
-    required: [true, 'Organization ID is required']
+  orgId: {
+    type: String,
+    required: [true, 'Organization ID is required'],
+    unique: true
   },
   createdAt: {
     type: Date,
@@ -53,5 +54,5 @@ const OrganizationSchema = new Schema({
   }
 });
 
-const Organization = mongoose.model('Organization', OrganizationSchema); 
+const Organization = mongoose.model('Organization', OrganizationSchema);
 export default Organization;

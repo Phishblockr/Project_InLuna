@@ -20,7 +20,7 @@ const logger = winston.createLogger({
 // Get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const users = await User.find({ uuid: id }).select('-password');
+  const users = await User.find({ orgId: id }).select('-password');
   res.status(users.length > 0 ? 200 : 404).json(users.length > 0 ? users : { error: 'Users not found' });
 });
 
@@ -35,11 +35,11 @@ export const createUser = asyncHandler(async (req, res) => {
       username,
       name,
       email,
-      phone: phone,
+      phone,
       role,
       department,
       img,
-      uuid: orgId,
+      orgId,
       password: hashedPassword
     });
     await newUser.save();
@@ -86,9 +86,9 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
 // Login user
 export const loginUser = asyncHandler(async (req, res) => {
-  const { uuid, username, password } = req.body;
+  const { orgId, username, password } = req.body;
   try {
-    const user = await User.findOne({ uuid, username });
+    const user = await User.findOne({ orgId, username });
 
     if (!user) {
       return res.status(404).json({ error: 'Invalid Credentials' });
@@ -99,11 +99,11 @@ export const loginUser = asyncHandler(async (req, res) => {
     if (username === user.username && isMatch) {
       const payload = {
         userId: user.id,
-        orgId: user.uuid,
-        isDashboardAdmin: user.isDashboardAdmin
+        orgId: user.orgId,
+        userType: user.userType
       }
       const token = jwt.sign(payload, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h'  });
-      res.status(200).json({ token, userId: user.id, profileImg: user.img, isDashboardAdmin: user.isDashboardAdmin });
+      res.status(200).json({ token });
     } else {
       return res.status(401).json({ error: 'Invalid credentials' });
     }

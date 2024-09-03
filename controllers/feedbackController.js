@@ -5,7 +5,7 @@ export const addFeedbackExt = async (req, res) => {
     try {
 
         const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
-        const orgId = parseInt(req.user.orgId);
+        const orgId = req.user.orgId;
 
         const {feedback} = req.body;
         const newFeedback = new Feedback({

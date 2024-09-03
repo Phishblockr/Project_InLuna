@@ -6,7 +6,7 @@ export const addUrlExt = async (req, res) => {
     try {
         
         const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
-        const orgId = parseInt(req.user.orgId);
+        const orgId = req.user.orgId;
 
         const visitedBy =  [{ userId }]
 
@@ -52,7 +52,7 @@ export const addUrlExt = async (req, res) => {
 
 export const fetchUrlStatsExt = async (req, res) => {
     const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);  
-    const orgId = parseInt(req.user.orgId);
+    const orgId = req.user.orgId;
 
     console.log(userId, orgId);
     try {

@@ -1,4 +1,7 @@
 import jwt from "jsonwebtoken"
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const dashboardAdminMiddleware = (req, res, next) => {
     const authHeader = req.headers["authorization"];
@@ -12,7 +15,7 @@ const dashboardAdminMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
 
-        if (req.user.isDashboardAdmin) {
+        if (req.user.userType == process.env.ADMIN) {
             next();
         } else {
             return res.status(403).json({ error: "Access denied. Admins only." });

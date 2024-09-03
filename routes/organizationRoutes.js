@@ -8,7 +8,7 @@ import {
   searchOrganizations,
   getOrganizationsByAdmin,
   aggregateStatistics,
-  findUsersWithUuid
+  findUsersWithOrgId
 } from '../controllers/organizationController.js';
 
 const router = express.Router();
@@ -21,6 +21,6 @@ router.get('/stats/aggregate', aggregateStatistics);
 router.get('/:id', getOrganization);
 router.delete('/:id', deleteOrganization);
 router.put('/:id', updateOrganization);
-router.get('/getAllUsers/:orgId', findUsersWithUuid);
+router.get('/getAllUsers/:orgId', findUsersWithOrgId);
 
 export default router;

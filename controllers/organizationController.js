@@ -140,12 +140,12 @@ export const aggregateStatistics = async (req, res) => {
   }
 };
 
-// Find all users with UUID
-export const findUsersWithUuid = async (req, res) => {
+// Find all users with orgId
+export const findUsersWithOrgId = async (req, res) => {
   try {
     const { orgId } = req.params;
     console.log(orgId);
-    const users = await User.find({ uuid: orgId });
+    const users = await User.find({ orgId: orgId });
     console.log(users);
     res.status(200).json(users);
   } catch (err) {

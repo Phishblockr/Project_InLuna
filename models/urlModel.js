@@ -48,7 +48,7 @@ const urlSchema = new mongoose.Schema(
       default: false,
     },
     orgId: {
-      type: Number,
+      type: String,
       required: [true, "Organization ID cannot be empty"],
     },
   },

@@ -22,7 +22,7 @@ const whitelistReqSchema = new mongoose.Schema(
             default: 'pending'
         },
         orgId: {
-            type: Number,
+            type: String,
             required: [true, "Organization ID cannot be empty"],
         },
     },

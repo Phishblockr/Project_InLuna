@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const { Schema } = mongoose;
 
@@ -50,17 +53,17 @@ const userSchema = new Schema({
         enum: ['active', 'inactive', 'suspended'],
         default: 'active'
     },
-    isDashboardAdmin: {
-        type: Boolean,
-        default: false,
+    userType: {
+        type: String,
+        default: process.env.USER,
     },
     createdAt: {
         type: Date,
         default: Date.now
     },
-    uuid: {
-        type: Number,
-        required: [true, 'Organization ID is required']
+    orgId: {
+        type: String,
+        required: [true, 'Organization ID is required'],
     }
 });
 
