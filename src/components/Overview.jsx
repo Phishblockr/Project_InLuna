@@ -60,9 +60,8 @@ const Overview = () => {
 
     try {
       const user = JSON.parse(localStorage.getItem("user"));
-      const orgId = user.orgId;
       const token = user.token;
-      const response = await fetch(`http://localhost:5000/api/overview/org-metrics?orgId=${encodeURIComponent(orgId)}&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`, {
+      const response = await fetch(`http://localhost:5000/api/overview/org-metrics?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`, {
         method: "GET",
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -91,9 +90,10 @@ const Overview = () => {
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-4'>
       <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
+        <div className="flex justify-between">
         <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
 
-        <div className="flex justify-end">
+        <div >
           <div className="mb-2 py-2 px-5 shadow border-2 border-gray-100 flex items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-[#001C40]">
           <span>Showing overview for: </span>
           <DatePicker
@@ -104,6 +104,7 @@ const Overview = () => {
             dateFormat="MM/yyyy"
             className="w-20 text-center dark:text-[#F4F4F4] dark:bg-[#001C40]"
           />
+          </div>
           </div>
         </div>
 

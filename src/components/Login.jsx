@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthProvider';
 import { toast } from "sonner";
+import { jwtDecode } from 'jwt-decode';
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -13,7 +14,7 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const loginData = {
-      uuid: orgId,
+      orgId: orgId,
       username: username,
       password: password
     };
@@ -30,8 +31,9 @@ const Login = () => {
         throw new Error("Login failed. Please check your credentials!");
       }
       const data = await response.json();
-      console.log(data)
-      if (data.isDashboardAdmin) {
+      const decodedToken = jwtDecode(data.token);
+      const userType = import.meta.env.VITE_USERTYPE
+      if (decodedToken.userType == userType) {
         data.username = username;
         data.orgId = orgId;
         login(data);
@@ -41,7 +43,7 @@ const Login = () => {
         toast.error("Unauthorized");
       }
     } catch (error) {
-      toast.error("Unable to communicate with server");
+      toast.error("Unable to communicate with server ", error);
     
     }
   };
