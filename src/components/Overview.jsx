@@ -59,9 +59,10 @@ const Overview = () => {
     const year = date.getFullYear();
 
     try {
+      const apiUrl = import.meta.env.VITE_API_URL
       const user = JSON.parse(localStorage.getItem("user"));
       const token = user.token;
-      const response = await fetch(`http://localhost:5000/api/overview/org-metrics?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`, {
+      const response = await fetch(`${apiUrl}/overview/org-metrics?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`, {
         method: "GET",
         headers: {
           'Authorization': `Bearer ${token}`,
