@@ -53,8 +53,6 @@ export const addUrlExt = async (req, res) => {
 export const fetchUrlStatsExt = async (req, res) => {
     const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);  
     const orgId = req.user.orgId;
-
-    console.log(userId, orgId);
     try {
         const result = await Url.aggregate([
             { $match: { orgId: orgId } },  
