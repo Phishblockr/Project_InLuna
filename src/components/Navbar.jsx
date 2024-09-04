@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   RiSearchLine,
   RiNotificationBadgeLine,
@@ -63,6 +63,7 @@ const HelpOptions = [
 const Navbar = () => {
   const [dropdown, setDropdown] = useState(false);
   const [helpDropdown, setHelpDropdown] = useState(false);
+  const [userData, setUserData] = useState("")
 
   const toggleDropdown = () => {
     setDropdown(!dropdown);
@@ -79,6 +80,30 @@ const Navbar = () => {
   const closeHelpDropdown = () => {
     setHelpDropdown(false);
   };
+
+  const fetchUser = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user.token;
+      const response = await fetch(`${apiUrl}/user/profile`, {
+        method: "GET",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      setUserData(data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
 
   return (
     <nav className="bg-white px-4 py-3 flex justify-between sticky left-0 right-0 top-0 ml-64 z-10 dark:bg-[#002451]">
@@ -132,9 +157,10 @@ const Navbar = () => {
           <RiNotificationBadgeLine className="w-6 h-6" />
         </div>
         <div className="relative text-black flex items-center gap-x-3 dark:text-[#F4F4F4]">
-          <FaRegUserCircle className="w-6 h-6 mt-1" />
+          {/* <FaRegUserCircle className="w-6 h-6 mt-1" /> */}
+          <img src={userData.img} alt="" />
           <div className="flex flex-col">
-            <span>User</span>
+            <span>{userData.name}</span>
             <span className="text-[10px]">Admin</span>
           </div>
           <button
@@ -144,28 +170,28 @@ const Navbar = () => {
           >
             <RiArrowDropDownLine className="w-6 h-6 mt-1" />
           </button>
-          </div>
-          {dropdown && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={closeDropdown}></div>
-              <div className={`z-20 absolute rounded-lg shadow w-32 top-full right-0 ${dropdownTheme}`}>
-                <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
-                  {profileSettings.map((setting) => (
-                    <li key={setting.id} className={setting.style}>
-                      <Link
-                        title={setting.title}
-                        onClick={closeDropdown}
-                        className="flex items-center justify-center py-2"
-                        to={setting.url}
-                      >
-                        {setting.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </>
-          )}
+        </div>
+        {dropdown && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={closeDropdown}></div>
+            <div className={`z-20 absolute rounded-lg shadow w-32 top-full right-0 ${dropdownTheme}`}>
+              <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
+                {profileSettings.map((setting) => (
+                  <li key={setting.id} className={setting.style}>
+                    <Link
+                      title={setting.title}
+                      onClick={closeDropdown}
+                      className="flex items-center justify-center py-2"
+                      to={setting.url}
+                    >
+                      {setting.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
       </div>
     </nav>
   );

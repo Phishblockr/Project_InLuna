@@ -7,7 +7,7 @@ import { setOverviewData } from '../features/Overview/OverviewSlice.js';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import '../styleSheets/CustomDatePicker.css'; 
+import '../static/CustomDatePicker.css'; 
 
 const seriesData = [128, 56, 89, 74];
 const categories = ['Visited', 'Blocked', 'Clicked', 'Whitelisted'];
