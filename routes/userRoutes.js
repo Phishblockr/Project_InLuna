@@ -5,17 +5,16 @@ import {
   getUser,
   updateUser,
   deleteUser,
-  loginUser
+  fetchProfile
 } from '../controllers/userController.js';
 
 const router = express.Router();
 
-// Define routes
-router.get('/:id', getAllUsers);
-router.post('/', createUser);
-router.get('/:id', getUser);
-router.put('/:id', updateUser);
-router.delete('/:id', deleteUser);
-router.post('/login', loginUser);
+router.route("/fetch-all/:id").get(getAllUsers);
+router.route("/create").post(createUser);
+router.route("/fetch/:id").get(getUser);
+router.route("/update/:id").put(updateUser);
+router.route("/delete/:id").delete(deleteUser);
+router.route("/profile").get(fetchProfile);   
 
 export default router;

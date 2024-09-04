@@ -1,8 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+import authenticationRoutes from "./routes/authenticationRoutes.js"
 import organizationRoutes from './routes/organizationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import urlRoutes from './routes/urlRoutes.js';
@@ -39,8 +39,11 @@ mongoose.connect(process.env.MONGO_URI)
 // Organization Routes
 app.use('/api/org', organizationRoutes);
 
+// Authentication Routes
+app.use("/api/auth", authenticationRoutes);
+
 // Users Routes
-app.use('/api/user', userRoutes);
+app.use('/api/user', dashboardAdminMiddleware, userRoutes);
 
 // Url Routes
 app.use("/api/url", authenticateToken, urlRoutes);
