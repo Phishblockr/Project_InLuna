@@ -157,8 +157,8 @@ const Navbar = () => {
           <RiNotificationBadgeLine className="w-6 h-6" />
         </div>
         <div className="relative text-black flex items-center gap-x-3 dark:text-[#F4F4F4]">
-          {/* <FaRegUserCircle className="w-6 h-6 mt-1" /> */}
-          <img src={userData.img} alt="" />
+          {userData.img ? <img className="w-[24px] h-[24px] rounded-full" src={userData.img} alt="profile pic" /> : <FaRegUserCircle className="w-6 h-6 mt-1" />}
+          
           <div className="flex flex-col">
             <span>{userData.name}</span>
             <span className="text-[10px]">Admin</span>
