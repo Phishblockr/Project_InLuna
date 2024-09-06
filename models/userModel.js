@@ -26,6 +26,12 @@ const userSchema = new Schema({
         unique: true,
         match: [/.+@.+\..+/, 'Please fill a valid email address']
     },
+    recoveryEmail: {
+        type: String,
+        required: true,
+        unique: true,
+        match: [/.+@.+\..+/, 'Please fill a valid email address']
+    },
     password: {
         type: String,
         minlength: 6

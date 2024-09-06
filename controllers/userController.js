@@ -83,7 +83,7 @@ export const fetchProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const user = await User.findById(userId).select("img name username email phone role department status")
+    const user = await User.findById(userId).select("img name username email recoveryEmail phone role department status")
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
