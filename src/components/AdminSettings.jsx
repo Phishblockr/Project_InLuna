@@ -1,11 +1,17 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { RiUploadCloud2Line, RiLoopLeftLine } from "react-icons/ri";
 import { PiUserCircleLight } from "react-icons/pi";
+
+import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../features/userProfile/userProfileSlice";
+
 
 const AdminSettings = () => {
   const [image, setImage] = useState(null);
   const hiddenFileInput = useRef(null);
-  const [user, setUser] = useState({ img:"", name:"", email:"", recoveryEmail:""});
+  const [user, setUser] = useState({ img: "", name: "", email: "", recoveryEmail: "" });
+  const { details, loading, error } = useSelector((state) => state.userProfile);
+
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -65,8 +71,14 @@ const AdminSettings = () => {
                   alt="upload image"
                   className="mt-2 w-[150px] h-[150px] rounded-full"
                 />
+              ) : details?.img ? (
+                <img
+                  src={details.img}
+                  alt="upload image"
+                  className="mt-2 w-[150px] h-[150px] rounded-full"
+                />
               ) : (
-                <PiUserCircleLight className="mt-2 w-[150px] h-[150px] rounded-full"/>
+                <PiUserCircleLight className="mt-2 w-[150px] h-[150px] rounded-full" />
               )}
 
               <input
@@ -92,7 +104,8 @@ const AdminSettings = () => {
               id="name"
               name="name"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
-              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
+              onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
+              value={details.name}
             />
           </div>
 
@@ -103,7 +116,8 @@ const AdminSettings = () => {
               id="email"
               name="email"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
-              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
+              onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
+              value={details.email}
             />
           </div>
 
@@ -114,7 +128,41 @@ const AdminSettings = () => {
               id="recoveryEmail"
               name="recoveryEmail"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
-              onChange={e => setUser({...user, [e.target.name]: e.target.value})}
+              onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
+              value={details.recoveryEmail}
+            />
+          </div>
+          <div className="mt-3 flex flex-col">
+            <label htmlFor="role">Phone: </label>
+            <input
+              type="text"
+              id="phone"
+              name="phone"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
+              onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
+              value={details.phone}
+            />
+          </div>
+          <div className="mt-3 flex flex-col">
+            <label htmlFor="role">Role: </label>
+            <input
+              type="text"
+              id="role"
+              name="role"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
+              onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
+              value={details.role}
+            />
+          </div>
+          <div className="mt-3 flex flex-col">
+            <label htmlFor="role">Department: </label>
+            <input
+              type="text"
+              id="department"
+              name="department"
+              className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
+              onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
+              value={details.department}
             />
           </div>
           <div className="flex flex-row gap-x-2">

@@ -6,6 +6,7 @@ import urlSlice from './Urls/urlSlice';
 import requestsSlice from './Requests/requestsSlice';
 import perPageRecSlice from './PerPageRec/perPageRecSlice';
 import themeSlice from './Theme/themeSlice';
+import userProfileSlice from './userProfile/userProfileSlice';
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     requests: requestsSlice,
     perPageRec: perPageRecSlice,
     theme: themeSlice,
+    userProfile: userProfileSlice,
   },
 });
 

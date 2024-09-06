@@ -21,7 +21,7 @@ const Login = () => {
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL
-      const response = await fetch(`${apiUrl}/auth/login`, {
+      const response = await fetch(`${apiUrl}/auth/loginDas`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -44,8 +44,7 @@ const Login = () => {
         toast.error("Unauthorized");
       }
     } catch (error) {
-      toast.error("Unable to communicate with server ", error);
-    
+      toast.error(error);
     }
   };
 

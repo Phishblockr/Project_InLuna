@@ -8,6 +8,10 @@ import {
 import { FaRegUserCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../features/userProfile/userProfileSlice";
+import { FaEthernet } from "react-icons/fa6";
+
 const profileBtnStyle =
   "rounded-lg dark:text-white transition hover:bg-white dark:hover:bg-[#00285A]";
 const dropdownTheme = "bg-[#f7f4f4] dark:bg-[#182A46]"
@@ -61,9 +65,12 @@ const HelpOptions = [
 ];
 
 const Navbar = () => {
+
+  const dispatch = useDispatch();
+  const {details, loading, error} = useSelector((state) => state.userProfile);
+
   const [dropdown, setDropdown] = useState(false);
   const [helpDropdown, setHelpDropdown] = useState(false);
-  const [userData, setUserData] = useState("")
 
   const toggleDropdown = () => {
     setDropdown(!dropdown);
@@ -82,6 +89,7 @@ const Navbar = () => {
   };
 
   const fetchUser = async () => {
+    dispatch(fetchUserStart());
     try {
       const apiUrl = import.meta.env.VITE_API_URL
       const user = JSON.parse(localStorage.getItem("user"));
@@ -94,8 +102,9 @@ const Navbar = () => {
         }
       });
       const data = await response.json();
-      setUserData(data)
+      dispatch(fetchUserSuccess(data))
     } catch (error) {
+      dispatch(fetchUserFailure(error.message))
       console.log(error)
     }
   }
@@ -103,7 +112,6 @@ const Navbar = () => {
   useEffect(() => {
     fetchUser();
   }, []);
-
 
   return (
     <nav className="bg-white px-4 py-3 flex justify-between sticky left-0 right-0 top-0 ml-64 z-10 dark:bg-[#002451]">
@@ -157,10 +165,10 @@ const Navbar = () => {
           <RiNotificationBadgeLine className="w-6 h-6" />
         </div>
         <div className="relative text-black flex items-center gap-x-3 dark:text-[#F4F4F4]">
-          {userData.img ? <img className="w-[24px] h-[24px] rounded-full" src={userData.img} alt="profile pic" /> : <FaRegUserCircle className="w-6 h-6 mt-1" />}
+          {details?.img ? <img className="w-[24px] h-[24px] rounded-full" src={details?.img} alt="profile pic" /> : <FaRegUserCircle className="w-6 h-6 mt-1" />}
           
           <div className="flex flex-col">
-            <span>{userData.name}</span>
+            <span>{loading ? "loading..." : details?.name}</span>
             <span className="text-[10px]">Admin</span>
           </div>
           <button
