@@ -1,56 +1,90 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RiUploadCloud2Line, RiLoopLeftLine } from "react-icons/ri";
 import { PiUserCircleLight } from "react-icons/pi";
-
+import { toast } from "sonner";
 import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../features/userProfile/userProfileSlice";
-
+import UpdatePasswordModal from "./UpdatePasswordModal";
 
 const AdminSettings = () => {
   const [image, setImage] = useState(null);
   const hiddenFileInput = useRef(null);
-  const [user, setUser] = useState({ img: "", name: "", email: "", recoveryEmail: "" });
+  const dispatch = useDispatch()
   const { details, loading, error } = useSelector((state) => state.userProfile);
+  
+  const [user, setUser] = useState({
+    img: "",
+    name: "",
+    email: "",
+    recoveryEmail: "",
+    phone: "",
+    role: "",
+    department: ""
+  });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  useEffect(() => {
+    if (details) {
+      setUser({
+        img: details.img || "",
+        name: details.name || "",
+        email: details.email || "",
+        recoveryEmail: details.recoveryEmail || "",
+        phone: details.phone || "",
+        role: details.role || "",
+        department: details.department || ""
+      });
+    }
+  }, [details]);
 
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
-    const imgName = event.target.files[0].name;
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onloadend = () => {
-      const image = new Image();
-      image.src = reader.result;
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        const maxSize = Math.max(image.width, image.height);
-        canvas.width = maxSize;
-        canvas.height = maxSize;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(
-          image,
-          (maxSize - image.width) / 2,
-          (maxSize - image.height) / 2
-        );
-        canvas.toBlob(
-          (blob) => {
-            const file = new File([blob], imgName, {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            });
-            setImage(file);
-          },
-          "image/jpeg",
-          0.8
-        );
-      };
+      setUser(prevState => ({
+        ...prevState,
+        img: reader.result // This will store the base64 string
+      }));
+      setImage(file); // Optionally, still keep the file for preview purposes
     };
+    reader.readAsDataURL(file); // Convert to base64 string
   };
-
-  // TODO: Upload Function
 
   const handleClick = (event) => {
     hiddenFileInput.current.click();
+  };
+
+  const handleUpdate = async () => {
+    dispatch(fetchUserStart());
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = JSON.parse(localStorage.getItem("user")).token;
+
+      const response = await fetch (`${apiUrl}/user/updateAdminDetails`, {
+        method:"PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(user)
+        
+      });
+      const updatedUser = await response.json();
+
+      if (!response.ok){
+        throw new Error(updatedUser.message || "Failed to update user details");
+      }
+      dispatch(fetchUserSuccess(updatedUser))
+      toast.success("Details updated successfully")
+    } catch (error) {
+      dispatch(fetchUserFailure(error.message));
+      toast.error("Failed to update user details")
+    }
   };
 
   return (
@@ -71,9 +105,9 @@ const AdminSettings = () => {
                   alt="upload image"
                   className="mt-2 w-[150px] h-[150px] rounded-full"
                 />
-              ) : details?.img ? (
+              ) : user?.img ? (
                 <img
-                  src={details.img}
+                  src={user.img}
                   alt="upload image"
                   className="mt-2 w-[150px] h-[150px] rounded-full"
                 />
@@ -90,11 +124,11 @@ const AdminSettings = () => {
               />
             </div>
           </div>
-          <button className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-white">
+          {/* <button className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-white">
             <span className="flex flex-row gap-x-1">
               <RiUploadCloud2Line className="w-6 h-6" /> Upload Image
             </span>
-          </button>
+          </button> */}
         </div>
         <div className="mt-3 flex flex-col w-full items-center">
           <div className="flex flex-col">
@@ -105,7 +139,7 @@ const AdminSettings = () => {
               name="name"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
-              value={details.name}
+              value={user.name}
             />
           </div>
 
@@ -117,7 +151,7 @@ const AdminSettings = () => {
               name="email"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
-              value={details.email}
+              value={user.email}
             />
           </div>
 
@@ -129,7 +163,7 @@ const AdminSettings = () => {
               name="recoveryEmail"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
-              value={details.recoveryEmail}
+              value={user.recoveryEmail}
             />
           </div>
           <div className="mt-3 flex flex-col">
@@ -140,7 +174,7 @@ const AdminSettings = () => {
               name="phone"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
-              value={details.phone}
+              value={user.phone}
             />
           </div>
           <div className="mt-3 flex flex-col">
@@ -151,7 +185,7 @@ const AdminSettings = () => {
               name="role"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
-              value={details.role}
+              value={user.role}
             />
           </div>
           <div className="mt-3 flex flex-col">
@@ -162,21 +196,26 @@ const AdminSettings = () => {
               name="department"
               className=" w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-0"
               onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
-              value={details.department}
+              value={user.department}
             />
           </div>
           <div className="flex flex-row gap-x-2">
-            <button className=" mt-9 mb-2 rounded-lg text-white font-medium w-[19rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+            <button className=" mt-9 mb-2 rounded-lg text-white font-medium w-[19rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 "
+            onClick={handleUpdate}
+            >
               <span className="flex flex-row gap-x-2 items-center justify-center">
                 <RiLoopLeftLine className="w-6 h-6" /> Update Details
               </span>
             </button>
-            <button className=" mt-9 mb-2 rounded-lg text-white font-medium w-[19rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+            <button className=" mt-9 mb-2 rounded-lg text-black font-medium w-[19rem] bg-gray-300 hover:bg-gray-400 transition p-2 dark:bg-[#001C40] dark:text-white"
+            onClick={openModal}
+            >
               <span className="flex flex-row gap-x-2 items-center justify-center">
                 <RiLoopLeftLine className="w-6 h-6" /> Update password
               </span>
             </button>
           </div>
+          <UpdatePasswordModal isOpen={isModalOpen} onClose={closeModal} />
         </div>
       </div>
     </div>
