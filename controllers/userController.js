@@ -1,5 +1,6 @@
 import User from '../models/userModel.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
+import bcrypt from 'bcryptjs';
 import winston from 'winston';
 
 // Logger setup
@@ -71,6 +72,61 @@ export const updateUser = asyncHandler(async (req, res) => {
   }).select('-password');
   res.status(updatedUser ? 200 : 404).json(updatedUser ? updatedUser : { error: 'User not found' });
 });
+
+// update admin
+export const updateAdminDetails = asyncHandler(async (req, res) => {
+  try{
+    const userId = req.user.userId;
+    const {name, email, recoveryEmail, phone, role, department, img} = req.body;
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      {name, email, recoveryEmail, phone, role, department, img},
+      { new: true, runValidators: true }      
+    );
+    if (!updateUser) {
+      return res.status(404).json({message:"User not found"})
+    }
+    res.json(updateUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+  
+})
+
+
+// Update admin password
+export const updateAdminPwd = asyncHandler(async(req, res) => {
+  try{
+    const userId = req.user.userId;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const isMatch = await bcrypt.compare(oldPassword, user.password)
+    if (!isMatch){
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save()
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+})
 
 // Delete a user
 export const deleteUser = asyncHandler(async (req, res) => {

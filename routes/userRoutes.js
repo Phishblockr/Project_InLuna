@@ -4,6 +4,8 @@ import {
   createUser,
   getUser,
   updateUser,
+  updateAdminDetails,
+  updateAdminPwd,
   deleteUser,
   fetchProfile
 } from '../controllers/userController.js';
@@ -15,6 +17,8 @@ router.route("/create").post(createUser);
 router.route("/fetch/:id").get(getUser);
 router.route("/update/:id").put(updateUser);
 router.route("/delete/:id").delete(deleteUser);
-router.route("/profile").get(fetchProfile);   
+router.route("/profile").get(fetchProfile);
+router.route("/updateAdminDetails").put(updateAdminDetails)
+router.route("/updateAdminPwd").put(updateAdminPwd)
 
 export default router;

@@ -17,8 +17,12 @@ import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js"
 dotenv.config();
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+// Increase the size limit for JSON and URL-encoded bodies
+app.use(express.json({ limit: '10mb' })); // Adjust the limit as needed
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(cors({
+  origin: 'http://localhost:5173' // Replace with your frontend's address
+}));
 
 const logger = winston.createLogger({
   level: 'info',
