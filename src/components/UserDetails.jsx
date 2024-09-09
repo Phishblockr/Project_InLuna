@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { remUser, updateStatus } from "../features/Users/usersSlice";
 import { toast } from "sonner";
+import LineChart from "./LineChart";
+import PieChart from "./PieChart";
 
 const statusActive =
   "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
@@ -16,6 +18,7 @@ const UserDetails = () => {
   const user = useSelector((state) =>
     state.users.users.find((user) => user._id === id)
   );
+  const theme = useSelector((state) => state.theme);
 
   const dispatch = useDispatch();
 
@@ -41,6 +44,73 @@ const UserDetails = () => {
   if (!user) {
     return <div>User not found</div>;
   }
+
+  const seriesData = [56, 89, 74];
+  const categories = [
+    "Blacklisted urls visited",
+    "whitelist urls requests",
+    "visits to requested urls",
+  ];
+
+  const overviewPoints = [
+    {
+      id: 1,
+      title: "Clicks On Blacklisted Links",
+      count: 118,
+      lastMonth: "+20",
+      logo: "bi bi-shield-x",
+    },
+    {
+      id: 2,
+      title: "whitelist requests",
+      count: 56,
+      lastMonth: "+10",
+      logo: "bi bi-shield-exclamation",
+    },
+    {
+      id: 3,
+      title: "Visits to requested Urls.",
+      count: 23,
+      lastMonth: "+90",
+      logo: "bi bi-shield-shaded",
+    },
+  ];
+
+  const OverviewCard = ({ count, title, logo, lastMonth }) => (
+    <div
+      className={`shadow border-2 border-gray-100 flex px-4 py-6 items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-0`}
+    >
+      <div className="w-full flex flex-col font-medium">
+        <div className="flex flex-row justify-between">
+          <h4 className="">{title}</h4>
+          <i className={`${logo}`}></i>
+        </div>
+        <h4 className="mt-2 text-2xl font-bold">{count}</h4>
+        <div>
+          <span className="text-[12px] text-gray-500">
+            {lastMonth}% from last month
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const OverviewCards = ({ points }) => (
+    <div className="grid grid-cols-3 gap-3">
+      {points.map(({ id, title, count, logo, lastMonth }) => (
+        <OverviewCard
+          key={id}
+          count={count}
+          title={title}
+          logo={logo}
+          lastMonth={lastMonth}
+        />
+      ))}
+    </div>
+  );
+
+  console.log(user)
+
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -138,6 +208,22 @@ const UserDetails = () => {
               </span>
             </li>
           </ul>
+        </div>
+        <div className="my-8">
+          <OverviewCards points={overviewPoints} />
+        </div>
+        <h1 className="text-2xl font-medium tracking-tight mb-5">Graph</h1>
+        <div className="flex flex-row justify-around">
+          <div>
+            <LineChart
+              data={seriesData}
+              categories={categories}
+              theme={theme}
+            />
+          </div>
+          <div>
+            <PieChart data={seriesData} labels={categories} theme={theme} />
+          </div>
         </div>
         <div className="text-right mt-5">
           <button

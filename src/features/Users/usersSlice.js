@@ -6,9 +6,19 @@ const initialState = {
     error: null,
 };
 
+const apiUrl = import.meta.env.VITE_API_URL
+
 export const getUsers = createAsyncThunk('user/get', async (id, { rejectWithValue }) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(`http://localhost:5000/api/user/${id}`);
+        const res = await fetch(`${apiUrl}/user/fetch-all`, {
+            method: "GET",
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+        });
+        console.log(res)
         if (!res.ok) throw new Error('Failed to fetch users');
         const data = await res.json();
         return data;
@@ -18,11 +28,14 @@ export const getUsers = createAsyncThunk('user/get', async (id, { rejectWithValu
 });
 
 export const addUser = createAsyncThunk('user/add', async (user, { rejectWithValue }) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+
     try {
-        const res = await fetch(`http://localhost:5000/api/user`, {
+        const res = await fetch(`${apiUrl}/user/create`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(user),
         });
@@ -35,12 +48,15 @@ export const addUser = createAsyncThunk('user/add', async (user, { rejectWithVal
 });
 
 export const delUser = createAsyncThunk('user/del', async(id) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+
     try {
-        const res = await fetch(`http://localhost:5000/api/user/${id}`, {
+        const res = await fetch(`${apiUrl}/user/delete/${id}`, {
             method: 'DELETE',
             headers: {
-                'Content-type' : 'application/json'
-            }
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
         });
         const data = await res.json();
         return data;
@@ -95,7 +111,7 @@ const usersSlice = createSlice({
             })
             .addCase(delUser.fulfilled, (state, action) => {
                 state.loading = false;
-                state.users.push(action.payload);
+                state.users = state.users.filter(user => user._id !== action.meta.arg);
             })
             .addCase(delUser.rejected, (state, action) => {
                 state.loading = false;

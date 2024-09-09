@@ -27,12 +27,12 @@ const links = [
     title: "Users",
     url: "/users",
   },
-  {
-    id: 3,
-    icon: <CgInsights className={iconStyle} />,
-    title: "Insights",
-    url: "/insights",
-  },
+  // {
+  //   id: 3,
+  //   icon: <CgInsights className={iconStyle} />,
+  //   title: "Insights",
+  //   url: "/insights",
+  // },
   {
     id: 4,
     icon: <RiFileList3Line className={iconStyle} />,

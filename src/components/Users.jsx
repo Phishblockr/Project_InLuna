@@ -6,6 +6,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { delUser, getUsers, remUser } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
+import { PiUserCircleLight } from "react-icons/pi";
+
 
 export default function Users() {
   // Redux
@@ -15,7 +17,7 @@ export default function Users() {
   // End of Redux
 
   useEffect(() => {
-    dispatch(getUsers(69));
+    dispatch(getUsers());
   }, [dispatch]);
 
   // NOTE: This Logic is for demonstration purposes only and should be replaced to optimise database queries
@@ -80,12 +82,12 @@ export default function Users() {
 
   // End of Pagination Logic
 
-  const handleRemUser = async(id) => {
+  const handleRemUser = async (id) => {
     try {
-      await dispatch(delUser(id));
-      await dispatch(getUsers(69));
+      await dispatch(delUser(id)).unwrap();
+      toast.success(`User ${id} removed`);
     } catch (e) {
-      toast.error(e);
+      toast.error('Failed to remove user');
     }
   };
 
@@ -117,12 +119,6 @@ export default function Users() {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-
-          <div>
-            <button onClick={() => dispatch(getUsers(69))} className="border border-gray-300 rounded-md p-[10px]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#878787" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
-            </button>
-          </div>
 
           <select
             name="perPageRec"
@@ -173,12 +169,12 @@ export default function Users() {
                     className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
                   >
                     <td className="py-2 pl-2">
-                      <Link
+                      <Link 
                         to={`/users/userDetails/${user._id}`}
                         title="Click to view details"
                       >
                         <div className="flex items-center gap-x-3">
-                          <img src={user.img} alt="" className="h-12 w-12 rounded-full" />
+                          {user.img ? <img src={user.img} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12"/>}
                           <span className="font-medium">{user.name}</span>
                         </div>
                       </Link>

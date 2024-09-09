@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { addUser, getUsers } from '../features/Users/usersSlice';
 import { toast } from 'sonner';
+import { PiUserCircleLight } from "react-icons/pi";
+import { RiUploadCloud2Line, RiAddFill } from "react-icons/ri";
 
 const AddUser = () => {
+  const [image, setImage] = useState(null);
+  const hiddenFileInput = useRef(null);
+
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -12,8 +17,7 @@ const AddUser = () => {
     phone: '',
     role: '',
     department: '',
-    orgId: 69, // Example organization ID
-    password: '',
+    status: 'Inactive', // Added a default status
     img: ''
   });
 
@@ -25,15 +29,21 @@ const AddUser = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, img: reader.result });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prevState => ({
+        ...prevState,
+        img: reader.result // This will store the base64 string
+      }));
+      setImage(file); // Optionally, still keep the file for preview purposes
+    };
+    reader.readAsDataURL(file); // Convert to base64 string
+  };
+
+  const handleClick = () => {
+    hiddenFileInput.current.click();
   };
 
   const handleSubmit = async (e) => {
@@ -41,7 +51,7 @@ const AddUser = () => {
     try {
       await dispatch(addUser(formData));
       toast.success('User added successfully');
-      dispatch(getUsers(69)); // Fetch updated user list
+      dispatch(getUsers()); // Fetch updated user list
       navigate('/users'); // Redirect to users page
     } catch (error) {
       toast.error('Failed to add user');
@@ -49,91 +59,136 @@ const AddUser = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-center mb-6">Add User</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700">Name</label>
-          <input
-            name="name"
-            placeholder="Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+    <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+      <div className='z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none'>
+        <div>
+          <h1 className="pt-3 pl-5 text-2xl font-medium">Add User</h1>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Username</label>
-          <input
-            name="username"
-            placeholder="Username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Email</label>
-          <input
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Phone</label>
-          <input
-            name="phone"
-            placeholder="Phone"
-            value={formData.phone}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Role</label>
-          <input
-            name="role"
-            placeholder="Role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Department</label>
-          <input
-            name="department"
-            placeholder="Department"
-            value={formData.department}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300"
-        >
-          Add User
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="flex flex-col items-center justify-between">
+          <div>
+            <label htmlFor="image-upload-input">
+              {image ? "Click on upload" : "Choose an image"}
+            </label>
+            <div onClick={handleClick} style={{ cursor: "pointer" }}>
+              {image ? (
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt="upload image"
+                  className="mt-2 w-[150px] h-[150px] rounded-full"
+                />
+              ) : (
+                <PiUserCircleLight className="mt-2 w-[150px] h-[150px] rounded-full"/>
+              )}
+
+              <input
+                id="image-upload-input"
+                type="file"
+                onChange={handleImageChange}
+                ref={hiddenFileInput}
+                style={{ display: "none" }}
+              />
+            </div>
+          </div>
+          {/* <button type="button" className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-white" onClick={handleClick}>
+            <span className="flex flex-row gap-x-1">
+              <RiUploadCloud2Line className="w-6 h-6" /> Upload Image
+            </span>
+          </button> */}
+          <div className="mt-3 flex flex-col w-full items-center">
+            <div className="flex flex-col">
+              <label htmlFor="name">Name: </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                onChange={handleChange}
+                value={formData.name}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-col">
+              <label htmlFor="username">Username: </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                onChange={handleChange}
+                value={formData.username}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-col">
+              <label htmlFor="email">Email: </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                onChange={handleChange}
+                value={formData.email}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-col">
+              <label htmlFor="phone">Phone: </label>
+              <input
+                type="text"
+                id="phone"
+                name="phone"
+                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                onChange={handleChange}
+                value={formData.phone}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-col">
+              <label htmlFor="role">Role: </label>
+              <input
+                type="text"
+                id="role"
+                name="role"
+                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                onChange={handleChange}
+                value={formData.role}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-col">
+              <label htmlFor="department">Department: </label>
+              <input
+                type="text"
+                id="department"
+                name="department"
+                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                onChange={handleChange}
+                value={formData.department}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-col">
+              <label htmlFor="status">Status: </label>
+              <select
+                className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                name="status"
+                id="status"
+                onChange={handleChange}
+                value={formData.status}
+              >
+                <option value="Inactive">Inactive</option>
+                <option value="Active">Active</option>
+              </select>
+            </div>
+
+            <button type="submit" className=" mt-9 mb-2 rounded-lg text-white font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+              <span className="flex flex-row justify-center items-center">
+                <RiAddFill className="w-6 h-6 mr-1" /> Submit
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
