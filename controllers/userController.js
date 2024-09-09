@@ -15,7 +15,7 @@ const logger = winston.createLogger({
 
 // Get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const id = req.user.orgId;
   const users = await User.find({ orgId: id }).select('-password');
   res.status(users.length > 0 ? 200 : 404).json(users.length > 0 ? users : { error: 'Users not found' });
 });
@@ -23,10 +23,8 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
   try {
-    const { name, username, email, phone, role, department, orgId, password, img } = req.body;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('local', salt);
-    console.log(req.body);
+    const orgId = req.user.orgId;
+    const { name, username, email, phone, role, department, img } = req.body;
     const newUser = new User({
       username,
       name,
@@ -36,7 +34,6 @@ export const createUser = asyncHandler(async (req, res) => {
       department,
       img,
       orgId,
-      password: hashedPassword
     });
     await newUser.save();
     res.status(201).json(newUser);

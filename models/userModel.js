@@ -28,7 +28,7 @@ const userSchema = new Schema({
     },
     recoveryEmail: {
         type: String,
-        required: true,
+        required: false,
         unique: true,
         match: [/.+@.+\..+/, 'Please fill a valid email address']
     },
@@ -73,6 +73,7 @@ const userSchema = new Schema({
     }
 });
 
+userSchema.index({orgId: 1});
 // Compile the schema into a model
 const User = mongoose.model('User', userSchema);
 

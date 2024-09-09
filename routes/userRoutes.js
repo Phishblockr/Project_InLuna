@@ -12,7 +12,7 @@ import {
 
 const router = express.Router();
 
-router.route("/fetch-all/:id").get(getAllUsers);
+router.route("/fetch-all").get(getAllUsers);
 router.route("/create").post(createUser);
 router.route("/fetch/:id").get(getUser);
 router.route("/update/:id").put(updateUser);

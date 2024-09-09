@@ -20,9 +20,7 @@ const app = express();
 // Increase the size limit for JSON and URL-encoded bodies
 app.use(express.json({ limit: '10mb' })); // Adjust the limit as needed
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use(cors({
-  origin: 'http://localhost:5173' // Replace with your frontend's address
-}));
+app.use(cors());
 
 const logger = winston.createLogger({
   level: 'info',
