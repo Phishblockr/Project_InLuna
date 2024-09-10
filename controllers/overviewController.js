@@ -1,5 +1,7 @@
 import Url from "../models/urlModel.js";
 import WhitelistReq from "../models/whitelistReqModel.js";
+import asyncHandler from '../middlewares/asyncHandler.js';
+import mongoose from 'mongoose';
 
 export const fetchOrgMetrics = async (req, res) => {
     const { month, year } = req.query;
@@ -129,3 +131,57 @@ export const fetchOrgMetrics = async (req, res) => {
         res.status(500).send(error.message);
     }
 };
+
+export const fetchUserMetrics = asyncHandler(async (req, res) => {
+    try {
+        const { id } = req.params; // Id of user we are visiting on dashboard
+
+        const userObjectId = mongoose.Types.ObjectId.createFromHexString(id); // Convert userId to ObjectId once
+
+        const phishingClicksCount = await Url.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, isPhishing: true } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        const blacklistedClicksCount = await Url.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, isBlacklisted: true } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        const whitelistReqsCount = await WhitelistReq.countDocuments({
+            userId: userObjectId,
+            status: { $in: ["pending", "approved"] }
+        });
+
+        const approvedWhitelistReq = await WhitelistReq.find({
+            userId: userObjectId,
+            status: "approved"
+        }).select("_id");
+
+        const whitelistReqsId = approvedWhitelistReq.map(req => req._id);
+
+        const visitsToWhitelistUrls = await Url.aggregate([
+            { $match: { whitelistReqId: { $in: whitelistReqsId } } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        res.json({
+            phishingClicks: phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
+            blacklistedClicks: blacklistedClicksCount.length > 0 ? blacklistedClicksCount[0].total : 0,
+            whitelistRequests: whitelistReqsCount,
+            visitsToWhitelistUrls: visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
