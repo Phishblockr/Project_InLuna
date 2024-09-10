@@ -3,36 +3,36 @@ import { RiDeleteBinLine, RiAddFill } from "react-icons/ri";
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { delUser, getUsers, remUser } from "../features/Users/usersSlice";
+import { delUser, getUsers } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
-
+import LoadingOverlay from "./LoadingOverlay";
 
 export default function Users() {
-  // Redux
   const usersData = useSelector((state) => state.users.users);
   const perPageRec = useSelector((state) => state.perPageRec);
   const dispatch = useDispatch();
-  // End of Redux
+
+  const [query, setQuery] = useState("");
+  const [dataFilter, setDataFilter] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    dispatch(getUsers());
+    setDataLoading(true);
+    dispatch(getUsers())
+      .unwrap()
+      .finally(() => setDataLoading(false));
   }, [dispatch]);
 
-  // NOTE: This Logic is for demonstration purposes only and should be replaced to optimise database queries
-  // Start of User Search Logic
-  const [query, setQuery] = useState("");
   const keys = ["name", "email", "department", "role"];
   const search = (data) => {
     return data.filter((item) =>
       keys.some((key) => item[key] && item[key].toLowerCase().includes(query.toLowerCase()))
     );
   };
-  // End of User Search Logic
 
-  // Start of User Filter Logic
-  const [dataFilter, setDataFilter] = useState(null);
   const filter = (data) => {
     if (dataFilter === "active") {
       return data.filter((item) => item.status === "active");
@@ -42,16 +42,12 @@ export default function Users() {
       return data;
     }
   };
-  // End of User Filter Logic
 
-  // Start of Pagination Logic
-  const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = perPageRec;
   const filteredData = filter(search(usersData));
-  const lastIndex = currentPage * recordsPerPage;
-  const firstIndex = lastIndex - recordsPerPage;
+  const lastIndex = currentPage * perPageRec;
+  const firstIndex = lastIndex - perPageRec;
   const records = filteredData.slice(firstIndex, lastIndex);
-  const npage = Math.ceil(filteredData.length / recordsPerPage);
+  const npage = Math.ceil(filteredData.length / perPageRec);
   const numbers = [...Array(npage + 1).keys()].slice(1);
 
   function nextPage() {
@@ -74,14 +70,6 @@ export default function Users() {
     dispatch(setPerPageRec(value));
   };
 
-  useEffect(() => {
-    if (npage < currentPage) {
-      setCurrentPage(npage || 1);
-    }
-  }, [npage, currentPage]);
-
-  // End of Pagination Logic
-
   const handleRemUser = async (id) => {
     try {
       await dispatch(delUser(id)).unwrap();
@@ -91,13 +79,12 @@ export default function Users() {
     }
   };
 
-  const statusActive =
-    "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
-  const statusInactive =
-    "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
+  const statusActive = "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
+  const statusInactive = "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+      <LoadingOverlay loading={dataLoading} />
       <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="text-2xl font-medium tracking-tight">Users</h1>

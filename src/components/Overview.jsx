@@ -8,6 +8,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../static/CustomDatePicker.css'; 
+import LoadingOverlay from "./LoadingOverlay";
 
 const seriesData = [128, 56, 89, 74];
 const categories = ['Visited', 'Blocked', 'Clicked', 'Whitelisted'];
@@ -41,6 +42,7 @@ const Overview = () => {
   const theme = useSelector((state) => state.theme);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [dataLoading, setDataLoading] = useState(false)
 
   const renderMonthContent = (month, shortMonth, longMonth, day) => {
     const fullYear = new Date(day).getFullYear();
@@ -57,6 +59,8 @@ const Overview = () => {
   const fetchMetrics = async (date) => {
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
+
+    setDataLoading(true)
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL
@@ -78,6 +82,7 @@ const Overview = () => {
         { id: 4, title: "Phishing links blocked", count: data.totalBlacklistedUrls, lastMonth: data.percentageChangeBlacklistedUrls, logo: "bi bi-shield-shaded" },
       ];
       dispatch(setOverviewData(mappedData));
+      setDataLoading(false)
     } catch (error) {
       console.log(error);
       toast.error("Failed to fetch data");
@@ -90,6 +95,7 @@ const Overview = () => {
 
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-4'>
+      <LoadingOverlay loading={dataLoading} />
       <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
         <div className="flex justify-between">
         <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>

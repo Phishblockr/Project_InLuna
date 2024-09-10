@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 
 const AuthContext = createContext();
@@ -45,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div><LoadingOverlay loading={loading} /></div>;
     }
 
     return (

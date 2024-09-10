@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../features/userProfile/userProfileSlice";
 import { FaEthernet } from "react-icons/fa6";
+import LoadingOverlay from "./LoadingOverlay";
 
 const profileBtnStyle =
   "rounded-lg dark:text-white transition hover:bg-white dark:hover:bg-[#00285A]";
@@ -71,6 +72,7 @@ const Navbar = () => {
 
   const [dropdown, setDropdown] = useState(false);
   const [helpDropdown, setHelpDropdown] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
 
   const toggleDropdown = () => {
     setDropdown(!dropdown);
@@ -89,6 +91,7 @@ const Navbar = () => {
   };
 
   const fetchUser = async () => {
+    setDataLoading(true)
     dispatch(fetchUserStart());
     try {
       const apiUrl = import.meta.env.VITE_API_URL
@@ -103,6 +106,7 @@ const Navbar = () => {
       });
       const data = await response.json();
       dispatch(fetchUserSuccess(data))
+      setDataLoading(false)
     } catch (error) {
       dispatch(fetchUserFailure(error.message))
       console.log(error)
@@ -115,6 +119,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white px-4 py-3 flex justify-between sticky left-0 right-0 top-0 ml-64 z-10 dark:bg-[#002451]">
+      <LoadingOverlay loading={dataLoading} />
       <div className="flex items-center text-x1">
         <div className="relative w-[40svw] max-w-xl md:w-65 rounded-lg hidden md:block">
           <input

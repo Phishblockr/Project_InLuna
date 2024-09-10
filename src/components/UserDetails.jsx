@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import { remUser, updateStatus } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 import LineChart from "./LineChart";
 import PieChart from "./PieChart";
+import LoadingOverlay from "./LoadingOverlay";
 
 const statusActive =
   "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
@@ -14,6 +15,20 @@ const statusInactive =
 
 const UserDetails = () => {
   const { id } = useParams();
+  console.log(id)
+  const [activityCounts, setActivityCounts] = useState({
+    "phishingClicks": 0,
+    "blacklistedClicks": 0,
+    "whitelistRequests": 0,
+    "visitsToWhitelistUrls": 0
+  });
+  const [dataLoading, setDataLoading] = useState(false)
+
+  useEffect(() => {
+    fetchActivityCounts(id);
+  }, [id])
+
+
   const navigate = useNavigate();
   const user = useSelector((state) =>
     state.users.users.find((user) => user._id === id)
@@ -41,6 +56,31 @@ const UserDetails = () => {
     }
   };
 
+  const fetchActivityCounts = async (id) => {
+    try {
+      setDataLoading(true)
+      const apiUrl = import.meta.env.VITE_API_URL
+      const token = JSON.parse(localStorage.getItem("user")).token;
+      const response = await fetch(`${apiUrl}/overview/user-metrics/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch activity counts");
+      }
+
+      const data = await response.json();
+      setActivityCounts(data);
+      setDataLoading(false)
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
   if (!user) {
     return <div>User not found</div>;
   }
@@ -55,22 +95,29 @@ const UserDetails = () => {
   const overviewPoints = [
     {
       id: 1,
-      title: "Clicks On Blacklisted Links",
-      count: 118,
+      title: "Phishing Links visited",
+      count: activityCounts.phishingClicks,
       lastMonth: "+20",
       logo: "bi bi-shield-x",
     },
     {
       id: 2,
       title: "whitelist requests",
-      count: 56,
+      count: activityCounts.whitelistRequests,
       lastMonth: "+10",
       logo: "bi bi-shield-exclamation",
     },
     {
       id: 3,
       title: "Visits to requested Urls.",
-      count: 23,
+      count: activityCounts.visitsToWhitelistUrls,
+      lastMonth: "+90",
+      logo: "bi bi-shield-shaded",
+    },
+    {
+      id: 4,
+      title: "Blacklisted Links visited.",
+      count: activityCounts.blacklistedClicks,
       lastMonth: "+90",
       logo: "bi bi-shield-shaded",
     },
@@ -96,7 +143,7 @@ const UserDetails = () => {
   );
 
   const OverviewCards = ({ points }) => (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-4 gap-3">
       {points.map(({ id, title, count, logo, lastMonth }) => (
         <OverviewCard
           key={id}
@@ -109,11 +156,10 @@ const UserDetails = () => {
     </div>
   );
 
-  console.log(user)
-
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+      <LoadingOverlay loading={dataLoading} />
       <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
           <h1 className="text-2xl font-medium tracking-tight mb-5">

@@ -18,7 +18,6 @@ export const getUsers = createAsyncThunk('user/get', async (id, { rejectWithValu
               'Content-Type': 'application/json'
             }
         });
-        console.log(res)
         if (!res.ok) throw new Error('Failed to fetch users');
         const data = await res.json();
         return data;
