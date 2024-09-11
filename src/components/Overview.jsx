@@ -7,7 +7,7 @@ import { setOverviewData } from '../features/Overview/OverviewSlice.js';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import '../static/CustomDatePicker.css'; 
+import '../static/CustomDatePicker.css';
 import LoadingOverlay from "./LoadingOverlay";
 
 const seriesData = [128, 56, 89, 74];
@@ -98,20 +98,20 @@ const Overview = () => {
       <LoadingOverlay loading={dataLoading} />
       <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
         <div className="flex justify-between">
-        <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
+          <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
 
-        <div >
-          <div className="mb-2 py-2 px-5 shadow border-2 border-gray-100 flex items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-[#001C40]">
-          <span>Showing overview for: </span>
-          <DatePicker
-            selected={selectedDate}
-            onChange={handleDateChange}
-            renderMonthContent={renderMonthContent}
-            showMonthYearPicker
-            dateFormat="MM/yyyy"
-            className="w-20 text-center dark:text-[#F4F4F4] dark:bg-[#001C40]"
-          />
-          </div>
+          <div >
+            <div className="mb-2 py-2 px-5 shadow border-2 border-gray-100 flex items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-[#001C40]">
+              <span>Showing overview for: </span>
+              <DatePicker
+                selected={selectedDate}
+                onChange={handleDateChange}
+                renderMonthContent={renderMonthContent}
+                showMonthYearPicker
+                dateFormat="MM/yyyy"
+                className="w-20 text-center dark:text-[#F4F4F4] dark:bg-[#001C40]"
+              />
+            </div>
           </div>
         </div>
 

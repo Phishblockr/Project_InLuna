@@ -7,6 +7,9 @@ import { toast } from "sonner";
 import LineChart from "./LineChart";
 import PieChart from "./PieChart";
 import LoadingOverlay from "./LoadingOverlay";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import '../static/CustomDatePicker.css';
 
 const statusActive =
   "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
@@ -20,13 +23,31 @@ const UserDetails = () => {
     "phishingClicks": 0,
     "blacklistedClicks": 0,
     "whitelistRequests": 0,
-    "visitsToWhitelistUrls": 0
+    "visitsToWhitelistUrls": 0,
+    "percentageBlacklistedClicks": 0,
+    "percentagePhishingClicks" : 0,
+    "percentageVisitToWhitelistUrls": 0,
+    "percentageWhitelistReq": 0
   });
   const [dataLoading, setDataLoading] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+
+  const renderMonthContent = (month, shortMonth, longMonth, day) => {
+    const fullYear = new Date(day).getFullYear();
+    const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
+
+    return <span title={tooltipText}>{shortMonth}</span>;
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    fetchActivityCounts(id, date);
+  };
 
   useEffect(() => {
-    fetchActivityCounts(id);
-  }, [id])
+    fetchActivityCounts(id, selectedDate);
+  }, [id, selectedDate])
 
 
   const navigate = useNavigate();
@@ -56,12 +77,14 @@ const UserDetails = () => {
     }
   };
 
-  const fetchActivityCounts = async (id) => {
+  const fetchActivityCounts = async (id, date) => {
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
     try {
       setDataLoading(true)
       const apiUrl = import.meta.env.VITE_API_URL
       const token = JSON.parse(localStorage.getItem("user")).token;
-      const response = await fetch(`${apiUrl}/overview/user-metrics/${id}`, {
+      const response = await fetch(`${apiUrl}/overview/user-metrics/${id}/${month}/${year}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -74,6 +97,7 @@ const UserDetails = () => {
       }
 
       const data = await response.json();
+      console.log(data)
       setActivityCounts(data);
       setDataLoading(false)
     } catch (error) {
@@ -95,30 +119,30 @@ const UserDetails = () => {
   const overviewPoints = [
     {
       id: 1,
-      title: "Phishing Links visited",
+      title: "Phishing Links Visited",
       count: activityCounts.phishingClicks,
-      lastMonth: "+20",
+      lastMonth: activityCounts.percentagePhishingClicks,
       logo: "bi bi-shield-x",
     },
     {
       id: 2,
-      title: "whitelist requests",
+      title: "Whitelist Requests",
       count: activityCounts.whitelistRequests,
-      lastMonth: "+10",
+      lastMonth: activityCounts.percentageWhitelistReq,
       logo: "bi bi-shield-exclamation",
     },
     {
       id: 3,
-      title: "Visits to requested Urls.",
+      title: "Visits to Requested Urls.",
       count: activityCounts.visitsToWhitelistUrls,
-      lastMonth: "+90",
+      lastMonth: activityCounts.percentageVisitToWhitelistUrls,
       logo: "bi bi-shield-shaded",
     },
     {
       id: 4,
-      title: "Blacklisted Links visited.",
+      title: "Blacklisted Links Visited.",
       count: activityCounts.blacklistedClicks,
-      lastMonth: "+90",
+      lastMonth: activityCounts.percentageBlacklistedClicks,
       logo: "bi bi-shield-shaded",
     },
   ];
@@ -135,7 +159,7 @@ const UserDetails = () => {
         <h4 className="mt-2 text-2xl font-bold">{count}</h4>
         <div>
           <span className="text-[12px] text-gray-500">
-            {lastMonth}% from last month
+            {lastMonth}% compared to last month
           </span>
         </div>
       </div>
@@ -256,6 +280,17 @@ const UserDetails = () => {
           </ul>
         </div>
         <div className="my-8">
+            <div className="mb-2 py-2 px-5 shadow border-2 border-gray-100 flex items-center justify-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-[#001C40]">
+              <span>Showing overview for: </span>
+              <DatePicker
+                selected={selectedDate}
+                onChange={handleDateChange}
+                renderMonthContent={renderMonthContent}
+                showMonthYearPicker
+                dateFormat="MM/yyyy"
+                className="w-20 text-center dark:text-[#F4F4F4] dark:bg-[#001C40]"
+              />
+          </div>
           <OverviewCards points={overviewPoints} />
         </div>
         <h1 className="text-2xl font-medium tracking-tight mb-5">Graph</h1>
