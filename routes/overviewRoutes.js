@@ -4,6 +4,6 @@ import {fetchOrgMetrics, fetchUserMetrics} from "../controllers/overviewControll
 const router = express.Router();
 
 router.route("/org-metrics").get(fetchOrgMetrics);
-router.route("/user-metrics/:id").get(fetchUserMetrics);
+router.route("/user-metrics/:id/:month/:year").get(fetchUserMetrics);
 
 export default router;
