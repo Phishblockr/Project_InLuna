@@ -3,7 +3,7 @@ import { RiDeleteBinLine, RiAddFill } from "react-icons/ri";
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { delUser, getUsers } from "../features/Users/usersSlice";
+import { delUser, getUsers, uploadCsv } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
@@ -18,6 +18,7 @@ export default function Users() {
   const [dataFilter, setDataFilter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [dataLoading, setDataLoading] = useState(true);
+  const [file, setFile] = useState(null);
 
   useEffect(() => {
     setDataLoading(true);
@@ -25,6 +26,28 @@ export default function Users() {
       .unwrap()
       .finally(() => setDataLoading(false));
   }, [dispatch]);
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast.error("Please select a file to upload");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      console.log(file)
+      dispatch(uploadCsv(formData));
+      toast.success("CSV uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload CSV");
+    }
+  };
 
   const keys = ["name", "email", "department", "role"];
   const search = (data) => {
@@ -120,7 +143,10 @@ export default function Users() {
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-
+          <div>
+            <input type="file" accept=".csv" onChange={handleFileChange} />
+            <button onClick={handleUpload}>Upload CSV</button>
+          </div>
           <Link
             to={"/users/adduser"}
             className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
@@ -156,12 +182,12 @@ export default function Users() {
                     className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
                   >
                     <td className="py-2 pl-2">
-                      <Link 
+                      <Link
                         to={`/users/userDetails/${user._id}`}
                         title="Click to view details"
                       >
                         <div className="flex items-center gap-x-3">
-                          {user.img ? <img src={user.img} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12"/>}
+                          {user.img ? <img src={user.img} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
                           <span className="font-medium">{user.name}</span>
                         </div>
                       </Link>
@@ -213,8 +239,8 @@ export default function Users() {
                   <div key={index}>
                     <a
                       className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === number
-                          ? "bg-[#0364BD] text-white dark:bg-[#0364BD]"
-                          : "bg-gray-200 dark:bg-[#001C40]"
+                        ? "bg-[#0364BD] text-white dark:bg-[#0364BD]"
+                        : "bg-gray-200 dark:bg-[#001C40]"
                         }`}
                       href="#"
                       onClick={() => changeCPage(number)}

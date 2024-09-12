@@ -14,8 +14,8 @@ export const getUsers = createAsyncThunk('user/get', async (id, { rejectWithValu
         const res = await fetch(`${apiUrl}/user/fetch-all`, {
             method: "GET",
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         if (!res.ok) throw new Error('Failed to fetch users');
@@ -46,7 +46,7 @@ export const addUser = createAsyncThunk('user/add', async (user, { rejectWithVal
     }
 });
 
-export const delUser = createAsyncThunk('user/del', async(id) => {
+export const delUser = createAsyncThunk('user/del', async (id) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
 
     try {
@@ -61,6 +61,23 @@ export const delUser = createAsyncThunk('user/del', async(id) => {
         return data;
     } catch (error) {
         return rejectWithValue(error.message);
+    }
+})
+
+export const uploadCsv = createAsyncThunk('users/uploadCsv', async (formData, { rejectWithValue }) => {
+    try {
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        const response = await fetch(`${apiUrl}/user/addUsersFromCsv`, {
+            method: "POST",
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData,
+        });
+        if (!response.ok) throw new Error('Failed to upload CSV');
+        return await response.json()
+    } catch (error){
+        return rejectWithValue(error.message)
     }
 })
 
