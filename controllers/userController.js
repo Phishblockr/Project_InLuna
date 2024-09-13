@@ -2,6 +2,9 @@ import User from '../models/userModel.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import bcrypt from 'bcryptjs';
 import winston from 'winston';
+import csvParser from 'csv-parser';
+import fs from 'fs';
+import { generateUsername } from '../utils/generateUsername.js';
 
 // Logger setup
 const logger = winston.createLogger({
@@ -72,28 +75,28 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 // update admin
 export const updateAdminDetails = asyncHandler(async (req, res) => {
-  try{
+  try {
     const userId = req.user.userId;
-    const {name, email, recoveryEmail, phone, role, department, img} = req.body;
+    const { name, email, recoveryEmail, phone, role, department, img } = req.body;
     const updateUser = await User.findByIdAndUpdate(
       userId,
-      {name, email, recoveryEmail, phone, role, department, img},
-      { new: true, runValidators: true }      
+      { name, email, recoveryEmail, phone, role, department, img },
+      { new: true, runValidators: true }
     );
     if (!updateUser) {
-      return res.status(404).json({message:"User not found"})
+      return res.status(404).json({ message: "User not found" })
     }
     res.json(updateUser);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
-  
+
 })
 
 
 // Update admin password
-export const updateAdminPwd = asyncHandler(async(req, res) => {
-  try{
+export const updateAdminPwd = asyncHandler(async (req, res) => {
+  try {
     const userId = req.user.userId;
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
@@ -112,7 +115,7 @@ export const updateAdminPwd = asyncHandler(async(req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     const isMatch = await bcrypt.compare(oldPassword, user.password)
-    if (!isMatch){
+    if (!isMatch) {
       return res.status(400).json({ message: "Old password is incorrect" });
     }
 
@@ -130,6 +133,46 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = await User.findByIdAndDelete(id).select('-password');
   res.status(user ? 200 : 404).json(user ? { message: `User ${user.username} removed successfully` } : { error: 'User not found' });
+});
+
+export const addUsersFromCsv = asyncHandler(async (req, res) => {
+  const filePath = req.file.path;
+  const users = [];
+  const orgId = req.user.orgId;
+
+  try {
+    console.log(filePath);
+
+    await new Promise((resolve, reject) => {
+      fs.createReadStream(filePath)
+        .pipe(csvParser())
+        .on('data', (row) => {
+          const { Name, Email, Phone, Gender, Role, Department } = row;
+          const name = Name;
+          const email = Email.toLowerCase();
+          const phone = Phone;
+          const gender = Gender.toLowerCase();
+          const role = Role.toLowerCase();
+          const department = Department.toLowerCase();
+
+          const username = generateUsername(email, phone);
+          console.log({ name, email, phone, gender, role, department, username, orgId });
+          users.push({ name, email, phone, gender, role, department, username, orgId });
+        })
+        .on('end', resolve)
+        .on('error', reject);
+    });
+
+    await User.insertMany(users);
+    res.status(200).json({ message: 'Users added successfully' });
+  } catch (error) {
+    console.error('Error adding users from CSV:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  } finally {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
 });
 
 export const fetchProfile = async (req, res) => {

@@ -10,6 +10,10 @@ const userSchema = new Schema({
     img: {
         type: String,
     },
+    gender: {
+        type: String,
+        enum: ["male", "female", "other"],
+    },
     name: {
         type: String
     },
@@ -28,9 +32,9 @@ const userSchema = new Schema({
     },
     recoveryEmail: {
         type: String,
-        required: false,
+        match: [/.+@.+\..+/, 'Please fill a valid email address'],
         unique: true,
-        match: [/.+@.+\..+/, 'Please fill a valid email address']
+        sparse: true
     },
     password: {
         type: String,
@@ -40,11 +44,6 @@ const userSchema = new Schema({
         type: String,
         unique: true,
         match: [/^\+?[1-9]\d{1,14}$/, 'Please fill a valid phone number']
-    },
-    type: {
-        type: String,
-        enum: ['local', 'read-only', 'admin', 'super-admin'],
-        default: 'local'
     },
     role: {
         type: String,
