@@ -138,33 +138,72 @@ export const deleteUser = asyncHandler(async (req, res) => {
 export const addUsersFromCsv = asyncHandler(async (req, res) => {
   const filePath = req.file.path;
   const users = [];
+  const errors = [];
   const orgId = req.user.orgId;
 
   try {
-    console.log(filePath);
+    const existingEmails = new Set(await User.find({ orgId }).distinct("email"))
+    const existingPhones = new Set(await User.find({ orgId }).distinct("phone"))
+
+    const processedEmails = new Set();
+    const processedPhones = new Set();
 
     await new Promise((resolve, reject) => {
       fs.createReadStream(filePath)
         .pipe(csvParser())
         .on('data', (row) => {
           const { Name, Email, Phone, Gender, Role, Department } = row;
-          const name = Name;
           const email = Email.toLowerCase();
           const phone = Phone;
+
+          if (processedEmails.has(email)) {
+            errors.push({ row: row, error: `Duplicate email in CSV: ${email}` });
+            return;
+          }
+
+          if (processedPhones.has(phone)) {
+            errors.push({ row: row, error: `Duplicate phone in CSV: ${phone}` });
+            return;
+          }
+
+          if (existingEmails.has(email)) {
+            errors.push({ row: row, error: `Email already exists in DB: ${email}` });
+            return;
+          }
+
+          if (existingPhones.has(phone)) {
+            errors.push({ row: row, error: `Phone number already exists in DB: ${phone}` });
+            return;
+          }
+
+          const name = Name;
           const gender = Gender.toLowerCase();
           const role = Role.toLowerCase();
           const department = Department.toLowerCase();
 
           const username = generateUsername(email, phone);
-          console.log({ name, email, phone, gender, role, department, username, orgId });
           users.push({ name, email, phone, gender, role, department, username, orgId });
+
+          processedEmails.add(email);
+          processedPhones.add(phone);
         })
         .on('end', resolve)
         .on('error', reject);
     });
 
-    await User.insertMany(users);
-    res.status(200).json({ message: 'Users added successfully' });
+    if (users.length > 0) {
+
+      await User.insertMany(users);
+      res.status(200).json({ message: 'Users added successfully' });
+    } else {
+      if (errors) {
+        const errorMessages = errors.map(item => item.error)
+        res.status(400).json({ message: errorMessages });
+      } else {
+        res.status(400).json({ message: 'No valid data to add' });
+      }
+    }
+
   } catch (error) {
     console.error('Error adding users from CSV:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
