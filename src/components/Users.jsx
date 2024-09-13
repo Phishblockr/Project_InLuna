@@ -21,10 +21,13 @@ export default function Users() {
   const [file, setFile] = useState(null);
 
   useEffect(() => {
-    setDataLoading(true);
-    dispatch(getUsers())
+    const interval = setInterval(() => {
+      dispatch(getUsers())
       .unwrap()
-      .finally(() => setDataLoading(false));
+      .finally(() => setDataLoading(false))
+    }, 5000); // Fetch every 5 seconds
+  
+    return () => clearInterval(interval); // Cleanup interval on unmount
   }, [dispatch]);
 
   const handleFileChange = (e) => {
