@@ -191,17 +191,20 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
         .on('error', reject);
     });
 
+       if (errors.length > 0) {
+      res.status(400).json({
+        message: 'CSV contains errors',
+        errors: errors,
+      });
+      return;
+    }
+
     if (users.length > 0) {
 
       await User.insertMany(users);
       res.status(200).json({ message: 'Users added successfully' });
     } else {
-      if (errors) {
-        const errorMessages = errors.map(item => item.error)
-        res.status(400).json({ message: errorMessages });
-      } else {
         res.status(400).json({ message: 'No valid data to add' });
-      }
     }
 
   } catch (error) {
