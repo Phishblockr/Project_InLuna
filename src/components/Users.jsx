@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
 import LoadingOverlay from "./LoadingOverlay";
+import FileUploadModal from "./FileUploadModal";
 
 export default function Users() {
   const usersData = useSelector((state) => state.users.users);
@@ -18,7 +19,9 @@ export default function Users() {
   const [dataFilter, setDataFilter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [dataLoading, setDataLoading] = useState(true);
-  const [file, setFile] = useState(null);
+  const [errors, setErrors] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -51,6 +54,23 @@ export default function Users() {
       toast.error("Failed to upload CSV");
     }
   };
+
+  const handleFileSubmit = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file)
+
+    try{
+      dispatch(uploadCsv(formData)).unwrap()
+      if (response.errors) {
+        setErrors(response.errors);
+        toast.error("CSV contains errors. Please correct them and try again.");
+      } else {
+        toast.success("CSV uploaded successfully");
+      }
+    } catch (error) {
+      toast.error("Failed to upload CSV! Make sure your CSV don't contain duplicate email & phone values");
+    }
+  }
 
   const keys = ["name", "email", "department", "role"];
   const search = (data) => {
@@ -110,6 +130,13 @@ export default function Users() {
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+      <FileUploadModal
+        isOpen = {isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onFileSubmit={handleFileSubmit}
+        FileMsg = "Make sure csv contains following headers 'name, email, phone, gender, role, department'"
+        FileType = "csv"
+      />
       <LoadingOverlay loading={dataLoading} />
       <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
         <div>
@@ -146,13 +173,11 @@ export default function Users() {
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-          <div>
-            <input type="file" accept=".csv" onChange={handleFileChange} />
-            <button onClick={handleUpload}>Upload CSV</button>
-          </div>
+          <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-300 text-gray-400 dark:dark:bg-[#001733] dark:hover:bg-[#001733] transition" 
+          onClick={() => setIsModalOpen(true)}>Add users via CSV</button>
           <Link
             to={"/users/adduser"}
-            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
+            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors"
           >
             <span>
               Add User
