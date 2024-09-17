@@ -1,7 +1,11 @@
+import http from 'http';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import {Server} from "socket.io"
 import dotenv from 'dotenv';
+import winston from 'winston';
+
 import authenticationRoutes from "./routes/authenticationRoutes.js"
 import organizationRoutes from './routes/organizationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -9,7 +13,6 @@ import urlRoutes from './routes/urlRoutes.js';
 import whitelistReqRoutes from './routes/whitelistReqRoutes.js';
 import feedbackRoutes from "./routes/feedbackRoutes.js"
 import overviewRoutes from "./routes/overviewRoutes.js"
-import winston from 'winston';
 import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js"
 import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js"
@@ -18,9 +21,17 @@ dotenv.config();
 
 const app = express();
 // Increase the size limit for JSON and URL-encoded bodies
-app.use(express.json({ limit: '10mb' })); // Adjust the limit as needed
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors());
+
+const server = http.createServer(app);
+const io = new Server(server,  {
+  cors: {
+    origin: "http://localhost:5173", // Your React app's URL
+  }
+});
+app.set("socketio", io);
 
 const logger = winston.createLogger({
   level: 'info',
@@ -45,7 +56,8 @@ app.use('/api/org', organizationRoutes);
 app.use("/api/auth", authenticationRoutes);
 
 // Users Routes
-app.use('/api/user', dashboardAdminMiddleware, userRoutes);
+// Individual middleware to added specific routes for user
+app.use('/api/user', userRoutes);
 
 // Url Routes
 app.use("/api/url", authenticateToken, urlRoutes);
@@ -65,4 +77,4 @@ app.use("/api/overview",dashboardAdminMiddleware, overviewRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

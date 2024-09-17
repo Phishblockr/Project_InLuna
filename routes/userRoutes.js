@@ -1,7 +1,9 @@
 import express from 'express';
+import dashboardAdminMiddleware from "../middlewares/dashboardAdminMiddleware.js"
 import {
   getAllUsers,
   createUser,
+  createAdmin,
   getUser,
   updateUser,
   updateAdminDetails,
@@ -15,14 +17,15 @@ import multer from 'multer';
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
-router.route("/fetch-all").get(getAllUsers);
-router.route("/create").post(createUser);
-router.route("/fetch/:id").get(getUser);
-router.route("/update/:id").put(updateUser);
-router.route("/delete/:id").delete(deleteUser);
-router.route("/profile").get(fetchProfile);
-router.route("/updateAdminDetails").put(updateAdminDetails)
-router.route("/updateAdminPwd").put(updateAdminPwd)
-router.post("/addUsersFromCsv", upload.single("file"), addUsersFromCsv);
+router.route("/fetch-all").get(dashboardAdminMiddleware, getAllUsers);
+router.route("/create").post(dashboardAdminMiddleware, createUser);
+router.route("/createAdm").post(createAdmin);
+router.route("/fetch/:id").get(dashboardAdminMiddleware, getUser);
+router.route("/update/:id").put(dashboardAdminMiddleware, updateUser);
+router.route("/delete/:id").delete(dashboardAdminMiddleware, deleteUser);
+router.route("/profile").get(dashboardAdminMiddleware, fetchProfile);
+router.route("/updateAdminDetails").put(dashboardAdminMiddleware, updateAdminDetails)
+router.route("/updateAdminPwd").put(dashboardAdminMiddleware, updateAdminPwd)
+router.post("/addUsersFromCsv", upload.single("file"),dashboardAdminMiddleware, addUsersFromCsv);
 
 export default router;

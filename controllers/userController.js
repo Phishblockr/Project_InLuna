@@ -5,7 +5,9 @@ import winston from 'winston';
 import csvParser from 'csv-parser';
 import fs from 'fs';
 import { generateUsername } from '../utils/generateUsername.js';
+import dotenv from 'dotenv';
 
+dotenv.config();
 // Logger setup
 const logger = winston.createLogger({
   level: 'info',
@@ -39,12 +41,62 @@ export const createUser = asyncHandler(async (req, res) => {
       orgId,
     });
     await newUser.save();
+
+    const io = req.app.get("socketio");
+    io.emit("userCreated", newUser);
+
     res.status(201).json(newUser);
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ error: error.message });
   }
 });
+
+// Create a new admin
+export const createAdmin = asyncHandler(async (req, res) => {
+  try {
+    const { name, email, password, phone, role, department, img, orgId } = req.body;
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
+    }
+
+    const userExists = await User.findOne({
+      $or: [{ email }, { phone }]
+    });
+
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const username = generateUsername(email, phone);
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const UserTypeCode = process.env.ADMIN;
+
+    const newUser = new User({
+      username,
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      role,
+      department,
+      img,
+      orgId,
+      userType: UserTypeCode,
+    });
+    await newUser.save();
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Get a single user by ID
 export const getUser = asyncHandler(async (req, res) => {
@@ -70,7 +122,14 @@ export const updateUser = asyncHandler(async (req, res) => {
     new: true,
     runValidators: true
   }).select('-password');
-  res.status(updatedUser ? 200 : 404).json(updatedUser ? updatedUser : { error: 'User not found' });
+  if (updatedUser) {
+    const io = req.app.get('socketio');
+    io.emit('userUpdated', updatedUser);
+
+    res.status(200).json(updatedUser);
+  } else {
+    res.status(404).json({ error: 'User not found' });
+  }
 });
 
 // update admin
@@ -132,7 +191,14 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = await User.findByIdAndDelete(id).select('-password');
-  res.status(user ? 200 : 404).json(user ? { message: `User ${user.username} removed successfully` } : { error: 'User not found' });
+  if (user) {
+    const io = req.app.get('socketio');
+    io.emit('userDeleted', user._id);
+
+    res.status(200).json({ message: `User ${user.username} removed successfully` });
+  } else {
+    res.status(404).json({ error: 'User not found' });
+  }
 });
 
 export const addUsersFromCsv = asyncHandler(async (req, res) => {
@@ -191,7 +257,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
         .on('error', reject);
     });
 
-       if (errors.length > 0) {
+    if (errors.length > 0) {
       res.status(400).json({
         message: 'CSV contains errors',
         errors: errors,
@@ -200,11 +266,13 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
     }
 
     if (users.length > 0) {
-
       await User.insertMany(users);
+      const io = req.app.get('socketio');
+      io.emit("userCreated", users);
+  
       res.status(200).json({ message: 'Users added successfully' });
     } else {
-        res.status(400).json({ message: 'No valid data to add' });
+      res.status(400).json({ message: 'No valid data to add' });
     }
 
   } catch (error) {
