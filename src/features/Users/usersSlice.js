@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import io from "socket.io-client";
 
 const initialState = {
     users: [],
@@ -7,6 +8,7 @@ const initialState = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL
+const socket = io(import.meta.env.VITE_BASE_URL)
 
 export const getUsers = createAsyncThunk('user/get', async (id, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
@@ -46,7 +48,7 @@ export const addUser = createAsyncThunk('user/add', async (user, { rejectWithVal
     }
 });
 
-export const delUser = createAsyncThunk('user/del', async (id) => {
+export const delUser = createAsyncThunk('user/del', async (id, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
 
     try {
@@ -57,8 +59,8 @@ export const delUser = createAsyncThunk('user/del', async (id) => {
                 'Content-Type': 'application/json'
             },
         });
-        const data = await res.json();
-        return data;
+        if(!res.ok) throw new Error(`Failed to delete ${id}`)
+        return id;
     } catch (error) {
         return rejectWithValue(error.message);
     }
@@ -85,14 +87,27 @@ const usersSlice = createSlice({
     name: "users",
     initialState,
     reducers: {
-        remUser(state, action) {
-            state.users = state.users.filter(user => user.id !== action.payload);
-        },
+        // remUser(state, action) {
+        //     state.users = state.users.filter(user => user.id !== action.payload);
+        // },
+
         updateStatus(state, action) {
             const user = state.users.find(user => user.id === action.payload);
             if (user) {
                 user.status = user.status === "Inactive" ? "Active" : "Inactive";
             }
+        },
+        addUserSuccess(state, action) {
+            state.users.push(action.payload);
+        },
+        updateUserSuccess(state, action) {
+            const index = state.users.findIndex(user => user._id === action.payload._id);
+            if (index !== -1) {
+                state.users[index] = action.payload;
+            }
+        },
+        deleteUserSuccess(state, action) {
+            state.users = state.users.filter(user => user._id !== action.payload);
         },
     },
     extraReducers: builder => {
@@ -127,7 +142,7 @@ const usersSlice = createSlice({
             })
             .addCase(delUser.fulfilled, (state, action) => {
                 state.loading = false;
-                state.users = state.users.filter(user => user._id !== action.meta.arg);
+                state.users = state.users.filter(user => user._id !== action.payload);
             })
             .addCase(delUser.rejected, (state, action) => {
                 state.loading = false;
@@ -136,5 +151,20 @@ const usersSlice = createSlice({
     },
 });
 
-export const { remUser, updateStatus } = usersSlice.actions;
+export const { deleteUserSuccess, updateStatus, addUserSuccess, updateUserSuccess } = usersSlice.actions;
+
+export const startListeningToSocket = () => (dispatch) => {
+    socket.on("userCreated", (user) => {
+        dispatch(addUserSuccess(user));
+    });
+
+    socket.on("userUpdated", (user) => {
+        dispatch(updateUserSuccess(user));
+    });
+
+    socket.on("userDeleted", (userId) => {
+        dispatch(deleteUserSuccess(userId));
+    });
+}
+
 export default usersSlice.reducer;

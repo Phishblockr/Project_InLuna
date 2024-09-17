@@ -3,7 +3,7 @@ import { RiDeleteBinLine, RiAddFill } from "react-icons/ri";
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { delUser, getUsers, uploadCsv } from "../features/Users/usersSlice";
+import { delUser, getUsers, uploadCsv, startListeningToSocket } from "../features/Users/usersSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
@@ -24,13 +24,11 @@ export default function Users() {
 
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      dispatch(getUsers())
+    dispatch(getUsers())
       .unwrap()
       .finally(() => setDataLoading(false))
-    }, 5000); // Fetch every 5 seconds
-  
-    return () => clearInterval(interval); // Cleanup interval on unmount
+
+    dispatch(startListeningToSocket());
   }, [dispatch]);
 
   const handleFileChange = (e) => {
@@ -59,7 +57,7 @@ export default function Users() {
     const formData = new FormData();
     formData.append("file", file)
 
-    try{
+    try {
       dispatch(uploadCsv(formData)).unwrap()
       if (response.errors) {
         setErrors(response.errors);
@@ -120,6 +118,12 @@ export default function Users() {
     try {
       await dispatch(delUser(id)).unwrap();
       toast.success(`User ${id} removed`);
+
+      const updatedRecords = filteredData.slice(firstIndex, lastIndex - 1);
+      console.log("peep peep", updatedRecords)
+      if (updatedRecords.length === 0 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
     } catch (e) {
       toast.error('Failed to remove user');
     }
@@ -131,11 +135,11 @@ export default function Users() {
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <FileUploadModal
-        isOpen = {isModalOpen}
+        isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onFileSubmit={handleFileSubmit}
-        FileMsg = "Make sure csv contains following headers 'name, email, phone, gender, role, department'"
-        FileType = "csv"
+        FileMsg="Make sure csv contains following headers 'name, email, phone, gender, role, department'"
+        FileType="csv"
       />
       <LoadingOverlay loading={dataLoading} />
       <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
@@ -173,8 +177,8 @@ export default function Users() {
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-          <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-300 text-gray-400 dark:dark:bg-[#001733] dark:hover:bg-[#001733] transition" 
-          onClick={() => setIsModalOpen(true)}>Add users via CSV</button>
+          <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-300 dark:dark:bg-[#001733] dark:hover:bg-[#001733] transition"
+            onClick={() => setIsModalOpen(true)}>Add users via CSV</button>
           <Link
             to={"/users/adduser"}
             className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors"

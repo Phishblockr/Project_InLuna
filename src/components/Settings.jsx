@@ -30,7 +30,7 @@ const Settings = () => {
             </div>
             <div>
               <select
-                className="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001c40] dark:text-[#F4F4F4]"
+                className="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0364BD] bg-gray-100 dark:bg-[#001c40] dark:text-[#F4F4F4]"
                 name="theme"
                 id="theme"
                 onChange={(e) => handleSetTheme(e.target.value)}
