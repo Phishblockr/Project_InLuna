@@ -45,7 +45,6 @@ export default function Users() {
     formData.append('file', file);
 
     try {
-      console.log(file)
       dispatch(uploadCsv(formData));
       toast.success("CSV uploaded successfully");
     } catch (error) {
@@ -120,7 +119,6 @@ export default function Users() {
       toast.success(`User ${id} removed`);
 
       const updatedRecords = filteredData.slice(firstIndex, lastIndex - 1);
-      console.log("peep peep", updatedRecords)
       if (updatedRecords.length === 0 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }

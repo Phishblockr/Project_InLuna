@@ -18,7 +18,6 @@ const statusInactive =
 
 const UserDetails = () => {
   const { id } = useParams();
-  console.log(id)
   const [activityCounts, setActivityCounts] = useState({
     "phishingClicks": 0,
     "blacklistedClicks": 0,
@@ -97,7 +96,6 @@ const UserDetails = () => {
       }
 
       const data = await response.json();
-      console.log(data)
       setActivityCounts(data);
       setDataLoading(false)
     } catch (error) {

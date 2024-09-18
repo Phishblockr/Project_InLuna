@@ -9,7 +9,9 @@ const initialState = {
 
 const apiUrl = import.meta.env.VITE_API_URL
 const socket = io(import.meta.env.VITE_BASE_URL)
-
+socket.on('connect', () => {
+    console.log('Socket connected:', socket.id);
+});
 export const getUsers = createAsyncThunk('user/get', async (id, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
@@ -59,7 +61,7 @@ export const delUser = createAsyncThunk('user/del', async (id, { rejectWithValue
                 'Content-Type': 'application/json'
             },
         });
-        if(!res.ok) throw new Error(`Failed to delete ${id}`)
+        if (!res.ok) throw new Error(`Failed to delete ${id}`)
         return id;
     } catch (error) {
         return rejectWithValue(error.message);
@@ -78,7 +80,7 @@ export const uploadCsv = createAsyncThunk('users/uploadCsv', async (formData, { 
         });
         if (!response.ok) throw new Error('Failed to upload CSV');
         return await response.json()
-    } catch (error){
+    } catch (error) {
         return rejectWithValue(error.message)
     }
 })
@@ -98,8 +100,11 @@ const usersSlice = createSlice({
             }
         },
         addUserSuccess(state, action) {
-            state.users.push(action.payload);
-        },
+            const existingUser = state.users.find(user => user._id === action.payload._id);
+            if (!existingUser) {
+              state.users.push(action.payload); // Add user only if it doesn't exist
+            }
+          },
         updateUserSuccess(state, action) {
             const index = state.users.findIndex(user => user._id === action.payload._id);
             if (index !== -1) {
@@ -109,6 +114,9 @@ const usersSlice = createSlice({
         deleteUserSuccess(state, action) {
             state.users = state.users.filter(user => user._id !== action.payload);
         },
+        addMultipleUsersSuccess(state, action) {
+            state.users.push(...action.payload);
+        }
     },
     extraReducers: builder => {
         builder
@@ -151,11 +159,15 @@ const usersSlice = createSlice({
     },
 });
 
-export const { deleteUserSuccess, updateStatus, addUserSuccess, updateUserSuccess } = usersSlice.actions;
+export const { deleteUserSuccess, updateStatus, addUserSuccess, updateUserSuccess, addMultipleUsersSuccess } = usersSlice.actions;
 
 export const startListeningToSocket = () => (dispatch) => {
-    socket.on("userCreated", (user) => {
-        dispatch(addUserSuccess(user));
+    socket.on("usersByCsvAdded", (data) => {
+        dispatch(addMultipleUsersSuccess(data));
+    });
+
+    socket.on("userCreated", (data) => {
+        dispatch(addUserSuccess(data));
     });
 
     socket.on("userUpdated", (user) => {
