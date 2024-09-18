@@ -28,8 +28,10 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
   try {
-    const orgId = req.user.orgId;
-    const { name, username, email, phone, role, department, img } = req.body;
+    const orgId = "69";
+    const { name, email, phone, role, department, img } = req.body;
+
+    const username = generateUsername(email, phone);
     const newUser = new User({
       username,
       name,
@@ -40,10 +42,9 @@ export const createUser = asyncHandler(async (req, res) => {
       img,
       orgId,
     });
-    await newUser.save();
-
+    const addedUser = await newUser.save();
     const io = req.app.get("socketio");
-    io.emit("userCreated", newUser);
+    io.emit("userCreated", addedUser);
 
     res.status(201).json(newUser);
   } catch (error) {
@@ -266,9 +267,9 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
     }
 
     if (users.length > 0) {
-      await User.insertMany(users);
+      const insertedUsers = await User.insertMany(users);
       const io = req.app.get('socketio');
-      io.emit("userCreated", users);
+      io.emit("usersByCsvAdded", insertedUsers);
   
       res.status(200).json({ message: 'Users added successfully' });
     } else {
