@@ -28,7 +28,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
   try {
-    const orgId = "69";
+    const orgId = req.user.orgId;
     const { name, email, phone, role, department, img } = req.body;
 
     const username = generateUsername(email, phone);
@@ -109,15 +109,15 @@ export const getUser = asyncHandler(async (req, res) => {
 // Update a user
 export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { username, email, phone, role, department, orgId, password } = req.body;
+  const { username, name, email, phone, role, department, orgId } = req.body;
   const updates = {
     username,
+    name,
     email,
     phone,
     role,
     department,
     orgId,
-    password
   };
   const updatedUser = await User.findByIdAndUpdate(id, updates, {
     new: true,
