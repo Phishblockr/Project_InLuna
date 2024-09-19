@@ -9,6 +9,7 @@ import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
 import LoadingOverlay from "./LoadingOverlay";
 import FileUploadModal from "./FileUploadModal";
+import debounce from "debounce";
 
 export default function Users() {
   const usersData = useSelector((state) => state.users.users);
@@ -23,15 +24,22 @@ export default function Users() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setErrors] = useState(null);
 
-  console.log(totalPages)
-
   useEffect(() => {
-    dispatch(getUsers({ page: currentPage, limit: perPageRec }))
+    dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status: "all" }))
       .unwrap()
       .finally(() => setDataLoading(false))
 
     dispatch(startListeningToSocket());
-  }, [dispatch, currentPage, perPageRec]);
+  }, [dispatch, currentPage, perPageRec, query]);
+
+  const handleSearch = debounce((value) => {
+    setQuery(value)
+    dispatch(getUsers({ page: 1, limit: perPageRec, search: value }));
+  }, 300); 
+
+  const handleStatus = (value) =>{
+    dispatch(getUsers({ page: 1, limit: perPageRec, search: query, status: value }));
+  }
 
   const handleFileSubmit = async (file) => {
     const formData = new FormData();
@@ -49,13 +57,6 @@ export default function Users() {
       toast.error("Failed to upload CSV! Make sure your CSV don't contain duplicate email & phone values");
     }
   }
-
-  const keys = ["name", "email", "department", "role"];
-  const search = (data) => {
-    return data.filter((item) =>
-      keys.some((key) => item[key] && item[key].toLowerCase().includes(query.toLowerCase()))
-    );
-  };
 
   const filterUsers = (data) => {
     if (!Array.isArray(data)) return [];
@@ -121,7 +122,7 @@ export default function Users() {
       if (updatedRecords.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       } else {
-        dispatch(getUsers({ page: currentPage, limit: perPageRec }));
+        dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query }));
       }
     } catch (e) {
       toast.error('Failed to remove user');
@@ -152,13 +153,13 @@ export default function Users() {
             type="text"
             placeholder="Search User..."
             className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
           />
           <select
             name="filters"
             id="filters"
             className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-            onChange={(e) => setDataFilter(e.target.value)}
+            onChange={(e) => handleStatus(e.target.value)}
           >
             <option value="all">Status</option>
             <option value="active">Active</option>

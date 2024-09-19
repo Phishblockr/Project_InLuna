@@ -15,10 +15,10 @@ const socket = io(import.meta.env.VITE_BASE_URL)
 socket.on('connect', () => {
     console.log('Socket connected:', socket.id);
 });
-export const getUsers = createAsyncThunk('user/get', async ({page, limit}, { rejectWithValue }) => {
+export const getUsers = createAsyncThunk('user/get', async ({page, limit, search, status}, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}`, {
+        const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}&search=${search}&status=${status}`, {
             method: "GET",
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -150,6 +150,7 @@ const usersSlice = createSlice({
                 state.users = action.payload.users;
                 state.totalPages = action.payload.totalPages; 
                 state.currentPage = action.payload.currentPage;
+                state.totalUsers = action.payload.totalUsers;
             })
             .addCase(getUsers.rejected, (state, action) => {
                 state.loading = false;
