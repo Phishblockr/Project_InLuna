@@ -114,16 +114,28 @@ const usersSlice = createSlice({
             state.users = state.users.filter(user => user._id !== action.payload);
         },
         addMultipleUsersSuccess(state, action) {
-            const { users: newUsers, totalPages, totalUsers, perPageRec } = action.payload;
+            const newUsers = action.payload.users || [];
 
+            // Ensure newUsers is an array
+            if (!Array.isArray(newUsers)) {
+                console.error("Expected an array of new users, received: ", newUsers);
+                return;
+            }
+        
+            // Get the existing user IDs to avoid duplicates
             const existingUserIds = state.users.map(user => user._id);
-          
+        
+            // Filter out any duplicate users
             const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
-          
-            state.users = [...state.users, ...filteredNewUsers].slice(0, perPageRec);
-
-            state.totalUsers = totalUsers; 
-            state.totalPages = totalPages;
+        
+            // Combine the existing users with the new users
+            state.users = [...state.users, ...filteredNewUsers];
+        
+            // Update totalUsers with the new length of users
+            state.totalUsers = action.payload.totalUsers || state.users.length;
+        
+            // Calculate totalPages using the perPageRec value from action.payload
+            state.totalPages = Math.ceil(state.totalUsers / action.payload.perPageRec);
 
         }
     },
@@ -175,6 +187,22 @@ const usersSlice = createSlice({
             .addCase(delUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            .addCase(uploadCsv.fulfilled, (state, action) => {
+                state.loading = false;
+                const newUsers = action.payload.users || [];
+                const existingUserIds = state.users.map(user => user._id);
+            
+                const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
+            
+                // Update users and recalculate pagination
+                state.users = [...state.users, ...filteredNewUsers];
+                state.totalUsers = action.payload.totalUsers;
+                state.totalPages = Math.ceil(state.totalUsers / action.payload.perPageRec);
+            })
+            .addCase(uploadCsv.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
     },
 });
@@ -183,12 +211,7 @@ const usersSlice = createSlice({
 export const startListeningToSocket = () => (dispatch, getState) => {
     socket.on("usersByCsvAdded", (data) => {
         const perPageRec = getState().perPageRec;
-        dispatch(addMultipleUsersSuccess({
-            users: data.users,
-            totalUsers: data.totalUsers,
-            totalPages: Math.ceil(data.totalUsers / perPageRec),
-            perPageRec
-        }));
+        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec }));
     });
     
     socket.on("userCreated", (data) => {
