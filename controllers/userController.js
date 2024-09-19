@@ -20,9 +20,19 @@ const logger = winston.createLogger({
 
 // Get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+
   const id = req.user.orgId;
-  const users = await User.find({ orgId: id }).select('-password');
-  res.status(users.length > 0 ? 200 : 404).json(users.length > 0 ? users : { error: 'Users not found' });
+  const users = await User.find({ orgId: id }).select('-password').skip(skip).limit(limit);
+  const totalUsers = await User.countDocuments({orgId: id});
+  if(users.length > 0){
+    res.status(200).json({users, currentPage: page, totalPages: Math.ceil(totalUsers / limit), totalUsers})
+  } else {
+    res.status(400).json({error: "Users not found"})
+  }
 });
 
 // Create a new user
