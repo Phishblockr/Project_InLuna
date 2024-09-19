@@ -187,6 +187,7 @@ export const startListeningToSocket = () => (dispatch, getState) => {
             users: data.users,
             totalUsers: data.totalUsers,
             totalPages: Math.ceil(data.totalUsers / perPageRec),
+            perPageRec
         }));
     });
     
