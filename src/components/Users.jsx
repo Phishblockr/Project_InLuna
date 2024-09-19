@@ -12,6 +12,7 @@ import FileUploadModal from "./FileUploadModal";
 
 export default function Users() {
   const usersData = useSelector((state) => state.users.users);
+  const totalPages = useSelector((state) => state.users.totalPages);
   const perPageRec = useSelector((state) => state.perPageRec);
   const dispatch = useDispatch();
 
@@ -19,45 +20,25 @@ export default function Users() {
   const [dataFilter, setDataFilter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [dataLoading, setDataLoading] = useState(true);
-  const [errors, setErrors] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setErrors] = useState(null);
 
+  console.log(totalPages)
 
   useEffect(() => {
-    dispatch(getUsers())
+    dispatch(getUsers({ page: currentPage, limit: perPageRec }))
       .unwrap()
       .finally(() => setDataLoading(false))
 
     dispatch(startListeningToSocket());
-  }, [dispatch]);
-
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
-
-  const handleUpload = async () => {
-    if (!file) {
-      toast.error("Please select a file to upload");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      dispatch(uploadCsv(formData));
-      toast.success("CSV uploaded successfully");
-    } catch (error) {
-      toast.error("Failed to upload CSV");
-    }
-  };
+  }, [dispatch, currentPage, perPageRec]);
 
   const handleFileSubmit = async (file) => {
     const formData = new FormData();
     formData.append("file", file)
 
     try {
-      dispatch(uploadCsv(formData)).unwrap()
+      const response = dispatch(uploadCsv(formData)).unwrap()
       if (response.errors) {
         setErrors(response.errors);
         toast.error("CSV contains errors. Please correct them and try again.");
@@ -76,7 +57,8 @@ export default function Users() {
     );
   };
 
-  const filter = (data) => {
+  const filterUsers = (data) => {
+    if (!Array.isArray(data)) return [];
     if (dataFilter === "active") {
       return data.filter((item) => item.status === "active");
     } else if (dataFilter === "inactive") {
@@ -86,22 +68,42 @@ export default function Users() {
     }
   };
 
-  const filteredData = filter(search(usersData));
-  const lastIndex = currentPage * perPageRec;
-  const firstIndex = lastIndex - perPageRec;
-  const records = filteredData.slice(firstIndex, lastIndex);
-  const npage = Math.ceil(filteredData.length / perPageRec);
-  const numbers = [...Array(npage + 1).keys()].slice(1);
+  // const filteredData = filter(search(usersData));
+  // const lastIndex = currentPage * perPageRec;
+  // const firstIndex = lastIndex - perPageRec;
+  // const records = filteredData.slice(firstIndex, lastIndex);
+  // const npage = Math.ceil(filteredData.length / perPageRec);
+  // const numbers = [...Array(npage + 1).keys()].slice(1);
+
+  // function nextPage() {
+  //   if (currentPage !== npage) {
+  //     setCurrentPage(currentPage + 1);
+  //   }
+  // }
+
+  // function prePage() {
+  //   if (currentPage !== 1) {
+  //     setCurrentPage(currentPage - 1);
+  //   }
+  // }
+
+  // function changeCPage(n) {
+  //   setCurrentPage(n);
+  // }
+
+  const handleSetPerPageRec = (value) => {
+    dispatch(setPerPageRec(value));
+  };
 
   function nextPage() {
-    if (currentPage !== npage) {
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   }
 
   function prePage() {
-    if (currentPage !== 1) {
-      setCurrentPage(currentPage - 1);
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
     }
   }
 
@@ -109,23 +111,24 @@ export default function Users() {
     setCurrentPage(n);
   }
 
-  const handleSetPerPageRec = (value) => {
-    dispatch(setPerPageRec(value));
-  };
-
   const handleRemUser = async (id) => {
     try {
       await dispatch(delUser(id)).unwrap();
       toast.success(`User ${id} removed`);
 
-      const updatedRecords = filteredData.slice(firstIndex, lastIndex - 1);
-      if (updatedRecords.length === 0 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
+      const updatedRecords = filteredUsers.slice(0, perPageRec - 1);
+
+      if (updatedRecords.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      } else {
+        dispatch(getUsers({ page: currentPage, limit: perPageRec }));
       }
     } catch (e) {
       toast.error('Failed to remove user');
     }
   };
+
+  const filteredUsers = filterUsers(usersData);
 
   const statusActive = "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
   const statusInactive = "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
@@ -187,7 +190,7 @@ export default function Users() {
           </Link>
         </div>
       </div>
-      {records.length === 0 ? (
+      {filteredUsers.length === 0 ? (
         <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
           <span>No Records Found!</span>
         </div>
@@ -206,9 +209,9 @@ export default function Users() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((user, index) => (
+                {filteredUsers.map((user) => (
                   <tr
-                    key={index}
+                    key={user._id}
                     className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
                   >
                     <td className="py-2 pl-2">
@@ -255,40 +258,38 @@ export default function Users() {
           <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
             <nav className="flex gap-x-1 justify-between">
               <div>
-                <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  href="#"
+                <button
+                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD]"
+                  disabled={currentPage === 1}
                   onClick={prePage}
                 >
                   <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-                </a>
+                </button>
               </div>
               <div className="flex gap-x-2 items-center">
-                {numbers.map((number, index) => (
-                  <div key={index}>
-                    <a
-                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === number
-                        ? "bg-[#0364BD] text-white dark:bg-[#0364BD]"
-                        : "bg-gray-200 dark:bg-[#001C40]"
+                {totalPages && totalPages > 0 ? (
+                  [...Array(totalPages).keys()].map((n) => (
+                    <button
+                      className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-white dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
                         }`}
-                      href="#"
-                      onClick={() => changeCPage(number)}
+                      key={n + 1}
+                      onClick={() => changeCPage(n + 1)}
                     >
-                      {number}
-                    </a>
-                  </div>
-                ))}
+                      {n + 1}
+                    </button>
+                  ))
+                ) : (
+                  <span></span>
+                )}
               </div>
               <div>
-                <a
-                  className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === npage ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  href="#"
+                <button
+                  className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD]"
+                  disabled={currentPage === totalPages}
                   onClick={nextPage}
                 >
                   Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-                </a>
+                </button>
               </div>
             </nav>
           </div>

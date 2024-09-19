@@ -3,19 +3,22 @@ import io from "socket.io-client";
 
 const initialState = {
     users: [],
+    totalUsers: 0,
+    totalPages: 1,
+    currentPage: 1,
     loading: false,
     error: null,
-};
+  };
 
 const apiUrl = import.meta.env.VITE_API_URL
 const socket = io(import.meta.env.VITE_BASE_URL)
 socket.on('connect', () => {
     console.log('Socket connected:', socket.id);
 });
-export const getUsers = createAsyncThunk('user/get', async (id, { rejectWithValue }) => {
+export const getUsers = createAsyncThunk('user/get', async ({page, limit}, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(`${apiUrl}/user/fetch-all`, {
+        const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}`, {
             method: "GET",
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -89,10 +92,6 @@ const usersSlice = createSlice({
     name: "users",
     initialState,
     reducers: {
-        // remUser(state, action) {
-        //     state.users = state.users.filter(user => user.id !== action.payload);
-        // },
-
         updateStatus(state, action) {
             const user = state.users.find(user => user.id === action.payload);
             if (user) {
@@ -115,7 +114,17 @@ const usersSlice = createSlice({
             state.users = state.users.filter(user => user._id !== action.payload);
         },
         addMultipleUsersSuccess(state, action) {
-            state.users.push(...action.payload);
+            const { users: newUsers, totalPages, totalUsers, perPageRec } = action.payload;
+
+            const existingUserIds = state.users.map(user => user._id);
+          
+            const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
+          
+            state.users = [...state.users, ...filteredNewUsers].slice(0, perPageRec);
+
+            state.totalUsers = totalUsers; 
+            state.totalPages = totalPages;
+
         }
     },
     extraReducers: builder => {
@@ -126,7 +135,9 @@ const usersSlice = createSlice({
             })
             .addCase(getUsers.fulfilled, (state, action) => {
                 state.loading = false;
-                state.users = action.payload;
+                state.users = action.payload.users;
+                state.totalPages = action.payload.totalPages; 
+                state.currentPage = action.payload.currentPage;
             })
             .addCase(getUsers.rejected, (state, action) => {
                 state.loading = false;
@@ -151,6 +162,15 @@ const usersSlice = createSlice({
             .addCase(delUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.users = state.users.filter(user => user._id !== action.payload);
+                const totalPages = Math.ceil(state.totalUsers / state.perPageRec);
+
+                if (state.users.length < state.perPageRec && state.currentPage < totalPages){
+                    fetchMoreUsersFromNextPage(state.currentPage + 1, state.perPageRec).then(newUsers => {
+                        state.users.push(...newUsers);
+                    });
+                }
+                state.totalUsers -= 1;
+                state.totalPages = Math.ceil(state.totalUsers / state.perPageRec);
             })
             .addCase(delUser.rejected, (state, action) => {
                 state.loading = false;
@@ -159,13 +179,17 @@ const usersSlice = createSlice({
     },
 });
 
-export const { deleteUserSuccess, updateStatus, addUserSuccess, updateUserSuccess, addMultipleUsersSuccess } = usersSlice.actions;
 
-export const startListeningToSocket = () => (dispatch) => {
+export const startListeningToSocket = () => (dispatch, getState) => {
     socket.on("usersByCsvAdded", (data) => {
-        dispatch(addMultipleUsersSuccess(data));
+        const perPageRec = getState().perPageRec;
+        dispatch(addMultipleUsersSuccess({
+            users: data.users,
+            totalUsers: data.totalUsers,
+            totalPages: Math.ceil(data.totalUsers / perPageRec),
+        }));
     });
-
+    
     socket.on("userCreated", (data) => {
         dispatch(addUserSuccess(data));
     });
@@ -179,4 +203,21 @@ export const startListeningToSocket = () => (dispatch) => {
     });
 }
 
+const fetchMoreUsersFromNextPage = async (page, limit) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+    const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}`, {
+      method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.users;
+    }
+    return [];
+  };
+
+export const { deleteUserSuccess, updateStatus, addUserSuccess, updateUserSuccess, addMultipleUsersSuccess } = usersSlice.actions;
 export default usersSlice.reducer;
