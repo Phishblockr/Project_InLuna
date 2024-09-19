@@ -20,14 +20,33 @@ const logger = winston.createLogger({
 
 // Get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
-
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
+  const search = req.query.search || "";
+  const status = req.query.status || "all";
 
   const id = req.user.orgId;
-  const users = await User.find({ orgId: id }).select('-password').skip(skip).limit(limit);
-  const totalUsers = await User.countDocuments({orgId: id});
+
+  const searchFilter = search ? {
+    $or:[
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { department: { $regex: search, $options: 'i' } },
+      { role: { $regex: search, $options: 'i' } }
+    ]
+  } : {};
+
+  const statusFilter = status === "all" ? {} :  {
+    $or:[
+      {status: {$regex: status, $options: "i"}}
+    ]
+  };
+
+  const queryFilter = {orgId: id, ...searchFilter, ...statusFilter};
+
+  const users = await User.find(queryFilter).select('-password').skip(skip).limit(limit);
+  const totalUsers = await User.countDocuments(queryFilter);
   if(users.length > 0){
     res.status(200).json({users, currentPage: page, totalPages: Math.ceil(totalUsers / limit), totalUsers})
   } else {
