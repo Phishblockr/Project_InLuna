@@ -12,7 +12,6 @@ const AddUser = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    username: '',
     email: '',
     phone: '',
     role: '',
@@ -104,18 +103,6 @@ const AddUser = () => {
                 className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
                 onChange={handleChange}
                 value={formData.name}
-              />
-            </div>
-
-            <div className="mt-3 flex flex-col">
-              <label htmlFor="username">Username: </label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                onChange={handleChange}
-                value={formData.username}
               />
             </div>
 

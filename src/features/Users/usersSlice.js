@@ -121,20 +121,10 @@ const usersSlice = createSlice({
                 console.error("Expected an array of new users, received: ", newUsers);
                 return;
             }
-        
-            // Get the existing user IDs to avoid duplicates
             const existingUserIds = state.users.map(user => user._id);
-        
-            // Filter out any duplicate users
             const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
-        
-            // Combine the existing users with the new users
             state.users = [...state.users, ...filteredNewUsers];
-        
-            // Update totalUsers with the new length of users
             state.totalUsers = action.payload.totalUsers || state.users.length;
-        
-            // Calculate totalPages using the perPageRec value from action.payload
             state.totalPages = Math.ceil(state.totalUsers / action.payload.perPageRec);
 
         }
@@ -212,7 +202,7 @@ const usersSlice = createSlice({
 export const startListeningToSocket = () => (dispatch, getState) => {
     socket.on("usersByCsvAdded", (data) => {
         const perPageRec = getState().perPageRec;
-        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec }));
+        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec, search:"", status:"all" }));
     });
     
     socket.on("userCreated", (data) => {
