@@ -94,9 +94,9 @@ const Overview = () => {
   }, [dispatch, selectedDate]);
 
   return (
-    <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-4'>
+    <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
       <LoadingOverlay loading={dataLoading} />
-      <div className='z-1 w-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
+      <div className='z-1 w-full h-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
         <div className="flex justify-between">
           <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
 

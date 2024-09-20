@@ -3,15 +3,17 @@ import { RiDeleteBinLine, RiAddFill } from "react-icons/ri";
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { delUser, getUsers, uploadCsv, startListeningToSocket } from "../features/Users/usersSlice";
+import { delUser, getUsers, uploadCsv, startListeningToSocket } from "../../features/Users/usersSlice";
 import { toast } from "sonner";
-import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
+import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
-import LoadingOverlay from "./LoadingOverlay";
-import FileUploadModal from "./FileUploadModal";
+import LoadingOverlay from "../LoadingOverlay";
+import FileUploadModal from "../FileUploadModal";
+import AuthenticateModal from "../AuthenticateModal"
 import debounce from "debounce";
 
 export default function Users() {
+    const apiUrl = import.meta.env.VITE_API_URL
     const usersData = useSelector((state) => state.users.users);
     const totalPages = useSelector((state) => state.users.totalPages);
     const perPageRec = useSelector((state) => state.perPageRec);
@@ -22,8 +24,11 @@ export default function Users() {
     const [currentPage, setCurrentPage] = useState(1);
     const [dataLoading, setDataLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-	const [status, setStatus] = useState("all")
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [status, setStatus] = useState("all")
     const [error, setErrors] = useState(null);
+    const [operationType, setOperationType] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status }))
@@ -39,7 +44,7 @@ export default function Users() {
     }, 300);
 
     const handleStatus = (value) => {
-		setStatus(value)
+        setStatus(value)
         dispatch(getUsers({ page: 1, limit: perPageRec, search: query, status: value }));
     }
 
@@ -104,10 +109,43 @@ export default function Users() {
                 dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status }));
             }
         } catch (e) {
-            toast.error('Failed to remove user');
+            toast.error(`Error: ${e}`);
         }
     };
 
+    const handlePasswordModalOpen = (user, type) => {
+        setSelectedUser(user);
+        setOperationType(type);
+        setIsPasswordModalOpen(true);
+    };
+
+    const handlePasswordConfirm = async (password) => {
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        try {
+            const response = await fetch(`${apiUrl}/user/verifyAdminPassword`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ password }),
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                toast.error(data.error || "Failed to verify password.");
+                return;
+            }
+            if (operationType === "delete") {
+                handleRemUser(selectedUser);
+            }
+            setIsPasswordModalOpen(false);
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
+    console.log(handlePasswordConfirm)
     const filteredUsers = filterUsers(usersData);
 
     const statusActive = "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
@@ -123,6 +161,11 @@ export default function Users() {
                 FileType="csv"
             />
             <LoadingOverlay loading={dataLoading} />
+
+            <AuthenticateModal isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onConfirm={handlePasswordConfirm}
+            />
 
             <div>
 
@@ -228,7 +271,7 @@ export default function Users() {
                                             </span>
                                         </td>
                                         <td className="text-left ">
-                                            <button onClick={() => handleRemUser(user._id)}>
+                                            <button onClick={() => handlePasswordModalOpen(user._id, "delete")}>
                                                 <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
                                             </button>
                                         </td>

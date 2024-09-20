@@ -29,7 +29,7 @@ export const getUsers = createAsyncThunk('user/get', async ({page, limit, search
         const data = await res.json();
         return data;
     } catch (error) {
-        return rejectWithValue(error.message);
+        return rejectWithValue(error.message || 'An error occurred');
     }
 });
 
@@ -49,7 +49,7 @@ export const addUser = createAsyncThunk('user/add', async (user, { rejectWithVal
         const data = await res.json();
         return data;
     } catch (error) {
-        return rejectWithValue(error.message);
+        return rejectWithValue(error.message || 'An error occurred');
     }
 });
 
@@ -64,10 +64,33 @@ export const delUser = createAsyncThunk('user/del', async (id, { rejectWithValue
                 'Content-Type': 'application/json'
             },
         });
-        if (!res.ok) throw new Error(`Failed to delete ${id}`)
+        const data = await res.json();
+        if (!res.ok) {
+            return rejectWithValue(data.error || `Failed to delete ${id}`);
+          }
         return id;
     } catch (error) {
-        return rejectWithValue(error.message);
+        return rejectWithValue(error.message || 'An error occurred');
+    }
+});
+
+export const updateUserStatus = createAsyncThunk("users/updateStatus", async({id, name}, {rejectWithValue}) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+    try{
+        const response = await fetch(`${apiUrl}/user/updateStatus/${id}`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+        const data = await res.json();
+        if (!response.ok) {
+            return rejectWithValue(data.error || "Failed to update status")
+        }
+        return data;
+    } catch (error){
+        return rejectWithValue(error.message)
     }
 })
 
@@ -185,8 +208,6 @@ const usersSlice = createSlice({
                 const existingUserIds = state.users.map(user => user._id);
             
                 const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
-            
-                // Update users and recalculate pagination
                 state.users = [...state.users, ...filteredNewUsers];
                 state.totalUsers = action.payload.totalUsers;
                 state.totalPages = Math.ceil(state.totalUsers / action.payload.perPageRec);
@@ -194,7 +215,23 @@ const usersSlice = createSlice({
             .addCase(uploadCsv.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
-            });
+            })
+            .addCase(updateUserStatus.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateUserStatus.fulfilled, (state, action) => {
+                const updatedUser = action.payload;
+                const existingUser = state.users.find((user) => user._id === updatedUser._id);
+                if (existingUser) {
+                  existingUser.status = updatedUser.status;
+                }
+                state.loading = false;
+            })
+            .addCase(updateUserStatus.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+              });
     },
 });
 
