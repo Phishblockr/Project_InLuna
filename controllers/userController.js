@@ -162,6 +162,23 @@ export const updateUser = asyncHandler(async (req, res) => {
   }
 });
 
+// Update User Status
+export const updateUserStatus = asyncHandler(async(req, res) => {
+  const { id } = req.params;
+
+  const user = await User.findById(id).select("-password");
+  if(!user){
+    return res.status(404).json({error: "User not found"});
+  }
+
+  user.status = user.status === "active" ? "inactive" : "active";
+  const updatedUser = await user.save();
+
+  const io = req.app.get("socketio");
+  io.emit("userUpdated", updatedUser);
+
+  res.status(200).json(updatedUser);
+})
 // update admin
 export const updateAdminDetails = asyncHandler(async (req, res) => {
   try {
@@ -181,7 +198,6 @@ export const updateAdminDetails = asyncHandler(async (req, res) => {
   }
 
 })
-
 
 // Update admin password
 export const updateAdminPwd = asyncHandler(async (req, res) => {
@@ -216,6 +232,24 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 })
+
+// verify admin pwd
+export const verifyAdminPassword = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const userId = req.user.userId;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ error: "Incorrect password" });
+  }
+
+  res.status(200).json({ message: "Password verified" });
+});
 
 // Delete a user
 export const deleteUser = asyncHandler(async (req, res) => {

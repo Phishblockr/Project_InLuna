@@ -6,8 +6,10 @@ import {
   createAdmin,
   getUser,
   updateUser,
+  updateUserStatus,
   updateAdminDetails,
   updateAdminPwd,
+  verifyAdminPassword,
   deleteUser,
   fetchProfile,
   addUsersFromCsv
@@ -22,10 +24,12 @@ router.route("/create").post(dashboardAdminMiddleware, createUser);
 router.route("/createAdm").post(createAdmin);
 router.route("/fetch/:id").get(dashboardAdminMiddleware, getUser);
 router.route("/update/:id").put(dashboardAdminMiddleware, updateUser);
+router.route("/updateStatus/:id").put(dashboardAdminMiddleware, updateUserStatus);
 router.route("/delete/:id").delete(dashboardAdminMiddleware, deleteUser);
 router.route("/profile").get(dashboardAdminMiddleware, fetchProfile);
 router.route("/updateAdminDetails").put(dashboardAdminMiddleware, updateAdminDetails)
-router.route("/updateAdminPwd").put(dashboardAdminMiddleware, updateAdminPwd)
+router.route("/verifyAdminPassword").post(dashboardAdminMiddleware, verifyAdminPassword)
+router.route("/authenticateAdmin").put(dashboardAdminMiddleware, updateAdminPwd)
 router.post("/addUsersFromCsv", upload.single("file"),dashboardAdminMiddleware, addUsersFromCsv);
 
 export default router;
