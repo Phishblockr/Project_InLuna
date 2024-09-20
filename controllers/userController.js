@@ -29,7 +29,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   const id = req.user.orgId;
 
   const searchFilter = search ? {
-    $or:[
+    $or: [
       { name: { $regex: search, $options: 'i' } },
       { email: { $regex: search, $options: 'i' } },
       { department: { $regex: search, $options: 'i' } },
@@ -37,20 +37,20 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     ]
   } : {};
 
-  const statusFilter = status === "all" ? {} :  {
-    $or:[
-      {status: {$regex: status, $options: "i"}}
+  const statusFilter = status === "all" ? {} : {
+    $or: [
+      { status: { $regex: status, $options: "i" } }
     ]
   };
 
-  const queryFilter = {orgId: id, ...searchFilter, ...statusFilter};
+  const queryFilter = { orgId: id, ...searchFilter, ...statusFilter };
 
   const users = await User.find(queryFilter).select('-password').skip(skip).limit(limit);
   const totalUsers = await User.countDocuments(queryFilter);
-  if(users.length > 0){
-    res.status(200).json({users, currentPage: page, totalPages: Math.ceil(totalUsers / limit), totalUsers})
+  if (users.length > 0) {
+    res.status(200).json({ users, currentPage: page, totalPages: Math.ceil(totalUsers / limit), totalUsers })
   } else {
-    res.status(400).json({error: "Users not found"})
+    res.status(400).json({ error: "Users not found" })
   }
 });
 
@@ -220,12 +220,19 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
 // Delete a user
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const user = await User.findByIdAndDelete(id).select('-password');
+  const adminId = req.user.userId;
+  const user = await User.findById(id).select('-password');
   if (user) {
+    const userId = user._id.toString()
+    if (userId === adminId) {
+      res.status(403).json({ error: "You cannot delete your own account" })
+    } else {
+    await User.findByIdAndDelete(id);
     const io = req.app.get('socketio');
     io.emit('userDeleted', user._id);
 
-    res.status(200).json({ message: `User ${user.username} removed successfully` });
+    res.status(200).json({ message: `User ${user.email} removed successfully` });
+  }
   } else {
     res.status(404).json({ error: 'User not found' });
   }
@@ -299,7 +306,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
       const insertedUsers = await User.insertMany(users);
       const io = req.app.get('socketio');
       io.emit("usersByCsvAdded", insertedUsers);
-  
+
       res.status(200).json({ message: 'Users added successfully' });
     } else {
       res.status(400).json({ message: 'No valid data to add' });
