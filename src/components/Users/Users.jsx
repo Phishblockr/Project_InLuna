@@ -10,6 +10,7 @@ import { PiUserCircleLight } from "react-icons/pi";
 import LoadingOverlay from "../LoadingOverlay";
 import FileUploadModal from "../FileUploadModal";
 import AuthenticateModal from "../AuthenticateModal"
+import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import debounce from "debounce";
 
 export default function Users() {
@@ -121,31 +122,16 @@ export default function Users() {
 
     const handlePasswordConfirm = async (password) => {
         const token = JSON.parse(localStorage.getItem("user")).token;
-        try {
-            const response = await fetch(`${apiUrl}/user/verifyAdminPassword`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ password }),
-            });
-            const data = await response.json();
+        const result = await handleVerifyPwd(password, apiUrl, token);
 
-            if (!response.ok) {
-                toast.error(data.error || "Failed to verify password.");
-                return;
-            }
+        if (result) {
             if (operationType === "delete") {
                 handleRemUser(selectedUser);
             }
             setIsPasswordModalOpen(false);
-        } catch (error) {
-            toast.error(error.message);
         }
     };
-
-    console.log(handlePasswordConfirm)
+    
     const filteredUsers = filterUsers(usersData);
 
     const statusActive = "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";

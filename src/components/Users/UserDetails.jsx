@@ -10,6 +10,8 @@ import LoadingOverlay from "../LoadingOverlay";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../../static/CustomDatePicker.css';
+import AuthenticateModal from "../AuthenticateModal"
+import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 
 const statusActive =
     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
@@ -17,6 +19,7 @@ const statusInactive =
     "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
 const UserDetails = () => {
+    const apiUrl = import.meta.env.VITE_API_URL
     const { id } = useParams();
     const [activityCounts, setActivityCounts] = useState({
         "phishingClicks": 0,
@@ -30,6 +33,9 @@ const UserDetails = () => {
     });
     const [dataLoading, setDataLoading] = useState(false)
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [operationType, setOperationType] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(null);
 
 
     const renderMonthContent = (month, shortMonth, longMonth, day) => {
@@ -61,7 +67,7 @@ const UserDetails = () => {
         try {
             await dispatch(delUser(id)).unwrap();
             navigate("/users");
-            toast.success(`User ${name} removed`);
+            toast.success(`User deleted!`);
         } catch (e) {
             toast.error(e.message);
         }
@@ -173,10 +179,35 @@ const UserDetails = () => {
         </div>
     );
 
+    const handlePasswordModalOpen = (user, type) => {
+        setSelectedUser(user);
+        setOperationType(type);
+        setIsPasswordModalOpen(true);
+    };
+
+    const handlePasswordConfirm = async (password) => {
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        const result = await handleVerifyPwd(password, apiUrl, token);
+
+        if (result) {
+            if (operationType === "delete") {
+                handleRemUser(selectedUser._id);
+            } else if (operationType === "updateStatus"){
+                handleUpdateStatus(selectedUser._id, selectedUser.name)
+            }
+            setIsPasswordModalOpen(false);
+        }
+    };
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <LoadingOverlay loading={dataLoading} />
+
+            <AuthenticateModal isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onConfirm={handlePasswordConfirm}
+            />
+
             <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                 <div>
                     <h1 className="text-2xl font-medium tracking-tight mb-5">
@@ -275,7 +306,7 @@ const UserDetails = () => {
                     </div>
                     <div className="flex flex-col gap-5">
                     <button
-                        onClick={() => handleUpdateStatus(id, user.name)}
+                        onClick={() => handlePasswordModalOpen(user, "updateStatus")}
                         className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-white font-medium rounded-lg mr-2"
                     >
                         <span className="flex flex-row items-center gap-x-2 justify-center">
@@ -283,7 +314,7 @@ const UserDetails = () => {
                         </span>
                     </button>
                     <button
-                        onClick={() => handleRemUser(id, user.name)}
+                        onClick={() => handlePasswordModalOpen(user, "delete")}
                         className="bg-red-500 hover:bg-red-700 p-2 w-[200px] h-[50px] text-white font-medium rounded-lg"
                     >
                         <span className="flex flex-row items-center gap-x-2  justify-center">

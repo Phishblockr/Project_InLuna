@@ -6,7 +6,13 @@ export default function AuthenticateModal({ isOpen, onClose, onConfirm }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         onConfirm(password); // Send the password to the confirmation callback
+        handleClose();
     };
+
+    const handleClose = () => {
+        setPassword("");
+        onClose();
+    }
 
     if (!isOpen) return null;
 
@@ -28,7 +34,7 @@ export default function AuthenticateModal({ isOpen, onClose, onConfirm }) {
                     <div className="flex justify-end gap-2 mt-4">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="bg-gray-300 p-2 rounded-lg"
                         >
                             Cancel
