@@ -6,30 +6,32 @@ const urlSchema = new mongoose.Schema(
       type: String,
       required: [true, "Url cannot be empty"],
     },
-    visitedBy: [
-      {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "user",
-          required: [true, "UserId cannot be empty"],
-        },
-        visits: [
-          {
-            timestamp: {
-              type: Date,
-              default: Date.now,
-            },
+    visitedBy: {
+      type: [
+        {
+          userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "user",
           },
-        ],
-        totalVisits: {
-          type: Number,
-          default: 1,
+          visits: [
+            {
+              timestamp: {
+                type: Date,
+                default: Date.now,
+              },
+            },
+          ],
+          totalVisits: {
+            type: Number,
+            default: 0,
+          },
         },
-      },
-    ],
+      ],
+      default: [],
+    },
     tags: [{
-        type: String,
-        default: "general",
+      type: String,
+      default: "general",
     }],
     isVerified: {
       type: Boolean,
@@ -55,7 +57,7 @@ const urlSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-urlSchema.index({ url: 1, orgId: 1, createdAt: 1});
+urlSchema.index({ url: 1, orgId: 1, createdAt: 1 });
 
 const Url = mongoose.model("Url", urlSchema);
 
