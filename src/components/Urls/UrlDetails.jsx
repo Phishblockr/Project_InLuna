@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { remUrl, editUrl } from "../features/Urls/urlSlice";
+import { remUrl, editUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 
 const UrlDetails = () => {

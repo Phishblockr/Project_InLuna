@@ -6,9 +6,9 @@ import {
 } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { remUrl } from "../features/Urls/urlSlice";
+import { remUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
-import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
+import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 
 export default function UrlLists() {
   // Redux

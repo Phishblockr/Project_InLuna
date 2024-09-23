@@ -8,14 +8,15 @@ const initialState = {
     currentPage: 1,
     loading: false,
     error: null,
-  };
+};
 
 const apiUrl = import.meta.env.VITE_API_URL
 const socket = io(import.meta.env.VITE_BASE_URL)
 socket.on('connect', () => {
     console.log('Socket connected:', socket.id);
 });
-export const getUsers = createAsyncThunk('user/get', async ({page, limit, search, status}, { rejectWithValue }) => {
+
+export const getUsers = createAsyncThunk('user/get', async ({ page, limit, search, status }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}&search=${search}&status=${status}`, {
@@ -67,16 +68,16 @@ export const delUser = createAsyncThunk('user/del', async (id, { rejectWithValue
         const data = await res.json();
         if (!res.ok) {
             return rejectWithValue(data.error || `Failed to delete ${id}`);
-          }
+        }
         return id;
     } catch (error) {
         return rejectWithValue(error.message || 'An error occurred');
     }
 });
 
-export const updateUserStatus = createAsyncThunk("users/updateStatus", async({id, name}, {rejectWithValue}) => {
+export const updateUserStatus = createAsyncThunk("users/updateStatus", async ({ id, name }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
-    try{
+    try {
         const response = await fetch(`${apiUrl}/user/updateStatus/${id}`, {
             method: "PUT",
             headers: {
@@ -89,7 +90,7 @@ export const updateUserStatus = createAsyncThunk("users/updateStatus", async({id
             return rejectWithValue(data.error || "Failed to update status")
         }
         return data;
-    } catch (error){
+    } catch (error) {
         return rejectWithValue(error.message)
     }
 })
@@ -111,6 +112,23 @@ export const uploadCsv = createAsyncThunk('users/uploadCsv', async (formData, { 
     }
 })
 
+const fetchMoreUsersFromNextPage = async (page, limit) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+    const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+    if (res.ok) {
+        const data = await res.json();
+        return data.users;
+    }
+    return [];
+};
+
+
 const usersSlice = createSlice({
     name: "users",
     initialState,
@@ -124,9 +142,9 @@ const usersSlice = createSlice({
         addUserSuccess(state, action) {
             const existingUser = state.users.find(user => user._id === action.payload._id);
             if (!existingUser) {
-              state.users.push(action.payload); // Add user only if it doesn't exist
+                state.users.push(action.payload); // Add user only if it doesn't exist
             }
-          },
+        },
         updateUserSuccess(state, action) {
             const index = state.users.findIndex(user => user._id === action.payload._id);
             if (index !== -1) {
@@ -161,7 +179,7 @@ const usersSlice = createSlice({
             .addCase(getUsers.fulfilled, (state, action) => {
                 state.loading = false;
                 state.users = action.payload.users;
-                state.totalPages = action.payload.totalPages; 
+                state.totalPages = action.payload.totalPages;
                 state.currentPage = action.payload.currentPage;
                 state.totalUsers = action.payload.totalUsers;
             })
@@ -190,7 +208,7 @@ const usersSlice = createSlice({
                 state.users = state.users.filter(user => user._id !== action.payload);
                 const totalPages = Math.ceil(state.totalUsers / state.perPageRec);
 
-                if (state.users.length < state.perPageRec && state.currentPage < totalPages){
+                if (state.users.length < state.perPageRec && state.currentPage < totalPages) {
                     fetchMoreUsersFromNextPage(state.currentPage + 1, state.perPageRec).then(newUsers => {
                         state.users.push(...newUsers);
                     });
@@ -206,7 +224,7 @@ const usersSlice = createSlice({
                 state.loading = false;
                 const newUsers = action.payload.users || [];
                 const existingUserIds = state.users.map(user => user._id);
-            
+
                 const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
                 state.users = [...state.users, ...filteredNewUsers];
                 state.totalUsers = action.payload.totalUsers;
@@ -224,14 +242,14 @@ const usersSlice = createSlice({
                 const updatedUser = action.payload;
                 const existingUser = state.users.find((user) => user._id === updatedUser._id);
                 if (existingUser) {
-                  existingUser.status = updatedUser.status;
+                    existingUser.status = updatedUser.status;
                 }
                 state.loading = false;
             })
             .addCase(updateUserStatus.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
-              });
+            });
     },
 });
 
@@ -239,9 +257,9 @@ const usersSlice = createSlice({
 export const startListeningToSocket = () => (dispatch, getState) => {
     socket.on("usersByCsvAdded", (data) => {
         const perPageRec = getState().perPageRec;
-        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec, search:"", status:"all" }));
+        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec, search: "", status: "all" }));
     });
-    
+
     socket.on("userCreated", (data) => {
         dispatch(addUserSuccess(data));
     });
@@ -254,22 +272,5 @@ export const startListeningToSocket = () => (dispatch, getState) => {
         dispatch(deleteUserSuccess(userId));
     });
 }
-
-const fetchMoreUsersFromNextPage = async (page, limit) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
-    const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}`, {
-      method: "GET",
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.users;
-    }
-    return [];
-  };
-
 export const { deleteUserSuccess, updateStatus, addUserSuccess, updateUserSuccess, addMultipleUsersSuccess } = usersSlice.actions;
 export default usersSlice.reducer;

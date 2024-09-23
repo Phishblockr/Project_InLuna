@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { RiAddFill } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { addUrl } from "../features/Urls/urlSlice";
+import { addUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 
 const AddUrl = () => {
