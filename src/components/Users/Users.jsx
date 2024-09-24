@@ -21,7 +21,6 @@ export default function Users() {
     const dispatch = useDispatch();
 
     const [query, setQuery] = useState("");
-    const [dataFilter, setDataFilter] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [dataLoading, setDataLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +31,7 @@ export default function Users() {
     const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
+        setDataLoading(true)
         dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status }))
             .unwrap()
             .finally(() => setDataLoading(false))
@@ -66,17 +66,6 @@ export default function Users() {
         }
     }
 
-    const filterUsers = (data) => {
-        if (!Array.isArray(data)) return [];
-        if (dataFilter === "active") {
-            return data.filter((item) => item.status === "active");
-        } else if (dataFilter === "inactive") {
-            return data.filter((item) => item.status === "inactive");
-        } else {
-            return data;
-        }
-    };
-
     const handleSetPerPageRec = (value) => {
         dispatch(setPerPageRec(value));
     };
@@ -102,7 +91,7 @@ export default function Users() {
             await dispatch(delUser(id)).unwrap();
             toast.success(`User ${id} removed`);
 
-            const updatedRecords = filteredUsers.slice(0, perPageRec - 1);
+            const updatedRecords = usersData.slice(0, perPageRec - 1);
 
             if (updatedRecords.length === 1 && currentPage > 1) {
                 setCurrentPage((prev) => prev - 1);
@@ -131,8 +120,6 @@ export default function Users() {
             setIsPasswordModalOpen(false);
         }
     };
-    
-    const filteredUsers = filterUsers(usersData);
 
     const statusActive = "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
     const statusInactive = "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
@@ -202,7 +189,7 @@ export default function Users() {
                         </Link>
                     </div>
                 </div>
-                {filteredUsers.length === 0 ? (
+                {usersData.length === 0 ? (
                     <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
                         <span>No Records Found!</span>
                     </div>
@@ -220,7 +207,7 @@ export default function Users() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredUsers.map((user) => (
+                                {usersData.map((user) => (
                                     <tr
                                         key={user._id}
                                         className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
@@ -272,7 +259,7 @@ export default function Users() {
                 <nav className="flex gap-x-1 justify-between">
                     <div>
                         <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD]"
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === 1}
                             onClick={prePage}
                         >
@@ -297,7 +284,7 @@ export default function Users() {
                     </div>
                     <div>
                         <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD]"
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === totalPages}
                             onClick={nextPage}
                         >

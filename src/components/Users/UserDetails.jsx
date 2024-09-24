@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { deleteUserSuccess, delUser, updateStatus, updateUserStatus } from "../../features/Users/usersSlice";
+import { delUser, updateUserStatus } from "../../features/Users/usersSlice";
 import { toast } from "sonner";
 import LineChart from "../LineChart";
 import PieChart from "../PieChart";
