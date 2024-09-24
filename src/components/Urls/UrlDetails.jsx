@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { remUrl, editUrl } from "../../features/Urls/urlSlice";
+import { delUrl, updateUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 
 const UrlDetails = () => {
@@ -10,7 +10,7 @@ const UrlDetails = () => {
 
     const { id } = useParams();
     const navigate = useNavigate();
-    const url = useSelector((state) => state.urls.urls.find((url) => url.id === parseInt(id)));
+    const url = useSelector((state) => state.urls.urls.find((url) => url._id === id));
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -21,7 +21,7 @@ const UrlDetails = () => {
 
     const handleRemUrl = () => {
         try {
-            dispatch(remUrl(parseInt(id)));
+            dispatch(delUrl(parseInt(id)));
             toast.success(`URL ${url.url} removed`);
             navigate("/urllists");
         } catch (e) {
@@ -37,7 +37,7 @@ const UrlDetails = () => {
     const handleEditUrl = (event) => {
         event.preventDefault();
         try {
-            dispatch(editUrl({ id: parseInt(id), ...editUrlData }));
+            dispatch(updateUrl({ id: parseInt(id), ...editUrlData }));
             toast.success(`URL updated successfully`);
             navigate("/urllists");
         } catch (error) {

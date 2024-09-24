@@ -6,14 +6,27 @@ import {
 } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { remUrl } from "../../features/Urls/urlSlice";
+import { delUrl, getUrls, startListeningToSocket } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
+import LoadingOverlay from "../LoadingOverlay";
 
 export default function UrlLists() {
+
+    const apiUrl = import.meta.env.VITE_API_URL
+
+    const [dataLoading, setDataLoading] = useState(true);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [status, setStatus] = useState("all")
+    const [error, setErrors] = useState(null);
+    const [operationType, setOperationType] = useState(null);
+    const [selectedUrl, setSelectedUrl] = useState(null);
+
+
     // Redux
     const perPageRec = useSelector((state) => state.perPageRec);
     const urlData = useSelector((state) => state.urls.urls);
+    const totalPages = useSelector((state) => state.urls.totalPages);
     const dispatch = useDispatch();
     // End of Redux
 
@@ -43,23 +56,16 @@ export default function UrlLists() {
 
     // Start of Pagination Logic
     const [currentPage, setCurrentPage] = useState(1);
-    const recordsPerPage = perPageRec;
-    const filteredData = filter(search(urlData));
-    const lastIndex = currentPage * recordsPerPage;
-    const firstIndex = lastIndex - recordsPerPage;
-    const records = filteredData.slice(firstIndex, lastIndex);
-    const npage = Math.ceil(filteredData.length / recordsPerPage);
-    const numbers = [...Array(npage + 1).keys()].slice(1);
 
     function nextPage() {
-        if (currentPage !== npage) {
+        if (currentPage < totalPages) {
             setCurrentPage(currentPage + 1);
         }
     }
 
     function prePage() {
-        if (currentPage !== 1) {
-            setCurrentPage(currentPage - 1);
+        if (currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
         }
     }
 
@@ -72,22 +78,50 @@ export default function UrlLists() {
     };
 
     useEffect(() => {
-        if (npage < currentPage) {
-            setCurrentPage(npage || 1);
-        }
-    }, [npage, currentPage])
+        setDataLoading(true)
+        dispatch(getUrls({ page: currentPage, limit: perPageRec, search: query, status }))
+            .unwrap()
+            .finally(() => setDataLoading(false))
+
+        dispatch(startListeningToSocket());
+    }, [dispatch, currentPage, perPageRec, query])
     // End of Pagination Logic
 
     const formatUrl = (url, maxLen = 70) => {
         return url.length > maxLen ? url.substring(0, maxLen) + "..." : url;
     };
 
-    const handleRemUrl = (id, url) => {
+    const handleRemUrl = async (id, url) => {
         try {
-            dispatch(remUrl(id));
+            await dispatch(delUrl(id)).unwrap();
             toast.success(`URL ${url} removed`);
+
+            const updatedRecords = urlData.slice(0, perPageRec - 1);
+            if (updatedRecords.length === 1 && currentPage > 1) {
+                setCurrentPage((prev) => prev - 1)
+            } else {
+                dispatch(getUrls({ page: currentPage, limit: perPageRec, search: query, status }));
+            }
         } catch (e) {
-            toast.error(e);
+            toast.error(`Error: ${e}`);
+        }
+    };
+
+    const handlePasswordModalOpen = (url, type) => {
+        setSelectedUrl(url);
+        setOperationType(type);
+        setIsPasswordModalOpen(true);
+    };
+
+    const handlePasswordConfirm = async (password) => {
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        const result = await handleVerifyPwd(password, apiUrl, token);
+
+        if (result) {
+            if (operationType === "delete") {
+                handleRemUrl(selectedUrl);
+            }
+            setIsPasswordModalOpen(false);
         }
     };
 
@@ -97,57 +131,58 @@ export default function UrlLists() {
         "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-            <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
-                <div>
-                    <h1 className="text-2xl font-medium tracking-tight">URL List</h1>
+        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+            <LoadingOverlay loading={dataLoading} />
+            <div>
+                <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+                    <div>
+                        <h1 className="text-2xl font-medium tracking-tight">URL List</h1>
+                    </div>
+                    <div className="flex items-center gap-x-3">
+                        <input
+                            type="text"
+                            placeholder="Search Urls..."
+                            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
+                        <select
+                            name="filters"
+                            id="filters"
+                            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            onChange={(e) => setDataFilter(e.target.value)}
+                        >
+                            <option value="all">Status</option>
+                            <option value="whitelisted">Whitelisted</option>
+                            <option value="blacklisted">Blacklisted</option>
+                        </select>
+                        <select
+                            name="perPageRec"
+                            id="perPageRec"
+                            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            onChange={(e) => handleSetPerPageRec(e.target.value)}
+                            value={perPageRec}
+                        >
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <Link
+                            to={"/urllists/addurl"}
+                            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
+                        >
+                            <span>
+                                Add URL <RiAddFill className="inline-block w-6 h-6 -mt-1" />
+                            </span>
+                        </Link>
+                    </div>
                 </div>
-                <div className="flex items-center gap-x-3">
-                    <input
-                        type="text"
-                        placeholder="Search Urls..."
-                        className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-                    <select
-                        name="filters"
-                        id="filters"
-                        className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                        onChange={(e) => setDataFilter(e.target.value)}
-                    >
-                        <option value="all">Status</option>
-                        <option value="whitelisted">Whitelisted</option>
-                        <option value="blacklisted">Blacklisted</option>
-                    </select>
-                    <select
-                        name="perPageRec"
-                        id="perPageRec"
-                        className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                        onChange={(e) => handleSetPerPageRec(e.target.value)}
-                        value={perPageRec}
-                    >
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                    <Link
-                        to={"/urllists/addurl"}
-                        className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
-                    >
-                        <span>
-                            Add URL <RiAddFill className="inline-block w-6 h-6 -mt-1" />
-                        </span>
-                    </Link>
-                </div>
-            </div>
-            {records.length === 0 ? (
-                <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
-                    <span>No Records Found!</span>
-                </div>
-            ) : (
-                <>
+                {urlData.length === 0 ? (
+                    <div className="flex justify-center font-medium dark:text-[#F4F4F4]">
+                        <span>No Records Found!</span>
+                    </div>
+                ) : (
                     <div>
                         <table className="w-full dark:text-[#F4F4F4]">
                             <thead className="border-separate">
@@ -159,26 +194,26 @@ export default function UrlLists() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {records.map((url, index) => (
+                                {urlData.map((url) => (
                                     <tr
-                                        key={index}
+                                        key={url._id}
                                         className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
                                     >
                                         <td className="font-medium text-left text-gray-500 pl-2 py-4 dark:text-[#F4F4F4]">
                                             <Link
-                                                to={`/urllists/urldetails/${url.id}`}
+                                                to={`/urllists/urldetails/${url._id}`}
                                                 title="Click to view details"
                                             >
                                                 {formatUrl(url.url)}
                                             </Link>
                                         </td>
                                         <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            {url.category}
+                                            {url.tags && url.tags.length > 0 ? url.tags.join(", ") : "NA"}
                                         </td>
                                         <td className="text-left font-medium">
                                             <span
                                                 className={
-                                                    url.status === "Whitelisted"
+                                                    url.status === "whitelisted"
                                                         ? statusActive
                                                         : statusInactive
                                                 }
@@ -198,48 +233,46 @@ export default function UrlLists() {
                             </tbody>
                         </table>
                     </div>
-                    <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
-                        <nav className="flex gap-x-1 justify-between">
-                            <div>
-                                <a
-                                    className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                                        }`}
-                                    href="#"
-                                    onClick={prePage}
-                                >
-                                    <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-                                </a>
-                            </div>
-                            <div className="flex gap-x-2 items-center">
-                                {numbers.map((number, index) => (
-                                    <div key={index}>
-                                        <a
-                                            className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === number
-                                                    ? "bg-[#0364BD] text-white"
-                                                    : "bg-gray-200 dark:bg-[#001C40]"
-                                                }`}
-                                            href="#"
-                                            onClick={() => changeCPage(number)}
-                                        >
-                                            {number}
-                                        </a>
-                                    </div>
-                                ))}
-                            </div>
-                            <div>
-                                <a
-                                    className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === npage ? "opacity-50 cursor-not-allowed" : ""
-                                        }`}
-                                    href="#"
-                                    onClick={nextPage}
-                                >
-                                    Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-                                </a>
-                            </div>
-                        </nav>
+                )}
+            </div>
+            <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+                <nav className="flex gap-x-1 justify-between">
+                    <div>
+                        <button
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={currentPage === 1}
+                            onClick={prePage}
+                        >
+                            <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
+                        </button>
                     </div>
-                </>
-            )}
+                    <div className="flex gap-x-2 items-center">
+                        {totalPages && totalPages > 0 ? (
+                            [...Array(totalPages).keys()].map((n) => (
+                                <button
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-white dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
+                                        }`}
+                                    key={n + 1}
+                                    onClick={() => changeCPage(n + 1)}
+                                >
+                                    {n + 1}
+                                </button>
+                            ))
+                        ) : (
+                            <span></span>
+                        )}
+                    </div>
+                    <div>
+                        <button
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={currentPage === totalPages}
+                            onClick={nextPage}
+                        >
+                            Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                        </button>
+                    </div>
+                </nav>
+            </div>
         </div>
     );
 }

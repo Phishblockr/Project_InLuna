@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import io from "socket.io-client";
+import socket from "../../utils/socket";
 
 const initialState = {
     users: [],
@@ -11,10 +12,6 @@ const initialState = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL
-const socket = io(import.meta.env.VITE_BASE_URL)
-socket.on('connect', () => {
-    console.log('Socket connected:', socket.id);
-});
 
 export const getUsers = createAsyncThunk('user/get', async ({ page, limit, search, status }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;

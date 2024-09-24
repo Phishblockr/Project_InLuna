@@ -1,26 +1,24 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { urls } from "../../urlsData";
 import io from "socket.io-client";
+import socket from "../../utils/socket";
 
 const initialState = {
     urls: [],
     totalUrls: 0,
     totalPages: 1,
     currentPage: 1,
+    perPageRec: 5,
     loading: false,
     error: null,
-}
+};
 
 const apiUrl = import.meta.env.VITE_API_URL
-const socket = io(import.meta.env.VITE_BASE_URL)
-socket.on('connect', () => {
-    console.log('Socket connected:', socket.id);
-});
 
 export const getUrls = createAsyncThunk("url/get", async ({ page, limit, search, status }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(``, {
+        const res = await fetch(`${apiUrl}/url/getUrls?page=${page}&limit=${limit}&search=${search}&status=${status}`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -39,7 +37,7 @@ export const addUrl = createAsyncThunk("url/add", async (url, { rejectWithValue 
     const token = JSON.parse(localStorage.getItem("user")).token;
 
     try {
-        const res = await fetch(``, {
+        const res = await fetch(`${apiUrl}/url/addUrl`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -55,10 +53,10 @@ export const addUrl = createAsyncThunk("url/add", async (url, { rejectWithValue 
     }
 });
 
-export const delUrl = createAsyncThunk("url/del", async (id, { rejectWithValue }) => {
+export const delUrl = createAsyncThunk("url/del", async (urlId, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(``, {
+        const res = await fetch(`${apiUrl}/url/deleteUrl/${urlId}`, {
             method: "DELETE",
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -67,38 +65,39 @@ export const delUrl = createAsyncThunk("url/del", async (id, { rejectWithValue }
         });
         const data = await res.json();
         if (!res.ok) {
-            return rejectWithValue(data.error || `Failed to delete ${id}`);
+            return rejectWithValue(data.error || `Failed to delete ${urlId}`);
         }
-        return id;
+        return urlId;
     } catch (error) {
         return rejectWithValue(error.message || 'An error occurred');
     }
 });
 
-export const updateUrl = createAsyncThunk("url/update", async ({ id, url }, { rejectWithValue }) => {
+export const updateUrl = createAsyncThunk("url/update", async ({ urlId, urlData }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(``, {
+        const res = await fetch(`${apiUrl}/url/updateUrl/${urlId}`, {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
+            body: JSON.stringify(urlData)
         });
         const data = await res.json();
-        if (!response.ok) {
+        if (!res.ok) {
             return rejectWithValue(data.error || "Failed to update status")
         }
         return data;
     } catch (error) {
         return rejectWithValue(error.message)
     }
-})
+});
 
 const fetchMoreUrlsFromNextPage = async (page, limit) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(``, {
+        const res = await fetch(`${apiUrl}/url/getUrls?page=${page}&limit=${limit}`, {
             method: "GET",
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -212,11 +211,13 @@ const urlSlice = createSlice({
                 const updatedUrl = action.payload;
                 const existingUrl = state.urls.find((url) => url._id === updatedUrl._id);
                 if (existingUrl) {
-                    existingUrl = updateUrl;
+                    existingUrl.url = updatedUrl.url;
+                    existingUrl.category = updatedUrl.category;
+                    existingUrl.status = updatedUrl.status;
                 }
                 state.loading = false;
             })
-            .addCase(updateUrl.rejected, (status, action) => {
+            .addCase(updateUrl.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
