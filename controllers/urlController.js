@@ -110,7 +110,7 @@ export const unshortenUrl = async (req, res) => {
 };
 
 // Dashboard APIs
-export const getUrl = asyncHandler(async (req, res) => {
+export const getUrls = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
@@ -135,7 +135,7 @@ export const getUrl = asyncHandler(async (req, res) => {
     const urls = await Url.find(queryFilter).skip(skip).limit(limit);
     const totalUrls = await Url.countDocuments(queryFilter);
     if (urls.length > 0) {
-        res.status(200).json({ urls, currentPage: page, totalPage: Math.ceil(totalUrls / limit), totalUrls })
+        res.status(200).json({ urls, currentPage: page, totalPages: Math.ceil(totalUrls / limit), totalUrls })
     } else {
         res.status(400).json({ error: "Urls not found" })
     }

@@ -41,9 +41,10 @@ const urlSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    isBlacklisted: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ['whitelisted', 'blacklisted'],
+      default: 'whitelisted'
     },
     isUserAdded: {
       type: Boolean,
