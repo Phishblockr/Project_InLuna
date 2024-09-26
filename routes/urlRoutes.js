@@ -1,5 +1,6 @@
 import express from 'express';
 import { addUrlExt, fetchUrlStatsExt, unshortenUrl, getUrls, addUrl, updateUrl, deleteUrl } from '../controllers/urlController.js';
+import { convertTypes } from '../middlewares/convertTypes.js';
 
 const router = express.Router();
 
@@ -8,7 +9,7 @@ router.route("/urlStatsExt").get(fetchUrlStatsExt);
 router.route("/unshortenUrl").get(unshortenUrl);
 router.route("/getUrls").get(getUrls);
 router.route("/addUrl").post(addUrl);
-router.route("/updateUrl/:id").put(updateUrl);
+router.route("/updateUrl/:id").put(convertTypes(['isPhishing', 'isVerified']), updateUrl);
 router.route("/deleteUrl/:id").delete(deleteUrl);
 
 export default router;

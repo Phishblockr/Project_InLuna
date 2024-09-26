@@ -10,7 +10,7 @@ export const addUrlExt = async (req, res) => {
 
         const visitedBy = [{ userId }]
 
-        const { url, isVerified, isPhishing, isUserAdded, tags } = req.body;
+        const { url, isVerified, isPhishing, isUserAdded, category } = req.body;
 
         const existingUrl = await Url.findOne({ url: url, orgId: orgId });
 
@@ -36,7 +36,7 @@ export const addUrlExt = async (req, res) => {
                     visits: [{ timestamp: new Date() }],
                     totalVisits: 1,
                 }],
-                tags: tags,
+                category: category,
                 isVerified: isVerified,
                 isPhishing: isPhishing,
                 isUserAdded: isUserAdded,
@@ -144,18 +144,19 @@ export const getUrls = asyncHandler(async (req, res) => {
 export const addUrl = asyncHandler(async (req, res) => {
     try {
         const orgId = req.user.orgId;
-        const { url, isVerified, isPhishing, isUserAdded, tags } = req.body;
+        const { url, isVerified, isPhishing, category, status } = req.body;
         const existingUrl = await Url.findOne({ url: url, orgId: orgId });
         if (existingUrl) {
             res.status(400).json({ error: "Url already exists" })
         } else {
             const newUrl = new Url({
-                url: url,
-                tags: tags,
-                isVerified: isVerified,
-                isPhishing: isPhishing,
-                isUserAdded: isUserAdded,
-                orgId: orgId
+                url,
+                category,
+                isVerified,
+                isPhishing,
+                status,
+                isUserAdded: true,
+                orgId
             });
             await newUrl.save();
             const io = req.app.get("socketio");
@@ -169,21 +170,22 @@ export const addUrl = asyncHandler(async (req, res) => {
 
 export const updateUrl = asyncHandler(async (req, res) => {
     try {
-        const { urlId } = req.params;
-        const { url, tags, isVerified, isPhishing } = req.body;
+        const { id } = req.params;
+        let { url, category, status, isPhishing, isVerified } = req.body;
         const updates = {
             url,
-            tags,
-            isVerified,
+            category,
+            status,
             isPhishing,
+            isVerified,
         }
-        const updatedUrl = await Url.findById(urlId, updates, {
+        const updatedUrl = await Url.findByIdAndUpdate(id, updates, {
             new: true,
             runValidators: true
         });
 
         if (updatedUrl) {
-            const io = req.add.get("socketio");
+            const io = req.app.get("socketio");
             io.emit("urlUpdated", updatedUrl);
             res.status(200).json(updatedUrl);
         } else {
@@ -191,15 +193,17 @@ export const updateUrl = asyncHandler(async (req, res) => {
         }
     } catch (error) {
         res.status(400).send(error.message);
+        console.log(error.message)
     }
 });
 
 export const deleteUrl = asyncHandler(async (req, res) => {
     try {
-        const { urlId } = req.params;
-        const urlData = await Url.findByIdAndDelete(urlId);
+        const { id } = req.params;
+        const urlData = await Url.findByIdAndDelete(id);
         const io = req.app.get("socketio");
-        io.emit("urlDeleted", urlId);
+        io.emit("urlDeleted", id);
+        res.status(200).json(id);
     } catch (error) {
         res.status(400).send(error.message);
     }

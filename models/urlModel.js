@@ -29,7 +29,7 @@ const urlSchema = new mongoose.Schema(
       ],
       default: [],
     },
-    tags: [{
+    category: [{
       type: String,
       default: "general",
     }],
