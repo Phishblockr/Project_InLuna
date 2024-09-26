@@ -6,7 +6,7 @@ import { delUrl, updateUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 
 const UrlDetails = () => {
-    const [editUrlData, setEditUrlData] = useState({ url: "", category: [], status: "" });
+    const [editUrlData, setEditUrlData] = useState({ url: "", category: [], status: "", isPhishing: false, isVerified: false });
     const [newTag, setNewTag] = useState(""); // For adding new tags
 
     const { id } = useParams();
@@ -16,7 +16,7 @@ const UrlDetails = () => {
 
     useEffect(() => {
         if (url) {
-            setEditUrlData({ url: url.url, category: url.tags || [], status: url.status });
+            setEditUrlData({ url: url.url, category: url.category || [], status: url.status, isPhishing: url.isPhishing, isVerified: url.isVerified });
         }
     }, [url]);
 
@@ -38,7 +38,7 @@ const UrlDetails = () => {
     const handleEditUrl = (event) => {
         event.preventDefault();
         try {
-            dispatch(updateUrl({ id: parseInt(id), ...editUrlData }));
+            dispatch(updateUrl({ id, editUrlData }));
             toast.success(`URL updated successfully`);
             navigate("/urllists");
         } catch (error) {
@@ -61,8 +61,6 @@ const UrlDetails = () => {
     if (!url) {
         return <div>URL not found</div>;
     }
-    
-    console.log(editUrlData)
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -117,6 +115,32 @@ const UrlDetails = () => {
                         >
                             <option value="blacklisted">Blacklist</option>
                             <option value="whitelisted">Whitelist</option>
+                        </select>
+                    </div>
+                    <div className="mt-3 flex flex-col">
+                        <label htmlFor="isPhishing">Is this a url phishing url?: </label>
+                        <select
+                            className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white dark:bg-[#001C40] dark:border-0"
+                            name="isPhishing"
+                            id="isPhishing"
+                            value={editUrlData.isPhishing}
+                            onChange={handleChange}
+                        >
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div className="mt-3 flex flex-col">
+                        <label htmlFor="isVerified">Was url verified by human?: </label>
+                        <select
+                            className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white dark:bg-[#001C40] dark:border-0"
+                            name="isVerified"
+                            id="isVerified"
+                            value={editUrlData.isVerified}
+                            onChange={handleChange}
+                        >
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
                         </select>
                     </div>
                     <div className="flex flex-row gap-x-2">

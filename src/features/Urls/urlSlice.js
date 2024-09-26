@@ -55,6 +55,7 @@ export const addUrl = createAsyncThunk("url/add", async (url, { rejectWithValue 
 
 export const delUrl = createAsyncThunk("url/del", async (urlId, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
+    
     try {
         const res = await fetch(`${apiUrl}/url/deleteUrl/${urlId}`, {
             method: "DELETE",
@@ -73,16 +74,16 @@ export const delUrl = createAsyncThunk("url/del", async (urlId, { rejectWithValu
     }
 });
 
-export const updateUrl = createAsyncThunk("url/update", async ({ urlId, urlData }, { rejectWithValue }) => {
+export const updateUrl = createAsyncThunk("url/update", async ({ id, editUrlData }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
-        const res = await fetch(`${apiUrl}/url/updateUrl/${urlId}`, {
+        const res = await fetch(`${apiUrl}/url/updateUrl/${id}`, {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(urlData)
+            body: JSON.stringify(editUrlData)
         });
         const data = await res.json();
         if (!res.ok) {
@@ -110,7 +111,7 @@ const fetchMoreUrlsFromNextPage = async (page, limit) => {
         }
         return [];
     } catch (error) {
-        console.log(error.message)
+        console.error(error.message)
     }
 }
 

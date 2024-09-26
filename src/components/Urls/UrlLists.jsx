@@ -208,7 +208,7 @@ export default function UrlLists() {
                                             </Link>
                                         </td>
                                         <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            {url.tags && url.tags.length > 0 ? url.tags.join(", ") : "NA"}
+                                            {url.category && url.category.length > 0 ? url.category.join(", ") : "NA"}
                                         </td>
                                         <td className="text-left font-medium">
                                             <span
@@ -223,7 +223,7 @@ export default function UrlLists() {
                                         </td>
                                         <td className="text-left ">
                                             <button
-                                                onClick={() => handleRemUrl(url.id, formatUrl(url.url))}
+                                                onClick={() => handleRemUrl(url._id, formatUrl(url.url))}
                                             >
                                                 <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
                                             </button>
