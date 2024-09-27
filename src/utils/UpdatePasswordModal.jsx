@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
-import { useAuth } from '../utils/AuthProvider';
+import { useAuth } from './AuthProvider';
 
 const UpdatePasswordModal = ({ isOpen, onClose }) => {
     const { logout } = useAuth();

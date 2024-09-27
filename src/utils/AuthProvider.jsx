@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
-import LoadingOverlay from "../components/LoadingOverlay";
+import LoadingOverlay from "./LoadingOverlay";
 
 
 const AuthContext = createContext();

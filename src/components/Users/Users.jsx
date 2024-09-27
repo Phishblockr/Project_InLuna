@@ -7,8 +7,8 @@ import { delUser, getUsers, uploadCsv, startListeningToSocket } from "../../feat
 import { toast } from "sonner";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
-import LoadingOverlay from "../LoadingOverlay";
-import FileUploadModal from "../FileUploadModal";
+import LoadingOverlay from "../../utils/LoadingOverlay";
+import FileUploadModal from "../../utils/FileUploadModal";
 import AuthenticateModal from "../AuthenticateModal"
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import debounce from "debounce";

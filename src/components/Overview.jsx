@@ -8,7 +8,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../static/CustomDatePicker.css';
-import LoadingOverlay from "./LoadingOverlay";
+import LoadingOverlay from "../utils/LoadingOverlay";
 
 const seriesData = [128, 56, 89, 74];
 const categories = ['Visited', 'Blocked', 'Clicked', 'Whitelisted'];

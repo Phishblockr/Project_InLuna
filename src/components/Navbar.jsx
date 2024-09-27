@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../features/userProfile/userProfileSlice";
 import { FaEthernet } from "react-icons/fa6";
-import LoadingOverlay from "./LoadingOverlay";
+import LoadingOverlay from "../utils/LoadingOverlay";
 
 const profileBtnStyle =
   "rounded-lg dark:text-white transition hover:bg-white dark:hover:bg-[#00285A]";

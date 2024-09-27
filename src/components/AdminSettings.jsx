@@ -4,7 +4,7 @@ import { RiUploadCloud2Line, RiLoopLeftLine } from "react-icons/ri";
 import { PiUserCircleLight } from "react-icons/pi";
 import { toast } from "sonner";
 import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../features/userProfile/userProfileSlice";
-import UpdatePasswordModal from "./UpdatePasswordModal";
+import UpdatePasswordModal from "../utils/UpdatePasswordModal";
 
 const AdminSettings = () => {
   const [image, setImage] = useState(null);

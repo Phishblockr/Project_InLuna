@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { delUrl, getUrls, startListeningToSocket, uploadUrlCsv } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
-import LoadingOverlay from "../LoadingOverlay";
+import LoadingOverlay from "../../utils/LoadingOverlay";
 import CsvUploadUrlModal from "../../utils/csvUploadUrlModal";
 
 export default function UrlLists() {

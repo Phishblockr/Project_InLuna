@@ -6,7 +6,7 @@ import { delUser, updateUserStatus } from "../../features/Users/usersSlice";
 import { toast } from "sonner";
 import LineChart from "../LineChart";
 import PieChart from "../PieChart";
-import LoadingOverlay from "../LoadingOverlay";
+import LoadingOverlay from "../../utils/LoadingOverlay";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../../static/CustomDatePicker.css';
