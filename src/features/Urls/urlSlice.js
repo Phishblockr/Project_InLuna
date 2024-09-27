@@ -95,6 +95,23 @@ export const updateUrl = createAsyncThunk("url/update", async ({ id, editUrlData
     }
 });
 
+export const uploadUrlCsv = createAsyncThunk("url/uploadUrlCsv", async (formData, {rejectWithValue}) => {
+    try {
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        const response = await fetch(`${apiUrl}/url/addUrlFromCsv`, {
+            method: "POST",
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData,
+        });
+        if (!response.ok) throw new Error('Failed to upload CSV');
+        return await response.json()
+    } catch (error) {
+        return rejectWithValue(error.message)
+    }
+})
+
 const fetchMoreUrlsFromNextPage = async (page, limit) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
@@ -221,6 +238,26 @@ const urlSlice = createSlice({
             .addCase(updateUrl.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+
+            // csv
+            .addCase(uploadUrlCsv.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(uploadUrlCsv.fulfilled, (state, action) => {
+                state.loading = false;
+                const newUrls = action.payload.urls || [];
+                const existingUrlIds = state.urls.map(url => url._id);
+
+                const filteredNewUrls = newUrls.filter(url => !existingUrlIds.includes(url._id));
+                state.urls = [...state.urls, ...filteredNewUrls];
+                state.totalUrls = action.payload.totalUrls || state.totalUrls;
+                state.totalPages = action.payload.perPageRec ? Math.ceil(state.totalUrls / action.payload.perPageRec) : state.totalPages;
+            })
+            .addCase(uploadUrlCsv.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
     },
 });
@@ -237,6 +274,10 @@ export const startListeningToSocket = () => (dispatch, getState) => {
     socket.on("urlDeleted", (urlId) => {
         dispatch(deleteUrlSuccess(urlId));
     });
+    socket.on("urlsByCsvAdded", (data) => {
+        const perPageRec = getState().perPageRec;
+        dispatch(getUrls({page: getState().currentPage, limit: perPageRec, search:"", status: "all"}));
+    })
 }
 
 export default urlSlice.reducer;

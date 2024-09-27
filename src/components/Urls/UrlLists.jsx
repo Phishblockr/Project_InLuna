@@ -6,10 +6,11 @@ import {
 } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { delUrl, getUrls, startListeningToSocket } from "../../features/Urls/urlSlice";
+import { delUrl, getUrls, startListeningToSocket, uploadUrlCsv } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import LoadingOverlay from "../LoadingOverlay";
+import CsvUploadUrlModal from "../../utils/csvUploadUrlModal";
 
 export default function UrlLists() {
 
@@ -17,6 +18,7 @@ export default function UrlLists() {
 
     const [dataLoading, setDataLoading] = useState(true);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [isCsvUploadModalOpen, setIsCsvUploadModalOpen] = useState(false);
     const [status, setStatus] = useState("all")
     const [error, setErrors] = useState(null);
     const [operationType, setOperationType] = useState(null);
@@ -125,6 +127,29 @@ export default function UrlLists() {
         }
     };
 
+    const handleCsvUpload = async ({ file, urlHeader, categoryHeader, status, isPhishing, isVerified }) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("urlHeader", urlHeader);
+        formData.append("categoryHeader", categoryHeader);
+        formData.append("status", status);
+        formData.append("isPhishing", isPhishing);
+        formData.append("isVerified", isVerified);
+
+        try {
+            const response = await dispatch(uploadUrlCsv(formData)).unwrap();
+            if (response.errors) {
+                setErrors(response.errors);
+                toast.error("CSV contains errors. Please correct them and try again.");
+            } else {
+                toast.success("CSV uploaded successfully");
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error("Failed to upload CSV! Make sure your CSV doesn't contain duplicate email & phone values.");
+        }
+    };
+
     const statusActive =
         "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
     const statusInactive =
@@ -133,6 +158,11 @@ export default function UrlLists() {
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <LoadingOverlay loading={dataLoading} />
+            <CsvUploadUrlModal
+                isOpen={isCsvUploadModalOpen}
+                onClose={() => setIsCsvUploadModalOpen(false)}
+                onFileSubmit={handleCsvUpload}
+            />
             <div>
                 <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                     <div>
@@ -168,6 +198,8 @@ export default function UrlLists() {
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
+                        <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-300 dark:dark:bg-[#001733] dark:hover:bg-[#001733] transition"
+                            onClick={() => setIsCsvUploadModalOpen(true)}>Add urls via CSV</button>
                         <Link
                             to={"/urllists/addurl"}
                             className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
