@@ -2,6 +2,8 @@ import Url from '../models/urlModel.js';
 import fetch from 'node-fetch';
 import mongoose from 'mongoose';
 import asyncHandler from '../middlewares/asyncHandler.js';
+import fs from 'fs';
+import csvParser from 'csv-parser';
 
 export const addUrlExt = async (req, res) => {
     try {
@@ -12,22 +14,22 @@ export const addUrlExt = async (req, res) => {
 
         const { url, isVerified, isPhishing, isUserAdded, category } = req.body;
 
-        const existingUrl = await Url.findOne({ url: url, orgId: orgId });
+        const existingUrls = await Url.findOne({ url: url, orgId: orgId });
 
-        if (existingUrl) {
-            let visitor = existingUrl.visitedBy.find(v => v.userId.equals(visitedBy[0].userId));
+        if (existingUrls) {
+            let visitor = existingUrls.visitedBy.find(v => v.userId.equals(visitedBy[0].userId));
             if (visitor) {
                 visitor.visits.push({ timestamp: new Date() });
                 visitor.totalVisits += 1;
             } else {
-                existingUrl.visitedBy.push({
+                existingUrls.visitedBy.push({
                     userId: visitedBy[0].userId,
                     visits: [{ timestamp: new Date() }],
                     totalVisits: 1
                 });
             }
-            await existingUrl.save();
-            res.status(200).send(existingUrl);
+            await existingUrls.save();
+            res.status(200).send(existingUrls);
         } else {
             const newUrl = new Url({
                 url: url,
@@ -145,8 +147,8 @@ export const addUrl = asyncHandler(async (req, res) => {
     try {
         const orgId = req.user.orgId;
         const { url, isVerified, isPhishing, category, status } = req.body;
-        const existingUrl = await Url.findOne({ url: url, orgId: orgId });
-        if (existingUrl) {
+        const existingUrls = await Url.findOne({ url: url, orgId: orgId });
+        if (existingUrls) {
             res.status(400).json({ error: "Url already exists" })
         } else {
             const newUrl = new Url({
@@ -206,5 +208,59 @@ export const deleteUrl = asyncHandler(async (req, res) => {
         res.status(200).json(id);
     } catch (error) {
         res.status(400).send(error.message);
+    }
+})
+
+export const addUrlFromCsv = asyncHandler(async (req, res) => {
+    const filePath = req.file.path;
+    const urls = [];
+    const errors = [];
+    const orgId = req.user.orgId;
+
+    const { urlHeader, categoryHeader, status, isPhishing, isVerified } = req.body;
+
+    try {
+        const existingUrls = new Set(await Url.find({ orgId }).distinct("url"));
+
+        await new Promise((resolve, reject) => {
+            fs.createReadStream(filePath)
+                .pipe(csvParser())
+                .on("data", (row) => {
+                    const url = row[urlHeader]?.trim();
+                    const category = categoryHeader ? (row[categoryHeader]?.split(",").map(tag => tag.trim()) || []) : [];
+
+                    if (!url) {
+                        errors.push({ row, error: `Missing URL value` });
+                        return;
+                    }
+                    if (existingUrls.has(url)) {
+                        return;
+                    }
+                    const urlEntry = {
+                        url, category, status, isPhishing, isVerified, orgId
+                    };
+
+                    urls.push(urlEntry);
+                    existingUrls.add(url);
+                })
+                .on("end", resolve)
+                .on("error", reject);
+        });
+
+        if (urls.length > 0) {
+            const insertedUrls = await Url.insertMany(urls);
+            const io = req.app.get("socketio");
+            io.emit("urlsByCsvAdded", insertedUrls);
+            res.status(200).json({ message: "URLs added successfully" })
+        } else {
+            res.status(400).json({ message: 'No valid URLs to add or all URLs are duplicates' });
+        }
+    } catch (error) {
+        console.error('Error adding URLs from CSV:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    } finally {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
     }
 })
