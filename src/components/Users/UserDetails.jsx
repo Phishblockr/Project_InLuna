@@ -31,7 +31,8 @@ const UserDetails = () => {
         "percentageVisitToWhitelistUrls": 0,
         "percentageWhitelistReq": 0
     });
-    const [dataLoading, setDataLoading] = useState(false)
+    const [dataLoading, setDataLoading] = useState(false);
+    const [showLoading, setShowLoading] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [operationType, setOperationType] = useState(null);
@@ -82,6 +83,9 @@ const UserDetails = () => {
         const year = date.getFullYear();
         try {
             setDataLoading(true)
+            let loadingTimer = setTimeout(() => {
+                setShowLoading(true); // Only show loading overlay after delay
+            }, 500);
             const apiUrl = import.meta.env.VITE_API_URL
             const token = JSON.parse(localStorage.getItem("user")).token;
             const response = await fetch(`${apiUrl}/overview/user-metrics/${id}/${month}/${year}`, {
@@ -98,7 +102,9 @@ const UserDetails = () => {
 
             const data = await response.json();
             setActivityCounts(data);
-            setDataLoading(false)
+            clearTimeout(loadingTimer);
+            setShowLoading(false);
+            setDataLoading(false);
         } catch (error) {
             console.error(error.message);
         }
@@ -192,7 +198,7 @@ const UserDetails = () => {
         if (result) {
             if (operationType === "delete") {
                 handleRemUser(selectedUser._id);
-            } else if (operationType === "updateStatus"){
+            } else if (operationType === "updateStatus") {
                 handleUpdateStatus(selectedUser._id, selectedUser.name)
             }
             setIsPasswordModalOpen(false);
@@ -201,7 +207,7 @@ const UserDetails = () => {
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-            <LoadingOverlay loading={dataLoading} />
+            {showLoading && <LoadingOverlay loading={dataLoading} />}
 
             <AuthenticateModal isOpen={isPasswordModalOpen}
                 onClose={() => setIsPasswordModalOpen(false)}
@@ -216,112 +222,112 @@ const UserDetails = () => {
                 </div>
                 <div className="flex flex-row items-center justify-between">
                     <div className="flex flex-row items-center gap-x-5">
-                    {user.img ? (
-                        <img
-                            className="w-[10rem] h-[10rem] rounded-full object-cover"
-                            src={user.img}
-                            alt="user Profile"
-                        />
-                    ) : (
-                        <svg
-                            className="w-[10rem] h-[10rem] rounded-full object-cover"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="16 16 224 224"
-                        >
-                            <path
-                                d="M63.8,199.37a72,72,0,0,1,128.4,0"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="12"
+                        {user.img ? (
+                            <img
+                                className="w-[10rem] h-[10rem] rounded-full object-cover"
+                                src={user.img}
+                                alt="user Profile"
                             />
-                            <circle
-                                cx="128"
-                                cy="128"
-                                r="96"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="12"
-                            />
-                            <circle
-                                cx="128"
-                                cy="120"
-                                r="40"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="12"
-                            />
-                        </svg>
-                    )}
-                    <ul className="flex flex-col">
-                        <li className="font-medium text-3xl my-2">{user.name}</li>
-                        <li className="font-medium mb-1">
-                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
-                                Username:
-                            </span>
-                            <span>{user.username}</span>
-                        </li>
-                        <li className="font-medium mb-1">
-                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
-                                E-mail:
-                            </span>
-                            <span>{user.email}</span>
-                        </li>
-                        <li className="font-medium mb-1">
-                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
-                                Phone:
-                            </span>
-                            <span>{user.phone}</span>
-                        </li>
-                        <li className="font-medium mb-1">
-                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
-                                Department:
-                            </span>
-                            <span>{user.department}</span>
-                        </li>
-                        <li className="font-medium mb-2">
-                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
-                                Role:
-                            </span>
-                            <span>{user.role}</span>
-                        </li>
-                        <li className="font-medium mb-1">
-                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
-                                Status:
-                            </span>
-                            <span
-                                className={
-                                    user.status === "active" ? statusActive : statusInactive
-                                }
+                        ) : (
+                            <svg
+                                className="w-[10rem] h-[10rem] rounded-full object-cover"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="16 16 224 224"
                             >
-                                {user.status}
-                            </span>
-                        </li>
-                    </ul>
+                                <path
+                                    d="M63.8,199.37a72,72,0,0,1,128.4,0"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="12"
+                                />
+                                <circle
+                                    cx="128"
+                                    cy="128"
+                                    r="96"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="12"
+                                />
+                                <circle
+                                    cx="128"
+                                    cy="120"
+                                    r="40"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="12"
+                                />
+                            </svg>
+                        )}
+                        <ul className="flex flex-col">
+                            <li className="font-medium text-3xl my-2">{user.name}</li>
+                            <li className="font-medium mb-1">
+                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                                    Username:
+                                </span>
+                                <span>{user.username}</span>
+                            </li>
+                            <li className="font-medium mb-1">
+                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                                    E-mail:
+                                </span>
+                                <span>{user.email}</span>
+                            </li>
+                            <li className="font-medium mb-1">
+                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                                    Phone:
+                                </span>
+                                <span>{user.phone}</span>
+                            </li>
+                            <li className="font-medium mb-1">
+                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                                    Department:
+                                </span>
+                                <span>{user.department}</span>
+                            </li>
+                            <li className="font-medium mb-2">
+                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                                    Role:
+                                </span>
+                                <span>{user.role}</span>
+                            </li>
+                            <li className="font-medium mb-1">
+                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                                    Status:
+                                </span>
+                                <span
+                                    className={
+                                        user.status === "active" ? statusActive : statusInactive
+                                    }
+                                >
+                                    {user.status}
+                                </span>
+                            </li>
+                        </ul>
                     </div>
                     <div className="flex flex-col gap-5">
-                    <button
-                        onClick={() => handlePasswordModalOpen(user, "updateStatus")}
-                        className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-white font-medium rounded-lg mr-2"
-                    >
-                        <span className="flex flex-row items-center gap-x-2 justify-center">
-                            <RiLoopLeftLine className="w-6 h-6" /> Update Status
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => handlePasswordModalOpen(user, "delete")}
-                        className="bg-red-500 hover:bg-red-700 p-2 w-[200px] h-[50px] text-white font-medium rounded-lg"
-                    >
-                        <span className="flex flex-row items-center gap-x-2  justify-center">
-                            <RiDeleteBinLine className="w-6 h-6" /> Remove User
-                        </span>
-                    </button>
-                </div>
+                        <button
+                            onClick={() => handlePasswordModalOpen(user, "updateStatus")}
+                            className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-white font-medium rounded-lg mr-2"
+                        >
+                            <span className="flex flex-row items-center gap-x-2 justify-center">
+                                <RiLoopLeftLine className="w-6 h-6" /> Update Status
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => handlePasswordModalOpen(user, "delete")}
+                            className="bg-red-500 hover:bg-red-700 p-2 w-[200px] h-[50px] text-white font-medium rounded-lg"
+                        >
+                            <span className="flex flex-row items-center gap-x-2  justify-center">
+                                <RiDeleteBinLine className="w-6 h-6" /> Remove User
+                            </span>
+                        </button>
+                    </div>
                 </div>
                 <div className="my-8">
                     <div className="mb-2 py-2 px-5 shadow border-2 border-gray-100 flex items-center justify-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-[#001C40]">

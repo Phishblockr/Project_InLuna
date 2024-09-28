@@ -5,10 +5,16 @@ import { addUser, getUsers } from '../../features/Users/usersSlice';
 import { toast } from 'sonner';
 import { PiUserCircleLight } from "react-icons/pi";
 import { RiUploadCloud2Line, RiAddFill } from "react-icons/ri";
+import AuthenticateModal from '../../utils/AuthenticateModal';
+import { handleVerifyPwd } from '../../utils/handleVerifyPwd';
 
 const AddUser = () => {
     const [image, setImage] = useState(null);
     const hiddenFileInput = useRef(null);
+
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [operationType, setOperationType] = useState(null);
+    const apiUrl = import.meta.env.VITE_API_URL
 
     const [formData, setFormData] = useState({
         name: '',
@@ -47,18 +53,44 @@ const AddUser = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        handlePasswordModalOpen(null, "add")
+    };
+
+    const executeAddUser = async () => {
         try {
             await dispatch(addUser(formData));
             toast.success('User added successfully');
-            dispatch(getUsers()); // Fetch updated user list
-            navigate('/users'); // Redirect to users page
+            dispatch(getUsers());
+            navigate('/users');
         } catch (error) {
             toast.error('Failed to add user');
+        }
+    }
+
+    const handlePasswordModalOpen = (user, type) => {
+        // setSelectedUrl(user);
+        setOperationType(type);
+        setIsPasswordModalOpen(true);
+    };
+
+    const handlePasswordConfirm = async (password) => {
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        const result = await handleVerifyPwd(password, apiUrl, token);
+
+        if (result) {
+            if (operationType === "add") {
+                executeAddUser();
+            }
+            setIsPasswordModalOpen(false);
         }
     };
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+            <AuthenticateModal isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onConfirm={handlePasswordConfirm}
+            />
             <div className='z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none'>
                 <div>
                     <h1 className="pt-3 pl-5 text-2xl font-medium">Add User</h1>

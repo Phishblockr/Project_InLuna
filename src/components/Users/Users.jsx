@@ -24,6 +24,7 @@ export default function Users() {
     const [currentPage, setCurrentPage] = useState(1);
     const [dataLoading, setDataLoading] = useState(true);
     const [showLoading, setShowLoading] = useState(false);
+    const [csvData, setCsvData] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [status, setStatus] = useState("all")
@@ -60,9 +61,13 @@ export default function Users() {
     const handleFileSubmit = async (file) => {
         const formData = new FormData();
         formData.append("file", file)
+        setCsvData(formData);
+        handlePasswordModalOpen(null, "add");
+    }
 
+    const executeCsvUpload = async () => {
         try {
-            const response = dispatch(uploadCsv(formData)).unwrap()
+            const response = dispatch(uploadCsv(csvData)).unwrap()
             if (response.errors) {
                 setErrors(response.errors);
                 toast.error("CSV contains errors. Please correct them and try again.");
@@ -124,6 +129,8 @@ export default function Users() {
         if (result) {
             if (operationType === "delete") {
                 handleRemUser(selectedUser);
+            } else if (operationType === "add"){
+                executeCsvUpload()
             }
             setIsPasswordModalOpen(false);
         }

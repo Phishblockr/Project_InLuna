@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 import CsvUploadUrlModal from "../../utils/csvUploadUrlModal";
+import AuthenticateModal from "../../utils/AuthenticateModal";
+import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 
 export default function UrlLists() {
 
@@ -20,6 +22,7 @@ export default function UrlLists() {
     const [showLoading, setShowLoading] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isCsvUploadModalOpen, setIsCsvUploadModalOpen] = useState(false);
+    const [csvData, setCsvData] = useState(null);
     const [status, setStatus] = useState("all")
     const [error, setErrors] = useState(null);
     const [operationType, setOperationType] = useState(null);
@@ -101,10 +104,10 @@ export default function UrlLists() {
         return url.length > maxLen ? url.substring(0, maxLen) + "..." : url;
     };
 
-    const handleRemUrl = async (id, url) => {
+    const handleRemUrl = async (id) => {
         try {
             await dispatch(delUrl(id)).unwrap();
-            toast.success(`URL ${url} removed`);
+            toast.success(`URL removed`);
 
             const updatedRecords = urlData.slice(0, perPageRec - 1);
             if (updatedRecords.length === 1 && currentPage > 1) {
@@ -130,6 +133,8 @@ export default function UrlLists() {
         if (result) {
             if (operationType === "delete") {
                 handleRemUrl(selectedUrl);
+            } else if (operationType === "add"){
+                executeCsvUpload()
             }
             setIsPasswordModalOpen(false);
         }
@@ -144,8 +149,13 @@ export default function UrlLists() {
         formData.append("isPhishing", isPhishing);
         formData.append("isVerified", isVerified);
 
+        setCsvData(formData);
+        handlePasswordModalOpen(null, "add");
+    };
+
+    const executeCsvUpload = async () => {
         try {
-            const response = await dispatch(uploadUrlCsv(formData)).unwrap();
+            const response = await dispatch(uploadUrlCsv(csvData)).unwrap();
             if (response.errors) {
                 setErrors(response.errors);
                 toast.error("CSV contains errors. Please correct them and try again.");
@@ -156,7 +166,7 @@ export default function UrlLists() {
             console.log(error)
             toast.error("Failed to upload CSV! Make sure your CSV doesn't contain duplicate email & phone values.");
         }
-    };
+    }
 
     const statusActive =
         "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
@@ -170,6 +180,11 @@ export default function UrlLists() {
                 isOpen={isCsvUploadModalOpen}
                 onClose={() => setIsCsvUploadModalOpen(false)}
                 onFileSubmit={handleCsvUpload}
+            />
+
+            <AuthenticateModal isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onConfirm={handlePasswordConfirm}
             />
             <div>
                 <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
@@ -263,7 +278,7 @@ export default function UrlLists() {
                                         </td>
                                         <td className="text-left ">
                                             <button
-                                                onClick={() => handleRemUrl(url._id, formatUrl(url.url))}
+                                                onClick={() => handlePasswordModalOpen(url._id, "delete")}
                                             >
                                                 <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
                                             </button>

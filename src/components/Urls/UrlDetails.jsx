@@ -4,11 +4,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { delUrl, updateUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
+import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
+import AuthenticateModal from "../../utils/AuthenticateModal";
 
 const UrlDetails = () => {
     const [editUrlData, setEditUrlData] = useState({ url: "", category: [], status: "", isPhishing: false, isVerified: false });
     const [newTag, setNewTag] = useState(""); // For adding new tags
-
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [operationType, setOperationType] = useState(null);
+    const apiUrl = import.meta.env.VITE_API_URL
     const { id } = useParams();
     const navigate = useNavigate();
     const url = useSelector((state) => state.urls.urls.find((url) => url._id === id));
@@ -35,15 +39,15 @@ const UrlDetails = () => {
         setEditUrlData({ ...editUrlData, [name]: value });
     };
 
+    const executeEditUrl = async () => {
+        await dispatch(updateUrl({ id, editUrlData })).unwrap();
+        toast.success("URL updated successfully");
+        navigate("/urllists");
+    };
+
     const handleEditUrl = (event) => {
         event.preventDefault();
-        try {
-            dispatch(updateUrl({ id, editUrlData }));
-            toast.success(`URL updated successfully`);
-            navigate("/urllists");
-        } catch (error) {
-            toast.error(error.message);
-        }
+        handlePasswordModalOpen(null, "edit");
     };
 
     const handleAddTag = () => {
@@ -62,8 +66,32 @@ const UrlDetails = () => {
         return <div>URL not found</div>;
     }
 
+    const handlePasswordModalOpen = (url, type) => {
+        // setSelectedUrl(url);
+        setOperationType(type);
+        setIsPasswordModalOpen(true);
+    };
+
+    const handlePasswordConfirm = async (password) => {
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        const result = await handleVerifyPwd(password, apiUrl, token);
+
+        if (result) {
+            if (operationType === "delete") {
+                handleRemUrl();
+            } else if (operationType === "edit") {
+                executeEditUrl();
+            }
+            setIsPasswordModalOpen(false);
+        }
+    };
+
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+            <AuthenticateModal isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onConfirm={handlePasswordConfirm}
+            />
             <div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                 <div>
                     <h1 className="pt-3 pl-5 text-2xl font-medium">URL Details</h1>
@@ -86,20 +114,20 @@ const UrlDetails = () => {
                         <div className="w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-[#001C40] flex flex-wrap gap-2">
                             {editUrlData.category.map((tag, index) => (
                                 <div key={index} className="bg-gray-200 text-black px-2 py-1 rounded flex items-center gap-1">
-                                {tag}
-                                <button onClick={() => handleRemoveTag(index)} className="text-red-500">
-                                <RiCloseLine size={24} />
-                                </button>
+                                    {tag}
+                                    <button onClick={() => handleRemoveTag(index)} className="text-red-500">
+                                        <RiCloseLine size={24} />
+                                    </button>
                                 </div>
                             ))}
                         </div>
                         <div className="mt-2">
-                            <input type="text" value={newTag} placeholder="Add a category" onChange={(e) => {setNewTag(e.target.value)}} className="p-2 border border-gray-300 rounded-lg w-[35rem] dark:bg-[#001C40] dark:border-[#001C40]" />
+                            <input type="text" value={newTag} placeholder="Add a category" onChange={(e) => { setNewTag(e.target.value) }} className="p-2 border border-gray-300 rounded-lg w-[35rem] dark:bg-[#001C40] dark:border-[#001C40]" />
                             <button
-                            type="button" 
-                            className="ml-2 px-3 py-2 bg-gray-200 rounded-lg"
-                            onClick={handleAddTag}>
-                            <RiAddFill size={24} />
+                                type="button"
+                                className="ml-2 px-3 py-2 bg-gray-200 rounded-lg"
+                                onClick={handleAddTag}>
+                                <RiAddFill size={24} />
                             </button>
                         </div>
                     </div>
@@ -154,7 +182,7 @@ const UrlDetails = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={handleRemUrl}
+                            onClick={() => handlePasswordModalOpen(null, "delete")}
                             className="mt-9 mb-2 rounded-lg text-white font-medium w-[19rem] bg-red-500 hover:bg-red-700 transition p-2"
                         >
                             <span className="flex flex-row gap-x-2 items-center justify-center">
