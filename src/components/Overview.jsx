@@ -42,7 +42,8 @@ const Overview = () => {
   const theme = useSelector((state) => state.theme);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [dataLoading, setDataLoading] = useState(false)
+  const [dataLoading, setDataLoading] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
 
   const renderMonthContent = (month, shortMonth, longMonth, day) => {
     const fullYear = new Date(day).getFullYear();
@@ -61,6 +62,9 @@ const Overview = () => {
     const year = date.getFullYear();
 
     setDataLoading(true)
+    let loadingTimer = setTimeout(() => {
+      setShowLoading(true); // Only show loading overlay after delay
+    }, 500);
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL
@@ -82,8 +86,13 @@ const Overview = () => {
         { id: 4, title: "Phishing links blocked", count: data.totalBlacklistedUrls, lastMonth: data.percentageChangeBlacklistedUrls, logo: "bi bi-shield-shaded" },
       ];
       dispatch(setOverviewData(mappedData));
-      setDataLoading(false)
+      clearTimeout(loadingTimer);
+      setShowLoading(false);
+      setDataLoading(false);
     } catch (error) {
+      clearTimeout(loadingTimer);
+      setShowLoading(false);
+      setDataLoading(false);
       console.log(error);
       toast.error("Failed to fetch data");
     }
@@ -95,7 +104,7 @@ const Overview = () => {
 
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
-      <LoadingOverlay loading={dataLoading} />
+      {showLoading && <LoadingOverlay loading={dataLoading} />}
       <div className='z-1 w-full h-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
         <div className="flex justify-between">
           <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>

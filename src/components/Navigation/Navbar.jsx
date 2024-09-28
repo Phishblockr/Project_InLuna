@@ -73,6 +73,7 @@ const Navbar = () => {
     const [dropdown, setDropdown] = useState(false);
     const [helpDropdown, setHelpDropdown] = useState(false);
     const [dataLoading, setDataLoading] = useState(false);
+    const [showLoading, setShowLoading] = useState(false);
 
     const toggleDropdown = () => {
         setDropdown(!dropdown);
@@ -92,7 +93,10 @@ const Navbar = () => {
 
     const fetchUser = async () => {
         setDataLoading(true)
-        dispatch(fetchUserStart());
+        let loadingTimer = setTimeout(() => {
+            setShowLoading(true); // Only show loading overlay after delay
+        }, 500);
+        dispatch(fetchUserStart())
         try {
             const apiUrl = import.meta.env.VITE_API_URL
             const user = JSON.parse(localStorage.getItem("user"));
@@ -106,10 +110,15 @@ const Navbar = () => {
             });
             const data = await response.json();
             dispatch(fetchUserSuccess(data))
-            setDataLoading(false)
+            clearTimeout(loadingTimer);
+            setShowLoading(false);
+            setDataLoading(false);
         } catch (error) {
             dispatch(fetchUserFailure(error.message))
             console.log(error)
+            clearTimeout(loadingTimer);
+            setShowLoading(false);
+            setDataLoading(false);
         }
     }
 

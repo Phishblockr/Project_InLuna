@@ -23,6 +23,7 @@ export default function Users() {
     const [query, setQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [dataLoading, setDataLoading] = useState(true);
+    const [showLoading, setShowLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [status, setStatus] = useState("all")
@@ -32,9 +33,16 @@ export default function Users() {
 
     useEffect(() => {
         setDataLoading(true)
+        let loadingTimer = setTimeout(() => {
+            setShowLoading(true); // Only show loading overlay after delay
+        }, 500);
         dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status }))
             .unwrap()
-            .finally(() => setDataLoading(false))
+            .finally(() => {
+                clearTimeout(loadingTimer);
+                setShowLoading(false);
+                setDataLoading(false);
+            })
 
         dispatch(startListeningToSocket());
     }, [dispatch, currentPage, perPageRec, query]);
@@ -133,7 +141,7 @@ export default function Users() {
                 FileMsg="Make sure csv contains following headers 'name, email, phone, gender, role, department'"
                 FileType="csv"
             />
-            <LoadingOverlay loading={dataLoading} />
+            {showLoading && <LoadingOverlay loading={dataLoading} />}
 
             <AuthenticateModal isOpen={isPasswordModalOpen}
                 onClose={() => setIsPasswordModalOpen(false)}

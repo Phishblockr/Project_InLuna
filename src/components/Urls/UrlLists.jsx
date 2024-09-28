@@ -17,6 +17,7 @@ export default function UrlLists() {
     const apiUrl = import.meta.env.VITE_API_URL
 
     const [dataLoading, setDataLoading] = useState(true);
+    const [showLoading, setShowLoading] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isCsvUploadModalOpen, setIsCsvUploadModalOpen] = useState(false);
     const [status, setStatus] = useState("all")
@@ -81,9 +82,16 @@ export default function UrlLists() {
 
     useEffect(() => {
         setDataLoading(true)
+        let loadingTimer = setTimeout(() => {
+            setShowLoading(true); // Only show loading overlay after delay
+        }, 500);
         dispatch(getUrls({ page: currentPage, limit: perPageRec, search: query, status }))
             .unwrap()
-            .finally(() => setDataLoading(false))
+            .finally(() => {
+                clearTimeout(loadingTimer);
+                setShowLoading(false);
+                setDataLoading(false);
+            })
 
         dispatch(startListeningToSocket());
     }, [dispatch, currentPage, perPageRec, query])
@@ -157,7 +165,7 @@ export default function UrlLists() {
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-            <LoadingOverlay loading={dataLoading} />
+            {showLoading && <LoadingOverlay loading={dataLoading} />}
             <CsvUploadUrlModal
                 isOpen={isCsvUploadModalOpen}
                 onClose={() => setIsCsvUploadModalOpen(false)}
