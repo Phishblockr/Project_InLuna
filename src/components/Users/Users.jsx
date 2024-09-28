@@ -9,7 +9,7 @@ import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import { PiUserCircleLight } from "react-icons/pi";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 import FileUploadModal from "../../utils/FileUploadModal";
-import AuthenticateModal from "../AuthenticateModal"
+import AuthenticateModal from "../../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import debounce from "debounce";
 

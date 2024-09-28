@@ -10,7 +10,7 @@ import LoadingOverlay from "../../utils/LoadingOverlay";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../../static/CustomDatePicker.css';
-import AuthenticateModal from "../AuthenticateModal"
+import AuthenticateModal from "../../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 
 const statusActive =

@@ -9,26 +9,26 @@ import {
 import ProtectedRoute from "./utils/ProtectedRoute.jsx";
 import { AuthProvider } from "./utils/AuthProvider.jsx";
 import Users from "./components/Users/Users.jsx";
-import Insights from "./components/Insights.jsx";
 import UrlLists from "./components/Urls/UrlLists.jsx";
 import Requests from "./components/Requests.jsx";
-import Feedbacks from "./components/Feedbacks.jsx";
-import Logs from "./components/Logs.jsx";
-import Sidebar from "./components/Sidebar.jsx";
-import Navbar from "./components/Navbar.jsx";
+import Feedbacks from "./components/Services/Feedbacks.jsx";
+import Logs from "./components/Admin_Logs/Logs.jsx";
+import Sidebar from "./components/Navigation/Sidebar.jsx";
+import Navbar from "./components/Navigation/Navbar.jsx";
 import AddUser from "./components/Users/AddUser.jsx";
 import AddUrl from "./components/Urls/AddUrl.jsx";
 import UrlDetails from "./components/Urls/UrlDetails.jsx";
 import UserDetails from "./components/Users/UserDetails.jsx";
-import AddEmp from "./components/AddEmp.jsx";
+// import Insights from "./components/Employee/Insights.jsx";
+// import AddEmp from "./components/Employee/AddEmp.jsx";
+// import EmpInsights from "./components/Employee/EmpInsights.jsx";
 import { Toaster } from "sonner";
-import AdminSettings from "./components/AdminSettings.jsx";
-import Settings from "./components/Settings.jsx";
-import EmpInsights from "./components/EmpInsights.jsx";
-import Login from "./components/Login.jsx";
+import AdminSettings from "./components/Settings/AdminSettings.jsx";
+import Settings from "./components/Settings/Settings.jsx";
+import Login from "./components/Auth/Login.jsx";
 import Overview from "./components/Overview.jsx";
 import { useSelector } from "react-redux";
-import Logout from "./components/Logout.jsx";
+import Logout from "./components/Auth/Logout.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -69,12 +69,14 @@ function App() {
                         path="/users/userDetails/:id"
                         element={<UserDetails />}
                       />
+                      {/*
                       <Route path="/insights" element={<Insights />} />
                       <Route path="/insights/addemp" element={<AddEmp />} />
                       <Route
                         path="/insights/empinsight/:id"
                         element={<EmpInsights />}
                       />
+                    */}
                       <Route path="/urllists" element={<UrlLists />} />
                       <Route path="/urllists/addurl" element={<AddUrl />} />
                       <Route
