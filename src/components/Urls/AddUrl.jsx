@@ -63,12 +63,12 @@ const AddUrl = () => {
     };
 
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <AuthenticateModal isOpen={isPasswordModalOpen}
                 onClose={() => setIsPasswordModalOpen(false)}
                 onConfirm={handlePasswordConfirm}
             />
-            <div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+            <div className="z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-full dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                 <div>
                     <h1 className="pt-3 pl-5 text-2xl font-medium">Add URL</h1>
                 </div>

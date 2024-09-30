@@ -1,6 +1,4 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { urls } from "../../urlsData";
-import io from "socket.io-client";
 import socket from "../../utils/socket";
 
 const initialState = {
