@@ -39,6 +39,9 @@ export const addWhitelistReqExt = async (req, res) => {
         existingUrl.whitelistReqIds.push(newWhitelistReq._id);
         await existingUrl.save();
 
+        const io = req.app.get("socketio");
+        io.emit("newReqAdded", newWhitelistReq);
+
         res.status(201).send(newWhitelistReq);
     } catch (error) {
         res.status(400).send(error.message);
@@ -128,11 +131,26 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
             url.isVerified = true;
             url.isPhishing = false;
             url.status = "whitelisted",
-                await url.save();
+            await url.save();
         }
+
+        const io = req.app.get("socketio");
+        io.emit("reqUpdated", requestId);
 
         res.json({ message: "Whitelist request approved and URL updated", url });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
+
+export const deleteRequest = asyncHandler(async (req, res) => {
+    try{
+        const {requestId} = req.params;
+        await WhitelistReq.findByIdAndDelete(id);
+        const io = req.app.get("socketio");
+        io.emit("reqDeleted", requestId);
+        res.status(200).json(requestId);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+})
