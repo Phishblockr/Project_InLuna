@@ -110,9 +110,9 @@ export const fetchReqs = asyncHandler(async (req, res) => {
 
 export const approveWhitelistRequest = asyncHandler(async (req, res) => {
     try {
-        const { requestId } = req.params;
+        const { id } = req.params;
 
-        const whitelistRequest = await WhitelistReq.findById(requestId);
+        const whitelistRequest = await WhitelistReq.findById(id);
         if (!whitelistRequest) {
             return res.status(404).json({ message: "Whitelist request not found" });
         }
@@ -134,22 +134,51 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
             await url.save();
         }
 
-        const io = req.app.get("socketio");
-        io.emit("reqUpdated", requestId);
+        const updatedWhitelistRequest = await WhitelistReq.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(id) } },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userId",
+                    foreignField: "_id",
+                    as: "userDetails"
+                }
+            },
+            { $unwind: "$userDetails" },
+            {
+                $project: {
+                    _id: 1,
+                    url: 1,
+                    reason: 1,
+                    status: 1,
+                    createdAt: 1,
+                    "userDetails.name": 1,
+                    "userDetails.email": 1
+                }
+            }
+        ]);
 
-        res.json({ message: "Whitelist request approved and URL updated", url });
+        if (updatedWhitelistRequest.length === 0) {
+            return res.status(404).json({ message: "Updated request not found" });
+        }
+
+        const io = req.app.get("socketio");
+        io.emit("reqUpdated", updatedWhitelistRequest[0]); // Emit the full updated object with user details
+
+        res.json({ message: "Whitelist request approved and URL updated", updatedWhitelistRequest: updatedWhitelistRequest[0] });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
+        console.log(error)
     }
 });
 
 export const deleteRequest = asyncHandler(async (req, res) => {
     try{
-        const {requestId} = req.params;
+        const {id} = req.params;
         await WhitelistReq.findByIdAndDelete(id);
         const io = req.app.get("socketio");
-        io.emit("reqDeleted", requestId);
-        res.status(200).json(requestId);
+        io.emit("reqDeleted", id);
+        res.status(200).json(id);
     } catch (error) {
         res.status(400).send(error.message);
     }

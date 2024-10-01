@@ -29,10 +29,10 @@ const urlSchema = new mongoose.Schema(
       ],
       default: [],
     },
-    category: [{
-      type: String,
-      default: "general",
-    }],
+    category: {
+      type: [String],
+      default: ["general"],
+    },
     isVerified: {
       type: Boolean,
       default: false,
