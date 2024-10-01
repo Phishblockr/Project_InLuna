@@ -20,15 +20,24 @@ export default function Users() {
     const perPageRec = useSelector((state) => state.perPageRec);
     const dispatch = useDispatch();
 
-    const [query, setQuery] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
+    // For Loading Overlay
     const [dataLoading, setDataLoading] = useState(true);
     const [showLoading, setShowLoading] = useState(false);
+
+    // For CSV Upload
     const [csvData, setCsvData] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    const [status, setStatus] = useState("all")
+
+    // For Pagination and Data Filter
+    const [currentPage, setCurrentPage] = useState(1);
+    const [query, setQuery] = useState("");
+    const [status, setStatus] = useState("all");
+
+    // For Handling errors
     const [error, setErrors] = useState(null);
+
+    // For AuthenticateModal
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [operationType, setOperationType] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
 
@@ -111,8 +120,8 @@ export default function Users() {
             } else {
                 dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status }));
             }
-        } catch (e) {
-            toast.error(`Error: ${e}`);
+        } catch (error) {
+            toast.error(`Something went wrong: ${error}`);
         }
     };
 
@@ -129,7 +138,7 @@ export default function Users() {
         if (result) {
             if (operationType === "delete") {
                 handleRemUser(selectedUser);
-            } else if (operationType === "add"){
+            } else if (operationType === "add") {
                 executeCsvUpload()
             }
             setIsPasswordModalOpen(false);

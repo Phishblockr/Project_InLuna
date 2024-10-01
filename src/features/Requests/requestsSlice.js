@@ -2,18 +2,17 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import socket from "../../utils/socket";
 
 const initialState = {
-    reqs: [],
+    requests: [],
     totalReqs: 0,
     totalPages: 1,
     currentPage: 1,
-    perPageRec: 5,
     loading: false,
     error: null,
 };
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
-// Async thunk to fetch requests
+//fetch requests
 export const fetchReqs = createAsyncThunk(
     "whitelistReq/get",
     async ({ page, limit, search, status }, { rejectWithValue }) => {
@@ -38,12 +37,11 @@ export const fetchReqs = createAsyncThunk(
     }
 );
 
-// Async thunk to delete a request
+//delete a request
 export const delReq = createAsyncThunk(
     "whitelistReq/del",
-    async (reqId, { rejectWithValue }) => {
+    async ({reqId}, { rejectWithValue }) => {
         const token = JSON.parse(localStorage.getItem("user")).token;
-
         try {
             const res = await fetch(`${apiUrl}/whitelistReq/delReq/${reqId}`, {
                 method: "DELETE",
@@ -96,22 +94,22 @@ const requestsSlice = createSlice({
     initialState,
     reducers: {
         updateStatus(state, action) {
-            const request = state.reqs.find((request) => request._id === action.payload);
+            const request = state.requests.find((request) => request._id === action.payload);
             if (request) {
                 request.status = request.status === "Pending" ? "Completed" : "Pending";
             }
         },
         remReq(state, action) {
-            state.reqs = state.reqs.filter((request) => request._id !== action.payload);
+            state.requests = state.requests.filter((request) => request._id !== action.payload);
         },
         updateReqSuccess(state, action) {
-            const index = state.reqs.findIndex((req) => req._id === action.payload._id);
+            const index = state.requests.findIndex((req) => req._id === action.payload._id);
             if (index !== -1) {
-                state.reqs[index] = action.payload;
+                state.requests[index] = action.payload;
             }
         },
         deleteReqSuccess(state, action) {
-            state.reqs = state.reqs.filter((req) => req._id !== action.payload);
+            state.requests = state.requests.filter((req) => req._id !== action.payload);
         },
     },
     extraReducers: (builder) => {
@@ -122,7 +120,7 @@ const requestsSlice = createSlice({
             })
             .addCase(fetchReqs.fulfilled, (state, action) => {
                 state.loading = false;
-                state.reqs = action.payload.data;
+                state.requests = action.payload.data;
                 state.totalReqs = action.payload.totalRecords;
                 state.totalPages = action.payload.totalPages;
                 state.currentPage = action.payload.currentPage;
@@ -132,10 +130,10 @@ const requestsSlice = createSlice({
                 state.error = action.payload;
             })
             .addCase(delReq.fulfilled, (state, action) => {
-                state.reqs = state.reqs.filter((req) => req._id !== action.payload);
+                state.requests = state.requests.filter((req) => req._id !== action.payload);
             })
             .addCase(approveReq.fulfilled, (state, action) => {
-                const request = state.reqs.find((req) => req._id === action.payload._id);
+                const request = state.requests.find((req) => req._id === action.payload._id);
                 if (request) {
                     request.status = "approved";
                 }
@@ -145,7 +143,7 @@ const requestsSlice = createSlice({
 
 export const startListeningToSocket = () => (dispatch, getState) => {
     socket.on("newReqAdded", (req) => {
-        const perPageRec = getState().requests.perPageRec;
+        const perPageRec = getState().perPageRec;
         const currentPage = getState().requests.currentPage;
         dispatch(fetchReqs({ page: currentPage, limit: perPageRec, search: "", status: "all" }));
     });

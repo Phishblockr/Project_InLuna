@@ -135,12 +135,16 @@ const urlSlice = createSlice({
     initialState,
     reducers: {
         addUrlSuccess(state, action) {
-            const url = {
-                url: action.payload.url,
-                category: action.payload.category,
-                status: action.payload.status,
+            const existingUrl = state.urls.find(url => url._id === action.payload._id);
+            if (!existingUrl) {
+                state.urls.push(action.payload);
             }
-            state.urls.push(url);
+            // const url = {
+            //     url: action.payload.url,
+            //     category: action.payload.category,
+            //     status: action.payload.status,
+            // }
+            // state.urls.push(url);
         },
         deleteUrlSuccess(state, action) {
             state.urls = state.urls.filter(url => url.id !== action.payload)
