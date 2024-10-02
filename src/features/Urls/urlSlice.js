@@ -147,11 +147,11 @@ const urlSlice = createSlice({
             // state.urls.push(url);
         },
         deleteUrlSuccess(state, action) {
-            state.urls = state.urls.filter(url => url.id !== action.payload)
+            state.urls = state.urls.filter(url => url._id !== action.payload)
         },
         updateUrlSuccess(state, action) {
             const { id, url, category, status } = action.payload;
-            const existingUrl = state.urls.find((url) => url.id === id);
+            const existingUrl = state.urls.find((url) => url._id === id);
             if (existingUrl) {
                 existingUrl.url = url;
                 existingUrl.category = category;
@@ -159,7 +159,7 @@ const urlSlice = createSlice({
             }
         }
         // updateStatus(state, action) {
-        //     const url = state.urls.find((url) => url.id === action.payload);
+        //     const url = state.urls.find((url) => url._id === action.payload);
         //     if (url) {
         //         url.status = url.status === "Blacklisted" ? "Whitelisted" : "Blacklisted";
         //     }

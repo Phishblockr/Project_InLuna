@@ -10,9 +10,12 @@ import AuthenticateModal from "../../utils/AuthenticateModal";
 
 
 const AddUrl = () => {
+
+    const textBarStyle = "w-full p-2 rounded-t-lg border-b-2 border-dashed bg-gray-100 border-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-[#001C40]"
+
     const [newTag, setNewTag] = useState(""); // For adding new tags
     const [url, setUrl] = useState({
-        url: "", category: [], status: "", isPhishing: false, isVerified: false
+        url: "", category: [], status: "blacklisted", isPhishing: false, isVerified: false
     });
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [operationType, setOperationType] = useState(null);
@@ -72,26 +75,28 @@ const AddUrl = () => {
                 <div>
                     <h1 className="pt-3 pl-5 text-2xl font-medium">Add URL</h1>
                 </div>
-                <form className="mt-3 flex flex-col w-full items-center" onSubmit={handleAddUrl}>
-                    <div className="flex flex-col">
+                <form className="mt-5 px-3 flex flex-col w-full items-center" onSubmit={handleAddUrl}>
+                    <div className="w-full flex flex-col">
                         <label htmlFor="url">URL: </label>
                         <input
                             type="text"
                             id="url"
                             name="url"
                             value={url.url}
-                            className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                            className={textBarStyle}
                             onChange={(e) =>
                                 setUrl({ ...url, [e.target.name]: e.target.value })
                             }
                         />
                     </div>
 
-                    <div className="mt-3 flex flex-col">
+                    <div className="mt-5 w-full flex flex-col">
                         <label htmlFor="category">Category: </label>
-                        <div className="w-[40rem] p-2 rounded-lg border border-gray-300 dark:bg-[#001C40] dark:border-[#001C40] flex flex-wrap gap-2">
+                        <div className={`${url.category.length === 0 ? "p-5" : "p-2"
+                            } rounded-lg border-dashed border-2 border-gray-300 dark:bg-[#001C40] dark:border-[#001C40] flex flex-wrap gap-2`}
+                        >
                             {url.category.map((tag, index) => (
-                                <div key={index} className="bg-gray-200 text-black px-2 py-1 rounded flex items-center gap-1">
+                                <div key={index} className="bg-gray-200 text-black px-2 py-1 rounded flex items-center gap-1 dark:bg-[#001733] dark:text-white">
                                     {tag}
                                     <button onClick={() => handleRemoveTag(index)} className="text-red-500">
                                         <RiCloseLine size={24} />
@@ -99,21 +104,21 @@ const AddUrl = () => {
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-2">
-                            <input type="text" value={newTag} placeholder="Add a category" onChange={(e) => { setNewTag(e.target.value) }} className="p-2 border border-gray-300 rounded-lg w-[35rem] dark:bg-[#001C40] dark:border-[#001C40]" />
+                        <div className="mt-2 flex flex-row items-center">
+                            <input type="text" value={newTag} placeholder="Add a category" onChange={(e) => { setNewTag(e.target.value) }} className={textBarStyle} />
                             <button
                                 type="button"
-                                className="ml-2 px-3 py-2 bg-gray-200 rounded-lg"
+                                className="ml-2 px-4 py-2 bg-gray-200 rounded-lg dark:bg-[#001C40]"
                                 onClick={handleAddTag}>
                                 <RiAddFill size={24} />
                             </button>
                         </div>
                     </div>
 
-                    <div className="mt-3 flex flex-col">
+                    <div className="w-full mt-5 flex flex-col">
                         <label htmlFor="status">Status: </label>
                         <select
-                            className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                            className={textBarStyle}
                             name="status"
                             id="status"
                             value={url.status}
@@ -125,39 +130,41 @@ const AddUrl = () => {
                             <option value="whitelisted">Whitelist</option>
                         </select>
                     </div>
-                    <div className="mt-3 flex flex-col">
-                        <label htmlFor="isPhishing">Is this a url phishing url?: </label>
-                        <select
-                            className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                            name="isPhishing"
-                            id="isPhishing"
-                            value={url.isPhishing}
-                            onChange={(e) =>
-                                setUrl({ ...url, [e.target.name]: e.target.value })
-                            }
-                        >
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-                    <div className="mt-3 flex flex-col">
-                        <label htmlFor="isVerified">Was url verified by human?: </label>
-                        <select
-                            className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                            name="isVerified"
-                            id="isVerified"
-                            value={url.isVerified}
-                            onChange={(e) =>
-                                setUrl({ ...url, [e.target.name]: e.target.value })
-                            }
-                        >
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
+                    <div className=" mt-5 flex flex-row gap-5 w-full">
+                        <div className="w-full flex flex-col">
+                            <label htmlFor="isPhishing">Is this a url phishing url?: </label>
+                            <select
+                                className={textBarStyle}
+                                name="isPhishing"
+                                id="isPhishing"
+                                value={url.isPhishing}
+                                onChange={(e) =>
+                                    setUrl({ ...url, [e.target.name]: e.target.value })
+                                }
+                            >
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div className="w-full flex flex-col">
+                            <label htmlFor="isVerified">Was url verified by human?: </label>
+                            <select
+                                className={textBarStyle}
+                                name="isVerified"
+                                id="isVerified"
+                                value={url.isVerified}
+                                onChange={(e) =>
+                                    setUrl({ ...url, [e.target.name]: e.target.value })
+                                }
+                            >
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
                     </div>
                     <button
                         type="submit"
-                        className=" mt-9 mb-2 rounded-lg text-white font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 "
+                        className=" mt-9 mb-2 rounded-lg text-white font-medium w-full bg-[#0364BD] hover:bg-[#003A70] transition p-2 "
                     >
                         <span className="flex flex-row justify-center items-center">
                             <RiAddFill className="w-6 h-6 mr-1" /> Submit

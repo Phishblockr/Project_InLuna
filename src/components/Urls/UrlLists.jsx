@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { RiAddFill, RiDeleteBinLine } from "react-icons/ri";
+import { RiAddFill, RiDeleteBinLine, RiShareBoxLine, RiEyeLine   } from "react-icons/ri";
 import {
     MdOutlineArrowBackIos,
     MdOutlineArrowForwardIos,
@@ -13,10 +13,13 @@ import LoadingOverlay from "../../utils/LoadingOverlay";
 import CsvUploadUrlModal from "../../utils/csvUploadUrlModal";
 import AuthenticateModal from "../../utils/AuthenticateModal";
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
+import { useNavigate } from "react-router-dom";
+
 
 export default function UrlLists() {
 
     const apiUrl = import.meta.env.VITE_API_URL
+    const navigate = useNavigate();
 
     const [dataLoading, setDataLoading] = useState(true);
     const [showLoading, setShowLoading] = useState(false);
@@ -133,7 +136,7 @@ export default function UrlLists() {
         if (result) {
             if (operationType === "delete") {
                 handleRemUrl(selectedUrl);
-            } else if (operationType === "add"){
+            } else if (operationType === "add") {
                 executeCsvUpload()
             }
             setIsPasswordModalOpen(false);
@@ -254,10 +257,11 @@ export default function UrlLists() {
                                         key={url._id}
                                         className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
                                     >
-                                        <td className="font-medium text-left text-gray-500 pl-2 py-4 dark:text-[#F4F4F4]">
+                                        <td className="font-medium text-left text-gray-500 p-5 dark:text-[#F4F4F4] max-w-[400px] truncate">
                                             <Link
                                                 to={`/urllists/urldetails/${url._id}`}
                                                 title="Click to view details"
+                                                className="block overflow-hidden whitespace-nowrap overflow-ellipsis"
                                             >
                                                 {formatUrl(url.url)}
                                             </Link>
@@ -276,12 +280,21 @@ export default function UrlLists() {
                                                 {url.status}
                                             </span>
                                         </td>
-                                        <td className="text-left ">
+                                        <td className=" mt-5 flex flex-row gap-2 items-center text-left ">
                                             <button
                                                 onClick={() => handlePasswordModalOpen(url._id, "delete")}
+                                                title = "Delete Url"
                                             >
-                                                <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
+                                                <RiDeleteBinLine size={24} className="text-red-500 hover:text-red-700 transition-colors" />
                                             </button>
+                                            <button
+                                            title = "Visit Url"
+                                            onClick={() => {window.open(url.url, '_blank');}}
+                                            ><RiShareBoxLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
+                                            <button
+                                            onClick={() => navigate(`/urllists/urldetails/${url._id}`)}
+                                            title = "View Url Details"
+                                            ><RiEyeLine size={24} className="hover:text-[#0364BD] transition-colors"/></button>
                                         </td>
                                     </tr>
                                 ))}

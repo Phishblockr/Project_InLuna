@@ -9,6 +9,7 @@ import AuthenticateModal from '../../utils/AuthenticateModal';
 import { handleVerifyPwd } from '../../utils/handleVerifyPwd';
 
 const AddUser = () => {
+    const textBarStyle = "w-full p-2 rounded-t-lg border-b-2 border-dashed bg-gray-100 border-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
     const [image, setImage] = useState(null);
     const hiddenFileInput = useRef(null);
 
@@ -22,8 +23,10 @@ const AddUser = () => {
         phone: '',
         role: '',
         department: '',
-        status: 'Inactive', // Added a default status
-        img: ''
+        status: 'active', // Added a default status
+        img: '',
+        gender: 'other',
+        userType: 'user'
     });
 
     const dispatch = useDispatch();
@@ -86,12 +89,12 @@ const AddUser = () => {
     };
 
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <AuthenticateModal isOpen={isPasswordModalOpen}
                 onClose={() => setIsPasswordModalOpen(false)}
                 onConfirm={handlePasswordConfirm}
             />
-            <div className='z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none'>
+            <div className='z-1 w-full font-medium bg-white rounded-xl shadow-xl p-3 h-full dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none'>
                 <div>
                     <h1 className="pt-3 pl-5 text-2xl font-medium">Add User</h1>
                 </div>
@@ -125,82 +128,126 @@ const AddUser = () => {
               <RiUploadCloud2Line className="w-6 h-6" /> Upload Image
             </span>
           </button> */}
-                    <div className="mt-3 flex flex-col w-full items-center">
-                        <div className="flex flex-col">
-                            <label htmlFor="name">Name: </label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                                onChange={handleChange}
-                                value={formData.name}
-                            />
+                    <div className="mt-5 flex flex-col w-full items-center px-3">
+                        <div className="flex flex-row gap-5 w-full">
+                            <div className="flex flex-col w-full">
+                                <label htmlFor="name">Name: </label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    className={textBarStyle}
+                                    onChange={handleChange}
+                                    value={formData.name}
+                                />
+                            </div>
+
+                            <div className="flex flex-col w-full">
+                                <label htmlFor="gender">Gender: </label>
+                                <select
+                                    className={textBarStyle}
+                                    name="gender"
+                                    id="gender"
+                                    onChange={handleChange}
+                                    value={formData.gender}
+                                >
+                                    <option value="other">Other</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+
+                                </select>
+                            </div>
                         </div>
 
-                        <div className="mt-3 flex flex-col">
-                            <label htmlFor="email">Email: </label>
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                                onChange={handleChange}
-                                value={formData.email}
-                            />
+                        <div className="mt-5 flex flex-row gap-5 w-full">
+
+                            <div className="flex flex-col w-full">
+                                <label htmlFor="email">Email: </label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    className={textBarStyle}
+                                    onChange={handleChange}
+                                    value={formData.email}
+                                />
+                            </div>
+
+
+                            <div className="flex flex-col w-full">
+                                <label htmlFor="phone">Phone: </label>
+                                <input
+                                    type="text"
+                                    id="phone"
+                                    name="phone"
+                                    className={textBarStyle}
+                                    onChange={handleChange}
+                                    value={formData.phone}
+                                />
+                            </div>
+
                         </div>
 
-                        <div className="mt-3 flex flex-col">
-                            <label htmlFor="phone">Phone: </label>
-                            <input
-                                type="text"
-                                id="phone"
-                                name="phone"
-                                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                                onChange={handleChange}
-                                value={formData.phone}
-                            />
+                        <div className="mt-5 flex flex-row gap-5 w-full">
+
+                            <div className="flex flex-col w-full">
+                                <label htmlFor="role">Role: </label>
+                                <input
+                                    type="text"
+                                    id="role"
+                                    name="role"
+                                    className={textBarStyle}
+                                    onChange={handleChange}
+                                    value={formData.role}
+                                />
+                            </div>
+
+                            <div className="flex flex-col w-full">
+                                <label htmlFor="department">Department: </label>
+                                <input
+                                    type="text"
+                                    id="department"
+                                    name="department"
+                                    className={textBarStyle}
+                                    onChange={handleChange}
+                                    value={formData.department}
+                                />
+                            </div>
+
                         </div>
 
-                        <div className="mt-3 flex flex-col">
-                            <label htmlFor="role">Role: </label>
-                            <input
-                                type="text"
-                                id="role"
-                                name="role"
-                                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                                onChange={handleChange}
-                                value={formData.role}
-                            />
+                        <div className=" mt-5 flex flex-row gap-5 w-full">
+
+                            <div className=" flex flex-col w-full">
+                                <label htmlFor="status">Status: </label>
+                                <select
+                                    className={textBarStyle}
+                                    name="status"
+                                    id="status"
+                                    onChange={handleChange}
+                                    value={formData.status}
+                                >
+                                    <option value="inactive">Inactive</option>
+                                    <option value="active">Active</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col w-full">
+                                <label htmlFor="userType">User Type: </label>
+                                <select
+                                    className={textBarStyle}
+                                    name="userType"
+                                    id="userType"
+                                    onChange={handleChange}
+                                    value={formData.userType}
+                                >
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div className="mt-3 flex flex-col">
-                            <label htmlFor="department">Department: </label>
-                            <input
-                                type="text"
-                                id="department"
-                                name="department"
-                                className=" w-[40rem] p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                                onChange={handleChange}
-                                value={formData.department}
-                            />
-                        </div>
-
-                        <div className="mt-3 flex flex-col">
-                            <label htmlFor="status">Status: </label>
-                            <select
-                                className="w-[40rem] py-2 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                                name="status"
-                                id="status"
-                                onChange={handleChange}
-                                value={formData.status}
-                            >
-                                <option value="Inactive">Inactive</option>
-                                <option value="Active">Active</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" className=" mt-9 mb-2 rounded-lg text-white font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+                        <button type="submit" className=" mt-9 mb-2 rounded-lg text-white font-medium w-full bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
                             <span className="flex flex-row justify-center items-center">
                                 <RiAddFill className="w-6 h-6 mr-1" /> Submit
                             </span>

@@ -313,7 +313,7 @@ const UserDetails = () => {
                     <div className="flex flex-col gap-5">
                         <button
                             onClick={() => handlePasswordModalOpen(user, "updateStatus")}
-                            className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-white font-medium rounded-lg mr-2"
+                            className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-white font-medium rounded-lg mr-2 transition-colors"
                         >
                             <span className="flex flex-row items-center gap-x-2 justify-center">
                                 <RiLoopLeftLine className="w-6 h-6" /> Update Status
@@ -321,7 +321,7 @@ const UserDetails = () => {
                         </button>
                         <button
                             onClick={() => handlePasswordModalOpen(user, "delete")}
-                            className="bg-red-500 hover:bg-red-700 p-2 w-[200px] h-[50px] text-white font-medium rounded-lg"
+                            className="bg-gray-200 hover:bg-gray-300 text-red-500 p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
                         >
                             <span className="flex flex-row items-center gap-x-2  justify-center">
                                 <RiDeleteBinLine className="w-6 h-6" /> Remove User

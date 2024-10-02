@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { RiDeleteBinLine, RiAddFill } from "react-icons/ri";
+import { RiAddFill, RiDeleteBinLine, RiShareBoxLine, RiEyeLine } from "react-icons/ri";
 import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,9 +12,12 @@ import FileUploadModal from "../../utils/FileUploadModal";
 import AuthenticateModal from "../../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import debounce from "debounce";
+import { useNavigate } from "react-router-dom";
 
 export default function Users() {
     const apiUrl = import.meta.env.VITE_API_URL
+    const navigate = useNavigate();
+
     const usersData = useSelector((state) => state.users.users);
     const totalPages = useSelector((state) => state.users.totalPages);
     const perPageRec = useSelector((state) => state.perPageRec);
@@ -267,10 +270,14 @@ export default function Users() {
                                                 {user.status}
                                             </span>
                                         </td>
-                                        <td className="text-left ">
+                                        <td className="flex flex-row items-center gap-2 mt-5 text-left">
                                             <button onClick={() => handlePasswordModalOpen(user._id, "delete")}>
-                                                <RiDeleteBinLine className="w-6 h-6 text-red-500 cursor-pointer" />
+                                                <RiDeleteBinLine className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
                                             </button>
+                                            <button
+                                            onClick={() => navigate(`/users/userDetails/${user._id}`)}
+                                            title="Click to view details"
+                                            ><RiEyeLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
                                         </td>
                                     </tr>
                                 ))}
