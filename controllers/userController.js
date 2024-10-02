@@ -38,9 +38,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   } : {};
 
   const statusFilter = status === "all" ? {} : {
-    $or: [
-      { status: { $regex: status, $options: "i" } }
-    ]
+    status: { $regex: `^${status}$`, $options: "i" }
   };
 
   const queryFilter = { orgId: id, ...searchFilter, ...statusFilter };
@@ -58,24 +56,34 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 export const createUser = asyncHandler(async (req, res) => {
   try {
     const orgId = req.user.orgId;
-    const { name, email, phone, role, department, img } = req.body;
+    const { name, email, phone, role, department, gender, userType, img } = req.body;
+
+    let UserTypeCode
+
+    if (userType === "admin") {
+      UserTypeCode = process.env.ADMIN;
+    } else {
+      UserTypeCode = process.env.USER;
+    }
 
     const username = generateUsername(email, phone);
     const newUser = new User({
       username,
       name,
+      gender,
       email,
       phone,
       role,
       department,
       img,
       orgId,
+      userType: UserTypeCode
     });
     const addedUser = await newUser.save();
     const io = req.app.get("socketio");
     io.emit("userCreated", addedUser);
 
-    res.status(201).json(newUser);
+    res.status(201).json(addedUser);
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ error: error.message });
@@ -163,12 +171,12 @@ export const updateUser = asyncHandler(async (req, res) => {
 });
 
 // Update User Status
-export const updateUserStatus = asyncHandler(async(req, res) => {
+export const updateUserStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const user = await User.findById(id).select("-password");
-  if(!user){
-    return res.status(404).json({error: "User not found"});
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
   }
 
   user.status = user.status === "active" ? "inactive" : "active";
@@ -261,12 +269,12 @@ export const deleteUser = asyncHandler(async (req, res) => {
     if (userId === adminId) {
       res.status(403).json({ error: "You cannot delete your own account" })
     } else {
-    await User.findByIdAndDelete(id);
-    const io = req.app.get('socketio');
-    io.emit('userDeleted', user._id);
+      await User.findByIdAndDelete(id);
+      const io = req.app.get('socketio');
+      io.emit('userDeleted', user._id);
 
-    res.status(200).json({ message: `User ${user.email} removed successfully` });
-  }
+      res.status(200).json({ message: `User ${user.email} removed successfully` });
+    }
   } else {
     res.status(404).json({ error: 'User not found' });
   }

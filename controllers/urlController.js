@@ -106,7 +106,7 @@ export const unshortenUrl = async (req, res) => {
             return res.json({ request_url: shortUrl, resolved_url: shortUrl, success: false });
         }
     } catch (error) {
-        console.log("Error expanding URL: ", error);
+        console.error("Error expanding URL: ", error);
         return res.status(500).json({ error: "Failed to expand URL" });
     }
 };
@@ -127,9 +127,7 @@ export const getUrls = asyncHandler(async (req, res) => {
     } : {};
 
     const statusFilter = status === "all" ? {} : {
-        $or: [
-            { status: { $regex: status, $options: "i" } }
-        ]
+        status: { $regex: `^${status}$`, $options: "i" }
     };
 
     const queryFilter = { orgId: orgId, ...searchFilter, ...statusFilter };
@@ -147,13 +145,14 @@ export const addUrl = asyncHandler(async (req, res) => {
     try {
         const orgId = req.user.orgId;
         const { url, isVerified, isPhishing, category, status } = req.body;
+        const categoryArray = Array.isArray(category) ? category : [category];
         const existingUrls = await Url.findOne({ url: url, orgId: orgId });
         if (existingUrls) {
             res.status(400).json({ error: "Url already exists" })
         } else {
             const newUrl = new Url({
                 url,
-                category,
+                category: categoryArray,
                 isVerified,
                 isPhishing,
                 status,
@@ -195,7 +194,7 @@ export const updateUrl = asyncHandler(async (req, res) => {
         }
     } catch (error) {
         res.status(400).send(error.message);
-        console.log(error.message)
+        console.error(error.message)
     }
 });
 
