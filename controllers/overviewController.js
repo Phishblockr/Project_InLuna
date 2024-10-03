@@ -36,13 +36,13 @@ export const fetchOrgMetrics = async (req, res) => {
 
         const blacklistedUrlsCount = await Url.countDocuments({
             orgId: orgId,
-            isBlacklisted: true,
+            status: "blacklisted",
             createdAt: { $gte: startOfMonth, $lt: endOfMonth }
         });
 
         const previousBlacklistedUrlsCount = await Url.countDocuments({
             orgId: orgId,
-            isBlacklisted: true,
+            status: "blacklisted",
             createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
         });
 
@@ -60,7 +60,7 @@ export const fetchOrgMetrics = async (req, res) => {
                     totalOrgVisits: { $sum: "$visitedBy.totalVisits" },
                     totalOrgBlacklistedVisits: {
                         $sum: {
-                            $cond: [{ $eq: ["$isBlacklisted", true] }, "$visitedBy.totalVisits", 0]
+                            $cond: [{ $eq: ["$status", "blacklisted"] }, "$visitedBy.totalVisits", 0]
                         }
                     },
                     totalOrgPhishingVisits: {
@@ -86,7 +86,7 @@ export const fetchOrgMetrics = async (req, res) => {
                     totalOrgVisits: { $sum: "$visitedBy.totalVisits" },
                     totalOrgBlacklistedVisits: {
                         $sum: {
-                            $cond: [{ $eq: ["$isBlacklisted", true] }, "$visitedBy.totalVisits", 0]
+                            $cond: [{ $eq: ["$status", "blacklisted"] }, "$visitedBy.totalVisits", 0]
                         }
                     },
                     totalOrgPhishingVisits: {
@@ -155,7 +155,7 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
         ]);
 
         const blacklistedClicksCount = await Url.aggregate([
-            { $match: { "visitedBy.userId": userObjectId, isBlacklisted: true, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $match: { "visitedBy.userId": userObjectId, status: "blacklisted", createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
             { $unwind: "$visitedBy" },
             { $match: { "visitedBy.userId": userObjectId } },
             { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
@@ -170,14 +170,14 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
 
         const approvedWhitelistReq = await WhitelistReq.find({
             userId: userObjectId,
-            status: "approved",
+            status: { $in: ["approved", "pending"] },
             createdAt: { $gte: startOfMonth, $lt: endOfMonth }
         }).select("_id");
 
-        const whitelistReqsId = approvedWhitelistReq.map(req => req._id);
+        const whitelistReqsIds = approvedWhitelistReq.map(req => req._id);
 
         const visitsToWhitelistUrls = await Url.aggregate([
-            { $match: { whitelistReqId: { $in: whitelistReqsId }, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $match: { whitelistReqIds: { $in: whitelistReqsIds }, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
             { $unwind: "$visitedBy" },
             { $match: { "visitedBy.userId": userObjectId } },
             { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
@@ -193,7 +193,7 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
         ]);
 
         const previousBlacklistedClicksCount = await Url.aggregate([
-            { $match: { "visitedBy.userId": userObjectId, isBlacklisted: true, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
+            { $match: { "visitedBy.userId": userObjectId, status: "blacklisted", createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
             { $unwind: "$visitedBy" },
             { $match: { "visitedBy.userId": userObjectId } },
             { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
@@ -208,14 +208,14 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
 
         const previousApprovedWhitelistReq = await WhitelistReq.find({
             userId: userObjectId,
-            status: "approved",
+            status: { $in: ["pending", "approved"] },
             createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
         }).select("_id");
 
-        const previousWhitelistReqsId = previousApprovedWhitelistReq.map(req => req._id);
+        const previousWhitelistReqsIds = previousApprovedWhitelistReq.map(req => req._id);
 
         const previousVisitsToWhitelistUrls = await Url.aggregate([
-            { $match: { whitelistReqId: { $in: previousWhitelistReqsId }, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
+            { $match: { whitelistReqIds: { $in: previousWhitelistReqsIds }, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
             { $unwind: "$visitedBy" },
             { $match: { "visitedBy.userId": userObjectId } },
             { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
