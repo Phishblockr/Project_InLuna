@@ -1,14 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../utils/AuthProvider';
-import { toast } from "sonner";
-import { jwtDecode } from 'jwt-decode';
 
 const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [orgId, setOrgId] = useState("");
-    const navigate = useNavigate();
+    const [orgId, setOrgId] = useState(localStorage.getItem("orgId") || "");
+    const [saveOrgId, setSaveOrgId] = useState(localStorage.getItem("saveOrgId") === "true" || false);
     const { login } = useAuth();
 
     const handleSubmit = async (event) => {
@@ -18,34 +15,7 @@ const Login = () => {
             username: username,
             password: password
         };
-
-        try {
-            const apiUrl = import.meta.env.VITE_API_URL
-            const response = await fetch(`${apiUrl}/auth/loginDas`, {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                },
-                body: JSON.stringify(loginData),
-            });
-            if (!response.ok) {
-                throw new Error("Login failed. Please check your credentials!");
-            }
-            const data = await response.json();
-            const decodedToken = jwtDecode(data.token);
-            const userType = import.meta.env.VITE_USERTYPE
-            if (decodedToken.userType == userType) {
-                data.username = username;
-                data.orgId = orgId;
-                login(data);
-                navigate('/');
-                toast.success("Login successful")
-            } else {
-                toast.error("Unauthorized");
-            }
-        } catch (error) {
-            toast.error(error);
-        }
+        login(loginData, saveOrgId)
     };
 
     return (
@@ -95,6 +65,12 @@ const Login = () => {
                                 required
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
                             />
+                        </div>
+                        <div className="mb-6">
+                            <input
+                            onChange={(e) => setSaveOrgId(e.target.checked)}
+                            type="checkbox" id="saveOrgId" name="saveOrgId" checked={saveOrgId} />
+                            <label htmlFor="saveOrgId"> Save organization Id</label>
                         </div>
                         <button
                             type="submit"

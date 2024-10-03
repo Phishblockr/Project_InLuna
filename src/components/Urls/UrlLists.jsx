@@ -61,6 +61,12 @@ export default function UrlLists() {
             return data;
         }
     };
+
+    const handleStatus = (value) => {
+        setStatus(value)
+        dispatch(getUrls({ page: currentPage, limit: perPageRec, search: query, status:value }));
+    }
+
     // End of Filter Logic
 
     // Start of Pagination Logic
@@ -205,7 +211,7 @@ export default function UrlLists() {
                             name="filters"
                             id="filters"
                             className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                            onChange={(e) => setDataFilter(e.target.value)}
+                            onChange={(e) => handleStatus(e.target.value)}
                         >
                             <option value="all">Status</option>
                             <option value="whitelisted">Whitelisted</option>

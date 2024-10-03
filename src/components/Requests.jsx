@@ -275,7 +275,7 @@ export default function Requests() {
                                 </button>
                                 <button
                                     onClick={() => handleRem(request._id)}
-                                    className="bg-red-500 hover:bg-red-700 p-3 text-white font-medium rounded-lg"
+                                    className="bg-gray-200 hover:bg-gray-300 text-red-500 p-3 font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
                                 >
                                     <span className="flex flex-row items-center gap-x-1">
                                         <RiDeleteBinLine className="w-6 h-6" /> Remove Request
@@ -297,7 +297,7 @@ export default function Requests() {
                                             {truncateUrl(request.url)}
                                         </a>
                                     </p>
-                                    <p className="mt-2 bg-gray-100 rounded-lg p-2">
+                                    <p className="mt-2 bg-gray-100 rounded-lg p-2 dark:bg-[#001733]">
                                         <span className="font-medium">Reason: </span>{" "}
                                         {request.reason}
                                     </p>
