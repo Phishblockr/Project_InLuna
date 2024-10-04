@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/x-charts": "^7.18.0",
     "@reduxjs/toolkit": "^2.2.4",
     "axios": "^1.7.5",
     "bootstrap-icons": "^1.11.3",
