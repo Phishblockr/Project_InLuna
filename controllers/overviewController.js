@@ -9,7 +9,7 @@ const calculatePercentage = (current, previous) => {
 }
 
 export const fetchOrgMetrics = async (req, res) => {
-    const { month, year } = req.query;
+    const { month, year, timeFrame } = req.query;
 
     const orgId = req.user.orgId;
 
@@ -98,6 +98,45 @@ export const fetchOrgMetrics = async (req, res) => {
             }
         ]);
 
+        // Bar Graph (group by day or hour)
+        let timeGroup;
+        if (timeFrame === "weekly") {
+            timeGroup = {
+                $dateToString: { format: "%d/%m/%Y", date: "$createdAt" }
+            };
+        } else if (timeFrame === "daily") {
+            timeGroup = {
+                $hour: "$createdAt"
+            };
+        }
+
+        const visitsByTimeFrame = await Url.aggregate([
+            {
+                $match: {
+                    orgId: orgId,
+                    createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+                }
+            },
+            { $unwind: "$visitedBy" },
+            {
+                $group: {
+                    _id: timeGroup,
+                    totalVisits: { $sum: "$visitedBy.totalVisits" },
+                    blacklistedVisits: {
+                        $sum: {
+                            $cond: [{ $eq: ["$status", "blacklisted"] }, "$visitedBy.totalVisits", 0]
+                        }
+                    },
+                    phishingVisits: {
+                        $sum: {
+                            $cond: [{ $eq: ["$isPhishing", true] }, "$visitedBy.totalVisits", 0]
+                        }
+                    }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
         let response = {
             totalApprovedWhitelistRequests: approvedWhitelistCount,
             totalBlacklistedUrls: blacklistedUrlsCount,
@@ -123,7 +162,13 @@ export const fetchOrgMetrics = async (req, res) => {
             percentageChangeBlacklistedUrls: calculatePercentage(
                 blacklistedUrlsCount,
                 previousBlacklistedUrlsCount
-            )
+            ),
+            barGraphData: {
+                labels: visitsByTimeFrame.map(item => item._id),
+                totalVisits: visitsByTimeFrame.map(item => item.totalVisits),
+                blacklistedVisits: visitsByTimeFrame.map(item => item.blacklistedVisits),
+                phishingVisits: visitsByTimeFrame.map(item => item.phishingVisits)
+            }
 
         };
         res.status(200).send(response);
