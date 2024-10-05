@@ -7,31 +7,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../static/CustomDatePicker.css';
 import LoadingOverlay from "../utils/LoadingOverlay";
-import { BarChart } from '@mui/x-charts/BarChart';
-import { format, getISOWeek, endOfMonth, startOfMonth, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval } from 'date-fns';
-
-const OverviewCard = ({ count, title, logo, lastMonth }) => (
-  <div className="shadow border-2 border-gray-100 flex px-4 py-6 items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-0">
-    <div className='w-full flex flex-col font-medium'>
-      <div className='flex flex-row justify-between'>
-        <h4>{title}</h4>
-        <i className={`${logo}`}></i>
-      </div>
-      <h4 className='mt-2 text-2xl font-bold'>{count}</h4>
-      <div>
-        <span className='text-[12px] text-gray-500'>{lastMonth}% compared to last month</span>
-      </div>
-    </div>
-  </div>
-);
-
-const OverviewCards = ({ points }) => (
-  <div className='grid grid-cols-4 gap-3'>
-    {points.map(({ id, title, count, logo, lastMonth }) => (
-      <OverviewCard key={id} count={count} title={title} logo={logo} lastMonth={lastMonth} />
-    ))}
-  </div>
-);
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 
 const Overview = () => {
   const dispatch = useDispatch();
@@ -39,7 +16,7 @@ const Overview = () => {
   const theme = useSelector((state) => state.theme);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [timeFrame, setTimeFrame] = useState('weekly');
+  const [timeFrame, setTimeFrame] = useState('monthly');
   const [dataLoading, setDataLoading] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [barGraphData, setBarGraphData] = useState({ labels: [], totalVisits: [], blacklistedVisits: [], phishingVisits: [] });
@@ -49,41 +26,28 @@ const Overview = () => {
     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
   });
 
-  const goToNextWeek = () => {
-    const endOfCurrentMonth = endOfMonth(selectedDate);
-    const nextWeekStart = addWeeks(currentWeek.start, 1);
-    const nextWeekEnd = addWeeks(currentWeek.end, 1);
+  const OverviewCard = ({ count, title, logo, lastMonth }) => (
+    <div className="shadow border-2 border-gray-100 flex px-4 py-6 items-center text-black rounded-lg dark:text-[#F4F4F4] dark:bg-[#001C40] dark:border-0">
+      <div className='w-full flex flex-col font-medium'>
+        <div className='flex flex-row justify-between'>
+          <h4>{title}</h4>
+          <i className={`${logo}`}></i>
+        </div>
+        <h4 className='mt-2 text-2xl font-bold'>{count}</h4>
+        <div>
+          <span className='text-[12px] text-gray-500'>{lastMonth}% compared to last month</span>
+        </div>
+      </div>
+    </div>
+  );
 
-    // Limit the next week within the current month
-    const nextStart = nextWeekStart > endOfCurrentMonth ? endOfCurrentMonth : nextWeekStart;
-    const nextEnd = nextWeekEnd > endOfCurrentMonth ? endOfCurrentMonth : nextWeekEnd;
-
-    // Update current week
-    setCurrentWeek({
-      start: nextStart,
-      end: nextEnd,
-    });
-  };
-
-  const goToPreviousWeek = () => {
-    const startOfCurrentMonth = startOfMonth(selectedDate);
-    const prevWeekStart = subWeeks(currentWeek.start, 1);
-    const prevWeekEnd = subWeeks(currentWeek.end, 1);
-
-    // Limit the previous week within the current month
-    const prevStart = prevWeekStart < startOfCurrentMonth ? startOfCurrentMonth : prevWeekStart;
-    const prevEnd = prevWeekEnd < startOfCurrentMonth ? startOfCurrentMonth : prevWeekEnd;
-
-    // Update current week
-    setCurrentWeek({
-      start: prevStart,
-      end: prevEnd,
-    });
-  };
-
-  const getFormattedWeekRange = () => {
-    return `${format(currentWeek.start, 'dd/MM/yyyy')} - ${format(currentWeek.end, 'dd/MM/yyyy')}`;
-  };
+  const OverviewCards = ({ points }) => (
+    <div className='grid grid-cols-4 gap-3'>
+      {points.map(({ id, title, count, logo, lastMonth }) => (
+        <OverviewCard key={id} count={count} title={title} logo={logo} lastMonth={lastMonth} />
+      ))}
+    </div>
+  );
 
   const generateAllDatesInMonth = (year, month) => {
     const date = new Date(year, month, 1);
@@ -95,32 +59,16 @@ const Overview = () => {
     return dates;
   };
 
-  const renderMonthContent = (month, shortMonth, longMonth, day) => {
-    const fullYear = new Date(day).getFullYear();
-    const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
-
-    return <span title={tooltipText}>{shortMonth}</span>;
-  };
-
   const handleDateChange = (date) => {
     setSelectedDate(date);
-
-    // Update the current week to the first week of the newly selected month
     const firstWeekStart = startOfWeek(startOfMonth(date), { weekStartsOn: 1 });
     const firstWeekEnd = endOfWeek(startOfMonth(date), { weekStartsOn: 1 });
     setCurrentWeek({ start: firstWeekStart, end: firstWeekEnd });
-
-    fetchMetrics(date, timeFrame); // Fetch data based on selected date and time frame
-  };
-
-
-  const handleTimeFrameChange = (e) => {
-    setTimeFrame(e.target.value);
-    fetchMetrics(selectedDate, e.target.value); // Fetch data when the time frame changes
+    fetchMetrics(date, timeFrame);
   };
 
   const handleSeriesChange = (e) => {
-    setSelectedSeries(e.target.value); // Update the selected series based on user input
+    setSelectedSeries(e.target.value);
   };
 
   const fetchMetrics = async (date, timeFrame) => {
@@ -129,7 +77,7 @@ const Overview = () => {
 
     setDataLoading(true);
     let loadingTimer = setTimeout(() => {
-      setShowLoading(true); // Only show loading overlay after delay
+      setShowLoading(true);
     }, 500);
 
     try {
@@ -144,11 +92,9 @@ const Overview = () => {
         }
       });
       const data = await response.json();
-      console.log(data)
-      // Generate all dates in the selected month
-      const allDatesInMonth = generateAllDatesInMonth(year, month - 1);
+      console.log(data);
 
-      // Merge fetched data with all dates in the month and filter by current week
+      const allDatesInMonth = generateAllDatesInMonth(year, month - 1);
       const mergedBarGraphData = allDatesInMonth.map(date => {
         const index = data.barGraphData.labels.indexOf(date);
         return {
@@ -157,11 +103,6 @@ const Overview = () => {
           blacklistedVisits: index !== -1 ? data.barGraphData.blacklistedVisits[index] : 0,
           phishingVisits: index !== -1 ? data.barGraphData.phishingVisits[index] : 0,
         };
-      }).filter((item) => {
-        const itemDate = new Date(item.label.split('/').reverse().join('-')); // Convert label to Date
-        // Ensure only dates within the current week and within the selected month are included
-        return isWithinInterval(itemDate, { start: currentWeek.start, end: currentWeek.end }) &&
-          itemDate.getMonth() === selectedDate.getMonth();
       });
 
       setBarGraphData({
@@ -194,16 +135,20 @@ const Overview = () => {
     fetchMetrics(selectedDate, timeFrame);
   }, [dispatch, selectedDate, timeFrame, currentWeek]);
 
-  const filteredSeries = {
-    totalVisits: { label: "Detection", data: barGraphData.totalVisits },
-    blacklistedVisits: { label: "Blacklisted Visits", data: barGraphData.blacklistedVisits },
-    phishingVisits: { label: "Phishing Visits", data: barGraphData.phishingVisits },
-    all: [
-      { label: "Detection", data: barGraphData.totalVisits },
-      { label: "Phishing Visits", data: barGraphData.phishingVisits },
-      { label: "Blacklisted Visits", data: barGraphData.blacklistedVisits }
-    ]
+  const chartStyles = theme === 'dark' ? {
+    textColor: '#FFFFFF',
+    gridColor: '#444444',
+  } : {
+    textColor: '#000000',
+    gridColor: '#E0E0E0',
   };
+
+  const chartData = barGraphData.labels.map((label, index) => ({
+    name: label,
+    detection: barGraphData.totalVisits[index],
+    phishing: barGraphData.phishingVisits[index],
+    blacklisted: barGraphData.blacklistedVisits[index]
+  }));
 
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
@@ -212,12 +157,11 @@ const Overview = () => {
         <div className="flex justify-between">
           <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 dark:text-white">
             <span>Showing overview for: </span>
             <DatePicker
               selected={selectedDate}
               onChange={handleDateChange}
-              renderMonthContent={renderMonthContent}
               showMonthYearPicker
               dateFormat="MM/yyyy"
               className="w-20 text-center dark:text-[#F4F4F4] dark:bg-[#001C40]"
@@ -227,20 +171,15 @@ const Overview = () => {
 
         <OverviewCards points={overviewPoints} />
 
-        <div className='w-full mt-10'>
-          <div className="flex justify-between items-center mt-4">
-            <button onClick={goToPreviousWeek} className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4]">
-              &larr; Previous Week
-            </button>
-            <span className="text-xl font-semibold dark:text-[#F4F4F4]">{getFormattedWeekRange()}</span>
-            <button onClick={goToNextWeek} className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4]">
-              Next Week &rarr;
-            </button>
-          </div>
-
+        <div className='w-full mt-10 dark:text-white'>
           <div className="mt-4">
             <label htmlFor="seriesSelect" className="mr-2">Show Data:</label>
-            <select id="seriesSelect" value={selectedSeries} onChange={handleSeriesChange} className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4]">
+            <select
+              id="seriesSelect"
+              value={selectedSeries}
+              onChange={handleSeriesChange}
+              className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4]"
+            >
               <option value="all">All</option>
               <option value="totalVisits">Detection</option>
               <option value="phishingVisits">Phishing Visits</option>
@@ -248,12 +187,42 @@ const Overview = () => {
             </select>
           </div>
 
-          <BarChart
-            xAxis={[{ scaleType: 'band', data: barGraphData.labels }]}
-            series={selectedSeries === 'all' ? filteredSeries.all : [filteredSeries[selectedSeries]]}
-            height={300}
-            sx={{ width: '100%' }}
-          />
+          <div className='mt-3 p-[20px] rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]'>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={chartData}
+                margin={{
+                  top: 20, right: 30, left: 20, bottom: 5,
+                }}
+              >
+                <CartesianGrid stroke={chartStyles.gridColor} />
+
+                <XAxis
+                  dataKey="name"
+                  stroke={chartStyles.textColor}
+                  tickFormatter={(tick) => tick.split('/')[0]} // Extracts and displays the day part of the date
+                />
+
+                <YAxis stroke={chartStyles.textColor} />
+                <Tooltip cursor={{ fill: chartStyles.gridColor }} />
+                <Legend verticalAlign="top" wrapperStyle={{ color: chartStyles.textColor }} />
+
+                {/* Conditionally render bars based on the selected series */}
+                {selectedSeries === 'all' || selectedSeries === 'totalVisits' ? (
+                  <Bar dataKey="detection" fill="#82ca9d" radius={[10, 10, 0, 0]}/>
+                ) : null}
+
+                {selectedSeries === 'all' || selectedSeries === 'phishingVisits' ? (
+                  <Bar dataKey="phishing" fill="#8884d8" radius={[10, 10, 0, 0]}/>
+                ) : null}
+
+                {selectedSeries === 'all' || selectedSeries === 'blacklistedVisits' ? (
+                  <Bar dataKey="blacklisted" fill="#ff4d4f" radius={[10, 10, 0, 0]}/>
+                ) : null}
+
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
