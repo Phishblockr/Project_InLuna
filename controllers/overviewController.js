@@ -100,14 +100,12 @@ export const fetchOrgMetrics = async (req, res) => {
 
         // Bar Graph (group by day or hour)
         let timeGroup;
-        if (timeFrame === "weekly") {
-            timeGroup = {
-                $dateToString: { format: "%d/%m/%Y", date: "$createdAt" }
-            };
+        if (timeFrame === "monthly") {
+            timeGroup = { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } }; // Full date (daily)
         } else if (timeFrame === "daily") {
-            timeGroup = {
-                $hour: "$createdAt"
-            };
+            timeGroup = { $hour: "$createdAt" }; // By hour (daily view)
+        } else if (timeFrame === "weekly") {
+            timeGroup = { $dateToString: { format: "%V/%Y", date: "$createdAt" } }; // Week number of the year
         }
 
         const visitsByTimeFrame = await Url.aggregate([
