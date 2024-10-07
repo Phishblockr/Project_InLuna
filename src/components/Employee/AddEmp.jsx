@@ -71,7 +71,7 @@ const AddEmp = () => {
                             />
                         </div>
                     </div>
-                    <button onClick={() => ref.current.click()} className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-white">
+                    <button onClick={() => ref.current.click()} className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-[#f4f4f4]">
                         <span className="flex flex-row gap-x-1">
                             <RiUploadCloud2Line className="w-6 h-6" /> Upload Image
                         </span>
@@ -125,7 +125,7 @@ const AddEmp = () => {
                             onChange={e => setUser({ ...user, [e.target.name]: e.target.value })}
                         />
                     </div>
-                    <button onClick={() => handleAddUser(user)} className=" mt-9 mb-2 rounded-lg text-white font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+                    <button onClick={() => handleAddUser(user)} className=" mt-9 mb-2 rounded-lg text-[#f4f4f4] font-medium w-[40rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
                         {" "}
                         <span className="flex flex-row justify-center items-center">
                             <RiAddFill className="w-6 h-6 mr-1" /> add employee

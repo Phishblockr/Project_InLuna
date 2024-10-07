@@ -60,7 +60,7 @@ const CsvUploadUrlModal = ({ isOpen, onClose, onFileSubmit }) => {
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white relative p-6 rounded-lg shadow-lg w-96 dark:bg-[#002451] dark:text-white">
+            <div className="bg-white relative p-6 rounded-lg shadow-lg w-96 dark:bg-[#002451] dark:text-[#f4f4f4]">
                 <button className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                     onClick={closeModal}>
                     <RiCloseLine size={24} />
@@ -144,7 +144,7 @@ const CsvUploadUrlModal = ({ isOpen, onClose, onFileSubmit }) => {
                 {/* Submit Button */}
                 <button
                     onClick={handleSubmit}
-                    className="mt-4 w-full bg-[#0364BD] hover:bg-[#003A70] transition-colors text-white py-2 rounded-lg"
+                    className="mt-4 w-full bg-[#0364BD] hover:bg-[#003A70] transition-colors text-[#f4f4f4] py-2 rounded-lg"
                 >
                     Submit
                 </button>

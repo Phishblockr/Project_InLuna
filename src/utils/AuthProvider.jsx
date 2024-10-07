@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
             const tokenExpired = isTokenExpired(user.token);
 
             if (tokenExpired) {
-                logout();
+                logout(false, "Session expired please login again", "error");
             } else {
                 setIsAuthenticated(true);
                 setTokenExpirationTimeout(user.token);
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
 
     const setTokenExpirationTimeout = (token) => {
         const timeoutId = setTimeout(() => {
-            logout();
+            logout(false, "Session expired please login again", "error");
         }, getRemainingTime(token));
 
         // Clean up timer if necessary (if component unmounts, etc.)
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
             const userType = import.meta.env.VITE_USERTYPE;
 
             if (decodedToken.userType === userType) {
-                
+
 
                 localStorage.setItem("user", JSON.stringify(data));
                 if (saveOrgId === true) {
@@ -105,15 +105,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = (setClearOrgId) => {
-        if(setClearOrgId === true){
+    const logout = (setClearOrgId, message, toastStatus) => {
+        if (setClearOrgId === true) {
             localStorage.removeItem("orgId");
             localStorage.setItem("saveOrgId", false)
         }
         localStorage.removeItem("user");
         setIsAuthenticated(false);
         navigate("/login");
-        toast.success("Logout successful")
+        if (toastStatus === "success") {
+            toast.success(message)
+        } else {
+            toast.error(message)
+        }
     };
 
     if (loading) {

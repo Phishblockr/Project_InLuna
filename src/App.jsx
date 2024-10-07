@@ -33,11 +33,12 @@ import Logout from "./components/Auth/Logout.jsx";
 const MainLayout = ({ children }) => {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
+  const isLogoutpage = location.pathname === "/logout";
 
   return (
     <>
-      {!isLoginPage && <Sidebar />}
-      {!isLoginPage && <Navbar />}
+      {!isLoginPage && !isLogoutpage  && <Sidebar />}
+      {!isLoginPage && !isLogoutpage && <Navbar />}
       {children}
     </>
   );

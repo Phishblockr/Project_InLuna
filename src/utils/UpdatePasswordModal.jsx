@@ -96,13 +96,13 @@ const UpdatePasswordModal = ({ isOpen, onClose }) => {
                 <div className="flex justify-between mt-6">
                     <button
                         onClick={handleUpdatePassword}
-                        className="bg-[#0364BD] hover:bg-[#003A70] text-white font-medium py-2 px-4 rounded-lg"
+                        className="bg-[#0364BD] hover:bg-[#003A70] text-[#f4f4f4] font-medium py-2 px-4 rounded-lg"
                     >
                         Update Password
                     </button>
                     <button
                         onClick={onClose}
-                        className="bg-gray-300 hover:bg-gray-400 text-black font-medium py-2 px-4 rounded-lg dark:bg-[#001C40] dark:text-white"
+                        className="bg-gray-300 hover:bg-gray-400 text-black font-medium py-2 px-4 rounded-lg dark:bg-[#001C40] dark:text-[#f4f4f4]"
                     >
                         Cancel
                     </button>

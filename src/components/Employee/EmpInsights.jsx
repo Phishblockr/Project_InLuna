@@ -157,7 +157,7 @@ const EmpInsights = () => {
                 <div className="text-right mt-5">
                     <button
                         onClick={() => handleRemEmplremoveEmployee(empData.id, empData.name)}
-                        className="bg-red-500 hover:bg-red-700 p-2 text-white font-medium rounded-lg"
+                        className="bg-red-500 hover:bg-red-700 p-2 text-[#f4f4f4] font-medium rounded-lg"
                     >
                         <span className="flex flex-row items-center gap-x-1">
                             <RiDeleteBinLine className="w-6 h-6" /> Remove User

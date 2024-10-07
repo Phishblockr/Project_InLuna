@@ -11,7 +11,7 @@ import { CgInsights } from "react-icons/cg";
 import { NavLink } from "react-router-dom";
 
 const iconStyle = "inline-block w-6 h-6 mr-3 -mt-2";
-const activeLinkStyle = "py-5 px-3 w-full rounded-lg shadow bg-[#0364BD] text-white transition";
+const activeLinkStyle = "py-5 px-3 w-full rounded-lg shadow bg-[#0364BD] text-[#f4f4f4] transition";
 const inactiveLinkStyle = "py-5 px-3 w-full rounded-lg hover:shadow hover:bg-gray-100 dark:hover:bg-[#00285A] transition";
 
 const links = [

@@ -11,12 +11,12 @@ const PieChart = ({ data, labels, theme }) => {
     noData: { text: 'Statistics not available' },
     legend: {
       labels: {
-        colors: theme === 'dark' ? ['#FFF', '#FFF', '#FFF', '#FFF'] : ['#000', '#000', '#000', '#000']
+        colors: theme === 'dark' ? ['#f4f4f4', '#f4f4f4', '#f4f4f4', '#f4f4f4'] : ['#000', '#000', '#000', '#000']
       }
     },
     dataLabels: {
       style: {
-        colors: theme === 'dark' ? ['#FFF', '#FFF', '#FFF', '#FFF'] : ['#FFF', '#FFF', '#FFF', '#FFF']
+        colors: theme === 'dark' ? ['#f4f4f4', '#f4f4f4', '#f4f4f4', '#f4f4f4'] : ['#f4f4f4', '#f4f4f4', '#f4f4f4', '#f4f4f4']
       }
     },
   };

@@ -124,7 +124,7 @@ const AdminSettings = () => {
                             />
                         </div>
                     </div>
-                    {/* <button className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-white">
+                    {/* <button className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-[#f4f4f4]">
             <span className="flex flex-row gap-x-1">
               <RiUploadCloud2Line className="w-6 h-6" /> Upload Image
             </span>
@@ -200,14 +200,14 @@ const AdminSettings = () => {
                         />
                     </div>
                     <div className="flex flex-row gap-x-2">
-                        <button className=" mt-9 mb-2 rounded-lg text-white font-medium w-[19rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 "
+                        <button className=" mt-9 mb-2 rounded-lg text-[#f4f4f4] font-medium w-[19rem] bg-[#0364BD] hover:bg-[#003A70] transition p-2 "
                             onClick={handleUpdate}
                         >
                             <span className="flex flex-row gap-x-2 items-center justify-center">
                                 <RiLoopLeftLine className="w-6 h-6" /> Update Details
                             </span>
                         </button>
-                        <button className=" mt-9 mb-2 rounded-lg text-black font-medium w-[19rem] bg-gray-300 hover:bg-gray-400 transition p-2 dark:bg-[#001C40] dark:text-white"
+                        <button className=" mt-9 mb-2 rounded-lg text-black font-medium w-[19rem] bg-gray-300 hover:bg-gray-400 transition p-2 dark:bg-[#001C40] dark:text-[#f4f4f4]"
                             onClick={openModal}
                         >
                             <span className="flex flex-row gap-x-2 items-center justify-center">

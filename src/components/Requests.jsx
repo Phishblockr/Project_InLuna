@@ -23,8 +23,6 @@ export default function Requests() {
     const totalPages = useSelector((state) => state.requests.totalPages);
     const dispatch = useDispatch();
 
-    console.log(requestData)
-
     const statusActive = "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
     const statusInactive = "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
@@ -46,7 +44,7 @@ export default function Requests() {
     const handleSearch = debounce((value) => {
         setQuery(value);
         dispatch(fetchReqs({ page: 1, limit: perPageRec, search: value, status }));
-    })
+    }, 300);
     // End of Search Logic
 
     // Start of Filter Logic
@@ -148,6 +146,8 @@ export default function Requests() {
         return url.length > maxLength ? `${url.substring(0, maxLength)}...` : url;
     };
 
+    console.log(totalPages)
+
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <div>
@@ -160,16 +160,16 @@ export default function Requests() {
                             type="text"
                             placeholder="Search Request..."
                             className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                            onChange={(e) => setQuery(e.target.value)}
+                            onChange={(e) => handleSearch(e.target.value)}
                         />
                         <select
                             name="filters"
                             id="filters"
                             className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                            onChange={(e) => setDataFilter(e.target.value)}
+                            onChange={(e) => handleStatus(e.target.value)}
                         >
                             <option value="all">Status</option>
-                            <option value="completed">Completed</option>
+                            <option value="approved">Approved</option>
                             <option value="pending">Pending</option>
                         </select>
                         <select
@@ -267,7 +267,7 @@ export default function Requests() {
                                     <div className="">
                                 <button
                                     onClick={() => handleApproveReq(request._id)}
-                                    className="bg-[#0364BD] hover:bg-[#003A70] p-3 text-white font-medium rounded-lg mr-2"
+                                    className="bg-[#0364BD] hover:bg-[#003A70] p-3 text-[#f4f4f4] font-medium rounded-lg mr-2"
                                 >
                                     <span className="flex flex-row items-center gap-x-1">
                                         <RiLoopLeftLine className="w-6 h-6" /> Update URL Status
@@ -311,7 +311,7 @@ export default function Requests() {
                 <nav className="flex gap-x-1 justify-between">
                     <div>
                         <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === 1}
                             onClick={prePage}
                         >
@@ -322,7 +322,7 @@ export default function Requests() {
                         {totalPages && totalPages > 0 ? (
                             [...Array(totalPages).keys()].map((n) => (
                                 <button
-                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-white dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
                                         }`}
                                     key={n + 1}
                                     onClick={() => changeCPage(n + 1)}
@@ -336,7 +336,7 @@ export default function Requests() {
                     </div>
                     <div>
                         <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === totalPages}
                             onClick={nextPage}
                         >

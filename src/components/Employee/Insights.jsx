@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPrevPage }) => (
     <nav className="flex gap-x-1 justify-between">
         <a
-            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                 }`}
             href="#"
             onClick={onPrevPage}
@@ -23,8 +23,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPrevP
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
                 <a
                     key={number}
-                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === number
-                            ? "bg-[#0364BD] text-white dark:bg-[#0364BD]"
+                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === number
+                            ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]"
                             : "bg-gray-200 dark:bg-[#001C40]"
                         }`}
                     href="#"
@@ -35,7 +35,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange, onNextPage, onPrevP
             ))}
         </div>
         <a
-            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
+            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
                 }`}
             href="#"
             onClick={onNextPage}
@@ -161,7 +161,7 @@ const Insights = () => {
                     </button>
                     <Link
                         to={"/insights/addemployee"}
-                        className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
+                        className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition"
                     >
                         <MdOutlineArrowForwardIos />
                         <span>Add Employee</span>

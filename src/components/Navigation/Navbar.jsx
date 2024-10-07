@@ -14,7 +14,7 @@ import { FaEthernet } from "react-icons/fa6";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 
 const profileBtnStyle =
-    "rounded-lg dark:text-white transition hover:bg-white dark:hover:bg-[#00285A]";
+    "rounded-lg dark:text-[#f4f4f4] transition hover:bg-white dark:hover:bg-[#00285A]";
 const dropdownTheme = "bg-[#f7f4f4] dark:bg-[#182A46]"
 const profileSettings = [
     {
@@ -137,7 +137,7 @@ const Navbar = () => {
                         placeholder="Search..."
                     />
                     <span className="relative md:absolute inset-y-0 right-0 flex items-center pl-2 pr-2 bg-[#0364BD] rounded-r-lg hover:bg-[#003A70] cursor-pointer transition">
-                        <button className="p-1 px-2 focus:outline-none text-white">
+                        <button className="p-1 px-2 focus:outline-none text-[#f4f4f4]">
                             <RiSearchLine />
                         </button>
                     </span>

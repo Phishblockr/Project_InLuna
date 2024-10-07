@@ -201,7 +201,7 @@ const Pagination = ({
 }) => (
     <nav className="flex gap-x-1 justify-between">
         <a
-            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                 }`}
             href="#"
             onClick={onPrevPage}
@@ -212,8 +212,8 @@ const Pagination = ({
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
                 <a
                     key={number}
-                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === number
-                            ? "bg-[#0364BD] text-white"
+                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === number
+                            ? "bg-[#0364BD] text-[#f4f4f4]"
                             : "bg-gray-200 dark:bg-[#001C40]"
                         }`}
                     href="#"
@@ -224,7 +224,7 @@ const Pagination = ({
             ))}
         </div>
         <a
-            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
+            className={`bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
                 }`}
             href="#"
             onClick={onNextPage}
@@ -371,7 +371,7 @@ const Logs = () => {
                     </select>
                     <div className="flex">
                         <Link to={"/insights/addemp"}>
-                            <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition">
+                            <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition">
                                 <p className="text-md font-medium">to CSV</p>
                                 <BsFileEarmarkArrowDown className="w-6 h-6" />
                             </button>

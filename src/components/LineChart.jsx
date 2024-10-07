@@ -12,21 +12,21 @@ const LineChart = ({ data, categories, theme }) => {
     xaxis: {
       categories,
       labels: {
-        style: { colors: theme === 'dark' ? ['#FFF', '#FFF', '#FFF', '#FFF'] : ['#000', '#000', '#000', '#000'] },
+        style: { colors: theme === 'dark' ? ['#f4f4f4', '#f4f4f4', '#f4f4f4', '#f4f4f4'] : ['#000', '#000', '#000', '#000'] },
       },
     },
     yaxis: {
       labels: {
-        style: { colors: theme === 'dark' ? ['#FFF'] : ['#000'] },
+        style: { colors: theme === 'dark' ? ['#f4f4f4'] : ['#000'] },
       },
     },
     title: {
       text: 'Link Statistics',
-      style: { color: theme === 'dark' ? '#FFF' : '#000' },
+      style: { color: theme === 'dark' ? '#f4f4f4' : '#000' },
     },
     legend: {
       labels: {
-        colors: theme === 'dark' ? ['#FFF'] : ['#000'],
+        colors: theme === 'dark' ? ['#f4f4f4'] : ['#000'],
       },
     },
   };

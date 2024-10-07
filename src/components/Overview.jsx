@@ -136,7 +136,7 @@ const Overview = () => {
   }, [dispatch, selectedDate, timeFrame, currentWeek]);
 
   const chartStyles = theme === 'dark' ? {
-    textColor: '#FFFFFF',
+    textColor: '#f4f4f4',
     gridColor: '#444444',
   } : {
     textColor: '#000000',
@@ -157,28 +157,28 @@ const Overview = () => {
         <div className="flex justify-between">
           <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
 
-          <div className="flex items-center gap-4 dark:text-white">
+          <div className="flex items-center gap-4 dark:text-[#f4f4f4]">
             <span>Showing overview for: </span>
             <DatePicker
               selected={selectedDate}
               onChange={handleDateChange}
               showMonthYearPicker
               dateFormat="MM/yyyy"
-              className="w-20 text-center dark:text-[#F4F4F4] dark:bg-[#001C40]"
+              className="w-20 text-center rounded-lg dark:text-[#F4F4F4] dark:bg-[#002451] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             />
           </div>
         </div>
 
         <OverviewCards points={overviewPoints} />
 
-        <div className='w-full mt-10 dark:text-white'>
+        <div className='w-full mt-10 dark:text-[#f4f4f4]'>
           <div className="mt-4">
             <label htmlFor="seriesSelect" className="mr-2">Show Data:</label>
             <select
               id="seriesSelect"
               value={selectedSeries}
               onChange={handleSeriesChange}
-              className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4]"
+              className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4] dark:border-[#001C40] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
             >
               <option value="all">All</option>
               <option value="totalVisits">Detection</option>

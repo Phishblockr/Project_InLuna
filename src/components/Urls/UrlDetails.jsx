@@ -118,7 +118,7 @@ const UrlDetails = () => {
                             } rounded-lg border-dashed border-2 border-gray-300 dark:bg-[#001C40] dark:border-[#001C40] flex flex-wrap gap-2`}
                         >
                             {editUrlData.category.map((tag, index) => (
-                                <div key={index} className="bg-gray-200 text-black px-2 py-1 rounded flex items-center gap-1 dark:bg-[#001733] dark:text-white">
+                                <div key={index} className="bg-gray-200 text-black px-2 py-1 rounded flex items-center gap-1 dark:bg-[#001733] dark:text-[#f4f4f4]">
                                     {tag}
                                     <button onClick={() => handleRemoveTag(index)} className="text-red-500">
                                         <RiCloseLine size={24} />
@@ -190,7 +190,7 @@ const UrlDetails = () => {
                         </button>
                         <button
                             type="submit"
-                            className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-white font-medium rounded-lg transition-colors"
+                            className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-[#f4f4f4] font-medium rounded-lg transition-colors"
                         >
                             <span className="flex flex-row gap-x-2 items-center justify-center">
                                 <RiLoopLeftLine className="w-6 h-6" /> Update URL

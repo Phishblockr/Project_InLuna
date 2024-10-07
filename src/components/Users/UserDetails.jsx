@@ -313,7 +313,7 @@ const UserDetails = () => {
                     <div className="flex flex-col gap-5">
                         <button
                             onClick={() => handlePasswordModalOpen(user, "updateStatus")}
-                            className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-white font-medium rounded-lg mr-2 transition-colors"
+                            className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-[#f4f4f4] font-medium rounded-lg mr-2 transition-colors"
                         >
                             <span className="flex flex-row items-center gap-x-2 justify-center">
                                 <RiLoopLeftLine className="w-6 h-6" /> Update Status

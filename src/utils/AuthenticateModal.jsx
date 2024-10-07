@@ -39,7 +39,7 @@ export default function AuthenticateModal({ isOpen, onClose, onConfirm }) {
                         >
                             Cancel
                         </button>
-                        <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg">
+                        <button type="submit" className="bg-blue-600 text-[#f4f4f4] p-2 rounded-lg">
                             Confirm
                         </button>
                     </div>

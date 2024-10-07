@@ -208,7 +208,7 @@ export default function Users() {
                             onClick={() => setIsModalOpen(true)}>Add users via CSV</button>
                         <Link
                             to={"/users/adduser"}
-                            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-white cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors"
+                            className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors"
                         >
                             <span>
                                 Add User
@@ -290,7 +290,7 @@ export default function Users() {
                 <nav className="flex gap-x-1 justify-between">
                     <div>
                         <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === 1}
                             onClick={prePage}
                         >
@@ -301,7 +301,7 @@ export default function Users() {
                         {totalPages && totalPages > 0 ? (
                             [...Array(totalPages).keys()].map((n) => (
                                 <button
-                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-white transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-white dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
                                         }`}
                                     key={n + 1}
                                     onClick={() => changeCPage(n + 1)}
@@ -315,7 +315,7 @@ export default function Users() {
                     </div>
                     <div>
                         <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-white flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={currentPage === totalPages}
                             onClick={nextPage}
                         >

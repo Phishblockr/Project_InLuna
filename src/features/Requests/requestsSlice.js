@@ -11,7 +11,6 @@ const initialState = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL;
-
 //fetch requests
 export const fetchReqs = createAsyncThunk(
     "whitelistReq/get",
@@ -40,7 +39,7 @@ export const fetchReqs = createAsyncThunk(
 //delete a request
 export const delReq = createAsyncThunk(
     "whitelistReq/del",
-    async ({reqId}, { rejectWithValue }) => {
+    async ({ reqId }, { rejectWithValue }) => {
         const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             const res = await fetch(`${apiUrl}/whitelistReq/delReq/${reqId}`, {
@@ -88,6 +87,22 @@ export const approveReq = createAsyncThunk(
     }
 );
 
+const fetchMoreRequestsFromNextPage = async (page, limit) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+    const res = await fetch(`${apiUrl}/whitelistReq/fetchReqs?page=${page}&limit=${limit}`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+    if (res.ok) {
+        const data = await res.json();
+        return data.requests;
+    }
+    return [];
+};
+
 // Redux slice
 const requestsSlice = createSlice({
     name: "requests",
@@ -131,6 +146,14 @@ const requestsSlice = createSlice({
             })
             .addCase(delReq.fulfilled, (state, action) => {
                 state.requests = state.requests.filter((req) => req._id !== action.payload);
+                state.totalReqs -= 1;
+                state.totalPages = Math.ceil(state.totalReqs / state.perPageRec);
+
+                if (state.requests.length < state.perPageRec && state.currentPage < state.totalPages) {
+                    fetchMoreRequestsFromNextPage(state.currentPage + 1, state.perPageRec).then(newRequests => {
+                        state.requests.push(...newRequests);
+                    });
+                }
             })
             .addCase(approveReq.fulfilled, (state, action) => {
                 const request = state.requests.find((req) => req._id === action.payload._id);

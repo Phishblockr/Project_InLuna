@@ -123,7 +123,7 @@ const AddUser = () => {
                             />
                         </div>
                     </div>
-                    {/* <button type="button" className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-white" onClick={handleClick}>
+                    {/* <button type="button" className="mt-2 bg-[#0364BD] hover:bg-[#003A70] transition p-2 rounded-lg text-[#f4f4f4]" onClick={handleClick}>
             <span className="flex flex-row gap-x-1">
               <RiUploadCloud2Line className="w-6 h-6" /> Upload Image
             </span>
@@ -247,7 +247,7 @@ const AddUser = () => {
                             </div>
                         </div>
 
-                        <button type="submit" className=" mt-9 mb-2 rounded-lg text-white font-medium w-full bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
+                        <button type="submit" className=" mt-9 mb-2 rounded-lg text-[#f4f4f4] font-medium w-full bg-[#0364BD] hover:bg-[#003A70] transition p-2 ">
                             <span className="flex flex-row justify-center items-center">
                                 <RiAddFill className="w-6 h-6 mr-1" /> Submit
                             </span>
