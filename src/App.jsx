@@ -29,6 +29,7 @@ import Login from "./components/Auth/Login.jsx";
 import Overview from "./components/Overview.jsx";
 import { useSelector } from "react-redux";
 import Logout from "./components/Auth/Logout.jsx";
+import NotFound from "./components/NotFound.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -90,6 +91,7 @@ function App() {
                       <Route path="/profileSettings" element={<AdminSettings />} />
                       <Route path="/settings" element={<Settings />} />
                     </Route>
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </MainLayout>
               </AuthProvider>
