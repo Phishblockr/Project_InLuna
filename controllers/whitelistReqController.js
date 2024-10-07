@@ -95,7 +95,23 @@ export const fetchReqs = asyncHandler(async (req, res) => {
             {$skip: skip},
             {$limit: limit}
         ]);
-        const totalReqs = await WhitelistReq.countDocuments({orgId, ...statusFilter, ...searchFilter});
+
+        const totalReqsAggregation = await WhitelistReq.aggregate([
+            {$match: {orgId, ...statusFilter}},
+            {
+                $lookup:{
+                    from: "users",
+                    localField:"userId",
+                    foreignField:"_id",
+                    as: "userDetails",
+                },
+            },
+            {$unwind: "$userDetails"},
+            {$match: searchFilter},
+            {$count: "totalCount"},
+        ]);
+
+        const totalReqs = totalReqsAggregation[0]?.totalCount || 0;
 
         res.json({
             data: whitelistReqs,
@@ -168,7 +184,7 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
         res.json({ message: "Whitelist request approved and URL updated", updatedWhitelistRequest: updatedWhitelistRequest[0] });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
-        console.log(error)
+        console.error(error)
     }
 });
 
