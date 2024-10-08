@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const NotFound = () => {
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col justify-center items-center relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-center items-center relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <div className="flex flex-col items-center text-center">
                 <div className="flex items-center justify-center text-6xl font-bold text-black dark:text-white">
                     <span className="text-[150px]">4</span>

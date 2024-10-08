@@ -66,7 +66,7 @@ const AddUrl = () => {
     };
 
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[calc(100svh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <AuthenticateModal isOpen={isPasswordModalOpen}
                 onClose={() => setIsPasswordModalOpen(false)}
                 onConfirm={handlePasswordConfirm}

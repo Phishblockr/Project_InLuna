@@ -213,8 +213,8 @@ const Pagination = ({
                 <a
                     key={number}
                     className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === number
-                            ? "bg-[#0364BD] text-[#f4f4f4]"
-                            : "bg-gray-200 dark:bg-[#001C40]"
+                        ? "bg-[#0364BD] text-[#f4f4f4]"
+                        : "bg-gray-200 dark:bg-[#001C40]"
                         }`}
                     href="#"
                     onClick={() => onPageChange(number)}
@@ -329,65 +329,67 @@ const Logs = () => {
     }, [npage, currPage])
 
     return (
-        <div className="z-1 overflow-x-hidden max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] p-4 gap-5">
+        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
             <LogDetailsModal
                 show={showModal}
                 onClose={() => setShowModal(false)}
                 logData={selectedLog}
             />
-            <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl w-full dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
-                <div>
-                    <h1 className="font-medium text-2xl">Logs</h1>
-                </div>
-                <div className="flex gap-3 justify-evenly items-center">
-                    <input
-                        placeholder="Search Logs"
-                        className="border-2 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                    />
-                    <select
-                        defaultValue="default"
-                        className=" bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg dark:bg-[#001733] dark:border-0"
-                    >
-                        <option value="default">Sort by</option>
-                    </select>
-                    <select
-                        defaultValue="default"
-                        className="bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg dark:bg-[#001733] dark:border-0"
-                    >
-                        <option value="default">Date Range Filter</option>
-                    </select>
-                    <select
-                        name="perPageRec"
-                        id="perPageRec"
-                        className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
-                        onChange={(e) => handleSetPerPageRec(e.target.value)}
-                        value={perPageRec}
-                    >
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                    <div className="flex">
-                        <Link to={"/insights/addemp"}>
-                            <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition">
-                                <p className="text-md font-medium">to CSV</p>
-                                <BsFileEarmarkArrowDown className="w-6 h-6" />
-                            </button>
-                        </Link>
+            <div>
+                <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl w-full dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+                    <div>
+                        <h1 className="font-medium text-2xl">Logs</h1>
+                    </div>
+                    <div className="flex gap-3 justify-evenly items-center">
+                        <input
+                            placeholder="Search Logs"
+                            className="border-2 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                        />
+                        <select
+                            defaultValue="default"
+                            className=" bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg dark:bg-[#001733] dark:border-0"
+                        >
+                            <option value="default">Sort by</option>
+                        </select>
+                        <select
+                            defaultValue="default"
+                            className="bg-white text-lg text-gray-400 focus:outline-none p-2 border-2 border-gray-300 rounded-lg dark:bg-[#001733] dark:border-0"
+                        >
+                            <option value="default">Date Range Filter</option>
+                        </select>
+                        <select
+                            name="perPageRec"
+                            id="perPageRec"
+                            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            onChange={(e) => handleSetPerPageRec(e.target.value)}
+                            value={perPageRec}
+                        >
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <div className="flex">
+                            <Link to={"/insights/addemp"}>
+                                <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition">
+                                    <p className="text-md font-medium">to CSV</p>
+                                    <BsFileEarmarkArrowDown className="w-6 h-6" />
+                                </button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className="flex flex-col gap-2">
-                {records.map((el) => (
-                    <Log
-                        blog={el}
-                        key={el.id}
-                        setBlog={() => openLogDetails(el)}
-                        showBlog={showModal}
-                    />
-                ))}
+                <div className="flex flex-col gap-2 mt-5">
+                    {records.map((el) => (
+                        <Log
+                            blog={el}
+                            key={el.id}
+                            setBlog={() => openLogDetails(el)}
+                            showBlog={showModal}
+                        />
+                    ))}
+                </div>
             </div>
             {records.length > 0 && (
                 <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
