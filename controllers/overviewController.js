@@ -1,5 +1,6 @@
 import Url from "../models/urlModel.js";
 import WhitelistReq from "../models/whitelistReqModel.js";
+import User from "../models/userModel.js";
 import asyncHandler from '../middlewares/asyncHandler.js';
 import mongoose from 'mongoose';
 
@@ -135,6 +136,43 @@ export const fetchOrgMetrics = async (req, res) => {
             { $sort: { _id: 1 } }
         ]);
 
+        // For Department Level Scatter Plot
+        const departments = await User.distinct("department", {orgId: orgId});
+
+        const visitDataByDep = await Url.aggregate([
+            {$match: {orgId: orgId, createdAt: {$gte: startOfMonth, $lt: endOfMonth}}},
+            {$unwind: "$visitedBy"},
+            {$lookup: {from: "users", localField: "visitedBy.userId", foreignField: "_id", as: "userDetails"}},
+            {$unwind: "$userDetails"},
+            {
+                $group:{
+                    _id: "$userDetails.department",
+                    phishingVisits: {
+                        $sum: {$cond: [{$eq: ["$isPhishing", true]}, "$visitedBy.totalVisits", 0]}
+                    },
+                    blacklistedVisits: {
+                        $sum: {$cond: [{$eq: ["$status", "blacklisted"]}, "$visitedBy.totalVisits", 0]}
+                    },
+                    totalVisits: {$sum: "$visitedBy.totalVisits"}
+                }
+            },
+            {
+                $project: {
+                    department: "$_id",
+                    phishingVisits: 1,
+                    blacklistedVisits: 1,
+                    totalVisits: 1,
+                    _id: 0
+                }
+            }
+
+        ]);
+
+        const scatterPlotData = departments.map(department => {
+            const departmentData = visitDataByDep.find(d => d.department === department);
+            return departmentData || { department, phishingVisits: 0, blacklistedVisits: 0, totalVisits: 0 };
+        })
+
         let response = {
             totalApprovedWhitelistRequests: approvedWhitelistCount,
             totalBlacklistedUrls: blacklistedUrlsCount,
@@ -166,7 +204,8 @@ export const fetchOrgMetrics = async (req, res) => {
                 totalVisits: visitsByTimeFrame.map(item => item.totalVisits),
                 blacklistedVisits: visitsByTimeFrame.map(item => item.blacklistedVisits),
                 phishingVisits: visitsByTimeFrame.map(item => item.phishingVisits)
-            }
+            },
+            scatterPlotData,
 
         };
         res.status(200).send(response);
