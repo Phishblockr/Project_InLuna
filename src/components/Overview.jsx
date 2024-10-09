@@ -21,23 +21,12 @@ const Overview = () => {
   const [dataLoading, setDataLoading] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [barGraphData, setBarGraphData] = useState({ labels: [], totalVisits: [], blacklistedVisits: [], phishingVisits: [] });
+  const [scatterPlotData, setScatterPlotData] = useState([])
   const [selectedSeries, setSelectedSeries] = useState('all');
   const [currentWeek, setCurrentWeek] = useState({
     start: startOfWeek(new Date(), { weekStartsOn: 1 }),
     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
   });
-
-
-  // Data specific to the Scatter Plot
-  const scatterPlotData = [
-    { department: 'Accounts', phishing: 5, blacklisted: 3, totalCounts: 10 },
-    { department: 'HR', phishing: 10, blacklisted: 5, totalCounts: 15 },
-    { department: 'Dev', phishing: 7, blacklisted: 4, totalCounts: 12 },
-    { department: 'Finance', phishing: 9, blacklisted: 6, totalCounts: 14 },
-    { department: 'QA', phishing: 6, blacklisted: 3, totalCounts: 11 },
-    { department: 'IT', phishing: 3, blacklisted: 2, totalCounts: 8 },
-    { department: 'Ops', phishing: 7, blacklisted: 5, totalCounts: 13 },
-  ];
 
   const departments = [...new Set(scatterPlotData.map(d => d.department))];
 
@@ -48,7 +37,7 @@ const Overview = () => {
 
 
   const isDarkMode = theme === 'dark';
-  const backgroundColor = isDarkMode ? '#1f1f1f' : '#ffffff';
+  const backgroundColor = isDarkMode ? '#001C40' : '#ffffff';
   const gridColor = isDarkMode ? '#444444' : '#e5e5e5';
   const textColor = isDarkMode ? '#f4f4f4' : '#000000';
 
@@ -118,7 +107,6 @@ const Overview = () => {
         }
       });
       const data = await response.json();
-      console.log(data);
 
       const allDatesInMonth = generateAllDatesInMonth(year, month - 1);
       const mergedBarGraphData = allDatesInMonth.map(date => {
@@ -137,6 +125,8 @@ const Overview = () => {
         blacklistedVisits: mergedBarGraphData.map(item => item.blacklistedVisits),
         phishingVisits: mergedBarGraphData.map(item => item.phishingVisits),
       });
+
+      setScatterPlotData(data.scatterPlotData);
 
       const mappedData = [
         { id: 1, title: "Phishing links visited", count: data.totalOrgPhishingVisits, lastMonth: data.percentageChangeOrgPhishingVisits, logo: "bi bi-shield-x" },
@@ -177,7 +167,7 @@ const Overview = () => {
   }));
 
   return (
-    <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
+    <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
       {showLoading && <LoadingOverlay loading={dataLoading} />}
       <div className='z-1 w-full h-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
         <div className="flex justify-between">
@@ -214,6 +204,7 @@ const Overview = () => {
           </div>
 
           <div className='mt-3 p-[20px] rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]'>
+            <h2 className="text-center dark:text-[#F4F4F4]">Monthly URL Access</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={chartData}
@@ -221,7 +212,7 @@ const Overview = () => {
                   top: 20, right: 30, left: 20, bottom: 5,
                 }}
               >
-                <CartesianGrid stroke={chartStyles.gridColor} />
+                {/* <CartesianGrid stroke={chartStyles.gridColor} /> */}
 
                 <XAxis
                   dataKey="name"
@@ -250,76 +241,80 @@ const Overview = () => {
             </ResponsiveContainer>
           </div>
           <div className="w-full mt-3 p-2 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]">
-          <Plot className='w-full'
-             data={[
-              // Conditionally render data for Phishing Visits
-              (selectedSeries === 'all' || selectedSeries === 'phishingVisits') && {
-                x: scatterPlotData.map(d => d.department),
-                y: scatterPlotData.map(d => d.phishing),
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Phishing Visits',
-                marker: { color: phishingColor, size: 8 },
-              },
-              // Conditionally render data for Blacklisted Visits
-              (selectedSeries === 'all' || selectedSeries === 'blacklistedVisits') && {
-                x: scatterPlotData.map(d => d.department),
-                y: scatterPlotData.map(d => d.blacklisted),
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Blacklisted Visits',
-                marker: { color: blacklistedColor, size: 8 },
-              },
-              // Conditionally render data for Total Counts
-              (selectedSeries === 'all' || selectedSeries === 'totalVisits') && {
-                x: scatterPlotData.map(d => d.department),
-                y: scatterPlotData.map(d => d.totalCounts),
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Total Counts (Detection)',
-                marker: { color: totalCountsColor, size: 8 },
-              },
-            ].filter(Boolean)} // Filter out null traces if not selected
-            layout={{
-              title: {
-                text: 'Monthly URL Accesses by Department',
-                font: { color: textColor },
-              },
-              xaxis: {
-                title: { text: 'Departments', font: { color: textColor } },
-                tickvals: departments,
-                ticktext: departments,
-                showgrid: false,
-                color: textColor,
-              },
-              yaxis: {
-                title: { text: 'URL Access Count', font: { color: textColor } },
-                range: [0, Math.max(...scatterPlotData.map(d => d.totalCounts)) + 5],
-                color: textColor,
-                gridcolor: gridColor,
-              },
-              shapes: departments.map((dept, index) => ({
-                type: 'line',
-                x0: index + 0.5,
-                x1: index + 0.5,
-                y0: 0,
-                y1: Math.max(...scatterPlotData.map(d => d.totalCounts)) + 5,
-                line: {
-                  color: gridColor,
-                  width: 1,
-                  dash: 'dot',
+            <Plot className='w-full h-[400px]'
+              data={[
+                // Conditionally render data for Phishing Visits
+                (selectedSeries === 'all' || selectedSeries === 'phishingVisits') && {
+                  x: scatterPlotData.map(d => d.department),
+                  y: scatterPlotData.map(d => d.phishingVisits),
+                  mode: 'markers',
+                  type: 'scatter',
+                  name: 'Phishing Visits',
+                  marker: { color: phishingColor, size: 8 },
                 },
-              })),
-              paper_bgcolor: backgroundColor,
-              plot_bgcolor: backgroundColor,
-              height: 400,
-              showlegend: true,
-              margin: { l: 50, r: 50, t: 50, b: 50 },
-            }}
-            config={{ responsive: true }}
-          />
+                // Conditionally render data for Blacklisted Visits
+                (selectedSeries === 'all' || selectedSeries === 'blacklistedVisits') && {
+                  x: scatterPlotData.map(d => d.department),
+                  y: scatterPlotData.map(d => d.blacklistedVisits),
+                  mode: 'markers',
+                  type: 'scatter',
+                  name: 'Blacklisted Visits',
+                  marker: { color: blacklistedColor, size: 8 },
+                },
+                // Conditionally render data for Total Counts
+                (selectedSeries === 'all' || selectedSeries === 'totalVisits') && {
+                  x: scatterPlotData.map(d => d.department),
+                  y: scatterPlotData.map(d => d.totalVisits),
+                  mode: 'markers',
+                  type: 'scatter',
+                  name: 'Total Counts (Detection)',
+                  marker: { color: totalCountsColor, size: 8 },
+                },
+              ].filter(Boolean)} // Filter out null traces if not selected
+              layout={{
+                title: {
+                  text: 'Monthly URL Accesses by Department',
+                  font: { color: textColor },
+                },
+                xaxis: {
+                  title: { text: 'Departments', font: { color: textColor } },
+                  tickvals: scatterPlotData.map(d => d.department),
+                  ticktext: scatterPlotData.map(d => d.department),
+                  showgrid: false,
+                  color: textColor,
+                },
+                yaxis: {
+                  title: { text: 'URL Access Count', font: { color: textColor } },
+                  range: [0, Math.max(...scatterPlotData.map(d => d.totalVisits || 0)) + 5],
+                  color: textColor,
+                  gridcolor: gridColor,
+                },
+                shapes: scatterPlotData.map((dept, index) => ({
+                  type: 'line',
+                  x0: index + 0.5,
+                  x1: index + 0.5,
+                  y0: 0,
+                  y1: Math.max(...scatterPlotData.map(d => d.totalVisits || 0)) + 5,
+                  line: {
+                    color: gridColor,
+                    width: 1,
+                    dash: 'dot',
+                  },
+                })),
+                paper_bgcolor: backgroundColor,
+                plot_bgcolor: backgroundColor,
+                height: 400,
+                showlegend: true,
+                legend: {
+                  font: { color: textColor },
+                },
+                margin: { l: 50, r: 50, t: 50, b: 50 },
+              }}
+              config={{ responsive: true }}
+            />
           </div>
         </div>
+        <p>User Profile metrics</p>
       </div>
     </div>
   );
