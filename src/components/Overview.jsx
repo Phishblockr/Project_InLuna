@@ -7,9 +7,11 @@ import 'react-datepicker/dist/react-datepicker.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../static/CustomDatePicker.css';
 import LoadingOverlay from "../utils/LoadingOverlay";
-import { ScatterChart, Scatter, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import Plot from 'react-plotly.js';
+import { PiUserCircleLight } from "react-icons/pi";
+import { Link } from 'react-router-dom';
 
 const Overview = () => {
   const dispatch = useDispatch();
@@ -18,6 +20,7 @@ const Overview = () => {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [timeFrame, setTimeFrame] = useState('monthly');
+  const [browsingProfileMetrics, setBrowsingProfileMetrics] = useState("15")
   const [dataLoading, setDataLoading] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [barGraphData, setBarGraphData] = useState({ labels: [], totalVisits: [], blacklistedVisits: [], phishingVisits: [] });
@@ -27,6 +30,8 @@ const Overview = () => {
     start: startOfWeek(new Date(), { weekStartsOn: 1 }),
     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
   });
+  const [badBrowsingProfile, setBadBrowsingProfile] = useState([])
+  const [goodBrowsingProfile, setGoodBrowsingProfile] = useState([])
 
   const departments = [...new Set(scatterPlotData.map(d => d.department))];
 
@@ -99,7 +104,7 @@ const Overview = () => {
       const apiUrl = import.meta.env.VITE_API_URL;
       const user = JSON.parse(localStorage.getItem("user"));
       const token = user.token;
-      const response = await fetch(`${apiUrl}/overview/org-metrics?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}&timeFrame=${timeFrame}`, {
+      const response = await fetch(`${apiUrl}/overview/org-metrics?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}&timeFrame=${timeFrame}&browsingProfileMetrics=${browsingProfileMetrics}`, {
         method: "GET",
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -107,6 +112,9 @@ const Overview = () => {
         }
       });
       const data = await response.json();
+
+      setBadBrowsingProfile(data.badBrowsingProfile);
+      setGoodBrowsingProfile(data.goodBrowsingProfile);
 
       const allDatesInMonth = generateAllDatesInMonth(year, month - 1);
       const mergedBarGraphData = allDatesInMonth.map(date => {
@@ -169,7 +177,7 @@ const Overview = () => {
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
       {showLoading && <LoadingOverlay loading={dataLoading} />}
-      <div className='z-1 w-full h-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-2 dark:bg-[#002451]'>
+      <div className='z-1 w-full h-full bg-white rounded-xl shadow-xl flex flex-col p-3 gap-5 dark:bg-[#002451]'>
         <div className="flex justify-between">
           <h1 className='text-2xl font-medium tracking-tight dark:text-[#F4F4F4]'>Overview</h1>
 
@@ -314,7 +322,54 @@ const Overview = () => {
             />
           </div>
         </div>
-        <p>User Profile metrics</p>
+        <div className='flex justify-center gap-5'>
+          <div className='rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5'>
+            <h2 className='text-lg font-semibold mb-5'> User with Bad Browsing Profile</h2>
+            <table className='w-full text-left'>
+              <tbody>
+                {badBrowsingProfile.map(user => (
+                  <tr key={user.userId} className='hover:bg-gray-100 dark:hover:bg-gray-800'>
+                    <td className='p-2'>
+                      <Link
+                        to={`/users/userDetails/${user.userId}`}
+                        title="Click to view details"
+                      >
+                        <div className="flex items-center gap-x-3">
+                          {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
+                          <span className="font-medium">{user.name}</span>
+                          <span className="text-gray-500">{user.department}</span>
+                        </div>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className='rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5'>
+            <h2 className='text-lg font-semibold mb-5'> User with Good Browsing Profile</h2>
+            <table className='w-full text-left'>
+              <tbody>
+                {goodBrowsingProfile.map(user => (
+                  <tr key={user.userId} className='hover:bg-gray-100 dark:hover:bg-gray-800'>
+                  <td className='p-2'>
+                    <Link
+                      to={`/users/userDetails/${user.userId}`}
+                      title="Click to view details"
+                    >
+                      <div className="flex items-center gap-x-3">
+                        {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
+                        <span className="font-medium">{user.name}</span>
+                        <span className="text-gray-500">{user.department}</span>
+                      </div>
+                    </Link>
+                  </td>
+                </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -4,14 +4,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { delUser, updateUserStatus } from "../../features/Users/usersSlice";
 import { toast } from "sonner";
-import LineChart from "../LineChart";
-import PieChart from "../PieChart";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../../static/CustomDatePicker.css';
 import AuthenticateModal from "../../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+
 
 const statusActive =
     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
@@ -37,6 +38,13 @@ const UserDetails = () => {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [operationType, setOperationType] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedSeries, setSelectedSeries] = useState('all');
+    const [barGraphData, setBarGraphData] = useState({ labels: [], totalVisits: [], blacklistedVisits: [], phishingVisits: [] });
+    const [currentWeek, setCurrentWeek] = useState({
+        start: startOfWeek(new Date(), { weekStartsOn: 1 }),
+        end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+    });
+
 
 
     const renderMonthContent = (month, shortMonth, longMonth, day) => {
@@ -46,10 +54,26 @@ const UserDetails = () => {
         return <span title={tooltipText}>{shortMonth}</span>;
     };
 
+
+    const generateAllDatesInMonth = (year, month) => {
+        const date = new Date(year, month, 1);
+        const dates = [];
+        while (date.getMonth() === month) {
+            dates.push(format(new Date(date), 'dd/MM/yyyy'));
+            date.setDate(date.getDate() + 1);
+        }
+        return dates;
+    };
+
     const handleDateChange = (date) => {
         setSelectedDate(date);
         fetchActivityCounts(id, date);
     };
+
+    const handleSeriesChange = (e) => {
+        setSelectedSeries(e.target.value);
+    };
+
 
     useEffect(() => {
         fetchActivityCounts(id, selectedDate);
@@ -60,6 +84,9 @@ const UserDetails = () => {
     const user = useSelector((state) =>
         state.users.users.find((user) => user._id === id)
     );
+
+    console.log(user)
+
     const theme = useSelector((state) => state.theme);
 
     const dispatch = useDispatch();
@@ -101,6 +128,25 @@ const UserDetails = () => {
             }
 
             const data = await response.json();
+
+            const allDatesInMonth = generateAllDatesInMonth(year, month - 1);
+            const mergedBarGraphData = allDatesInMonth.map(date => {
+                const index = data.barGraphData.labels.indexOf(date);
+                return {
+                    label: date,
+                    totalVisits: index !== -1 ? data.barGraphData.totalVisits[index] : 0,
+                    blacklistedVisits: index !== -1 ? data.barGraphData.blacklistedVisits[index] : 0,
+                    phishingVisits: index !== -1 ? data.barGraphData.phishingVisits[index] : 0,
+                };
+            });
+
+            setBarGraphData({
+                labels: mergedBarGraphData.map(item => item.label),
+                totalVisits: mergedBarGraphData.map(item => item.totalVisits),
+                blacklistedVisits: mergedBarGraphData.map(item => item.blacklistedVisits),
+                phishingVisits: mergedBarGraphData.map(item => item.phishingVisits),
+            });
+
             setActivityCounts(data);
             clearTimeout(loadingTimer);
             setShowLoading(false);
@@ -204,6 +250,22 @@ const UserDetails = () => {
             setIsPasswordModalOpen(false);
         }
     };
+
+
+    const chartStyles = theme === 'dark' ? {
+        textColor: '#f4f4f4',
+        gridColor: '#444444',
+    } : {
+        textColor: '#000000',
+        gridColor: '#E0E0E0',
+    };
+
+    const chartData = barGraphData.labels.map((label, index) => ({
+        name: label,
+        detection: barGraphData.totalVisits[index],
+        phishing: barGraphData.phishingVisits[index],
+        blacklisted: barGraphData.blacklistedVisits[index]
+    }));
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -344,17 +406,56 @@ const UserDetails = () => {
                     <OverviewCards points={overviewPoints} />
                 </div>
                 <h1 className="text-2xl font-medium tracking-tight mb-5">Graph</h1>
-                <div className="flex flex-row justify-around">
-                    <div>
-                        <LineChart
-                            data={seriesData}
-                            categories={categories}
-                            theme={theme}
-                        />
+                <div className='mt-3 p-[20px] rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]'>
+                    <div className="mt-4">
+                        <label htmlFor="seriesSelect" className="mr-2">Show Data:</label>
+                        <select
+                            id="seriesSelect"
+                            value={selectedSeries}
+                            onChange={handleSeriesChange}
+                            className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4] dark:border-[#001C40] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+                        >
+                            <option value="all">All</option>
+                            <option value="totalVisits">Detection</option>
+                            <option value="phishingVisits">Phishing Visits</option>
+                            <option value="blacklistedVisits">Blacklisted Visits</option>
+                        </select>
                     </div>
-                    <div>
-                        <PieChart data={seriesData} labels={categories} theme={theme} />
-                    </div>
+                    <h2 className="text-center dark:text-[#F4F4F4]">Monthly URL Access</h2>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart
+                            data={chartData}
+                            margin={{
+                                top: 20, right: 30, left: 20, bottom: 5,
+                            }}
+                        >
+                            {/* <CartesianGrid stroke={chartStyles.gridColor} /> */}
+
+                            <XAxis
+                                dataKey="name"
+                                stroke={chartStyles.textColor}
+                                tickFormatter={(tick) => tick.split('/')[0]} // Extracts and displays the day part of the date
+                            />
+
+                            <YAxis stroke={chartStyles.textColor} />
+                            <Tooltip cursor={{ fill: chartStyles.gridColor }} />
+                            <Legend verticalAlign="top" wrapperStyle={{ color: chartStyles.textColor }} />
+
+                            {/* Conditionally render bars based on the selected series */}
+                            {selectedSeries === 'all' || selectedSeries === 'totalVisits' ? (
+                                <Bar dataKey="detection" fill="#82ca9d" radius={[10, 10, 0, 0]} />
+                            ) : null}
+
+                            {selectedSeries === 'all' || selectedSeries === 'phishingVisits' ? (
+                                <Bar dataKey="phishing" fill="#8884d8" radius={[10, 10, 0, 0]} />
+                            ) : null}
+
+                            {selectedSeries === 'all' || selectedSeries === 'blacklistedVisits' ? (
+                                <Bar dataKey="blacklisted" fill="#ff4d4f" radius={[10, 10, 0, 0]} />
+                            ) : null}
+
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
         </div>

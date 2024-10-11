@@ -10,7 +10,7 @@ import { delUrl, getUrls, startListeningToSocket, uploadUrlCsv } from "../../fea
 import { toast } from "sonner";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import LoadingOverlay from "../../utils/LoadingOverlay";
-import CsvUploadUrlModal from "../../utils/csvUploadUrlModal";
+import CsvUploadUrlModal from "../../utils/CsvUploadUrlModal";
 import AuthenticateModal from "../../utils/AuthenticateModal";
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import { useNavigate } from "react-router-dom";
