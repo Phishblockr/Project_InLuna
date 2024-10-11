@@ -10,8 +10,9 @@ const calculatePercentage = (current, previous) => {
 }
 
 export const fetchOrgMetrics = async (req, res) => {
-    const { month, year, timeFrame } = req.query;
+    const { month, year, timeFrame, browsingProfileMetrics } = req.query;
 
+    const BPMetrics = parseInt(browsingProfileMetrics)
     const orgId = req.user.orgId;
 
     try {
@@ -137,23 +138,23 @@ export const fetchOrgMetrics = async (req, res) => {
         ]);
 
         // For Department Level Scatter Plot
-        const departments = await User.distinct("department", {orgId: orgId});
+        const departments = await User.distinct("department", { orgId: orgId });
 
         const visitDataByDep = await Url.aggregate([
-            {$match: {orgId: orgId, createdAt: {$gte: startOfMonth, $lt: endOfMonth}}},
-            {$unwind: "$visitedBy"},
-            {$lookup: {from: "users", localField: "visitedBy.userId", foreignField: "_id", as: "userDetails"}},
-            {$unwind: "$userDetails"},
+            { $match: { orgId: orgId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            { $lookup: { from: "users", localField: "visitedBy.userId", foreignField: "_id", as: "userDetails" } },
+            { $unwind: "$userDetails" },
             {
-                $group:{
+                $group: {
                     _id: "$userDetails.department",
                     phishingVisits: {
-                        $sum: {$cond: [{$eq: ["$isPhishing", true]}, "$visitedBy.totalVisits", 0]}
+                        $sum: { $cond: [{ $eq: ["$isPhishing", true] }, "$visitedBy.totalVisits", 0] }
                     },
                     blacklistedVisits: {
-                        $sum: {$cond: [{$eq: ["$status", "blacklisted"]}, "$visitedBy.totalVisits", 0]}
+                        $sum: { $cond: [{ $eq: ["$status", "blacklisted"] }, "$visitedBy.totalVisits", 0] }
                     },
-                    totalVisits: {$sum: "$visitedBy.totalVisits"}
+                    totalVisits: { $sum: "$visitedBy.totalVisits" }
                 }
             },
             {
@@ -172,6 +173,44 @@ export const fetchOrgMetrics = async (req, res) => {
             const departmentData = visitDataByDep.find(d => d.department === department);
             return departmentData || { department, phishingVisits: 0, blacklistedVisits: 0, totalVisits: 0 };
         })
+
+        // classify Users By Browsing Profile
+        const users = await User.find({ orgId });
+        const goodBrowsingProfile = [];
+        const badBrowsingProfile = [];
+
+        for (const user of users) {
+            const userId = user._id;
+
+            const classifyUsersByBrowsingProfile = await Url.aggregate([
+                { $match: { "visitedBy.userId": userId, orgId } },
+                { $unwind: "$visitedBy" },
+                { $match: { "visitedBy.userId": userId } },
+                {
+                    $group: {
+                        _id: null,
+                        totalVisits: { $sum: "$visitedBy.totalVisits" },
+                        phishingVisits: { $sum: { $cond: [{ $eq: ["$isPhishing", true] }, "$visitedBy.totalVisits", 0] } },
+                        blacklistedVisits: { $sum: { $cond: [{ $eq: ["$status", "blacklisted"] }, "$visitedBy.totalVisits", 0] } }
+                    }
+                }
+            ]);
+            // If no visits, add the user to good profile by default
+            if (classifyUsersByBrowsingProfile.length === 0) {
+                goodBrowsingProfile.push({userId, profilePic: user.img, name: user.name, department: user.department});
+                continue;
+            }
+            
+            const { totalVisits, phishingVisits, blacklistedVisits } = classifyUsersByBrowsingProfile[0];
+            const phishingRate = (phishingVisits / totalVisits) * 100;
+            const blacklistedRate = (blacklistedVisits / totalVisits) * 100;
+
+            if (phishingRate > BPMetrics || blacklistedRate > BPMetrics) {
+                badBrowsingProfile.push({ userId, profilePic: user.img, name: user.name, department: user.department, phishingRate, blacklistedRate });
+            } else {
+                goodBrowsingProfile.push({ userId, profilePic: user.img, name: user.name, department: user.department, phishingRate, blacklistedRate });
+            }
+        }
 
         let response = {
             totalApprovedWhitelistRequests: approvedWhitelistCount,
@@ -206,6 +245,8 @@ export const fetchOrgMetrics = async (req, res) => {
                 phishingVisits: visitsByTimeFrame.map(item => item.phishingVisits)
             },
             scatterPlotData,
+            goodBrowsingProfile,
+            badBrowsingProfile
 
         };
         res.status(200).send(response);
@@ -304,6 +345,37 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
             { $project: { _id: 0, total: 1 } }
         ]);
 
+        // Bar Graph Data (grouped by day)
+        const visitsByDay = await Url.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
+                    totalVisits: { $sum: "$visitedBy.totalVisits" },
+                    blacklistedVisits: {
+                        $sum: {
+                            $cond: [{ $eq: ["$status", "blacklisted"] }, "$visitedBy.totalVisits", 0]
+                        }
+                    },
+                    phishingVisits: {
+                        $sum: {
+                            $cond: [{ $eq: ["$isPhishing", true] }, "$visitedBy.totalVisits", 0]
+                        }
+                    }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Format bar graph data
+        const barGraphData = {
+            labels: visitsByDay.map(item => item._id),
+            totalVisits: visitsByDay.map(item => item.totalVisits),
+            blacklistedVisits: visitsByDay.map(item => item.blacklistedVisits),
+            phishingVisits: visitsByDay.map(item => item.phishingVisits)
+        };
+
         res.json({
             phishingClicks: phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
             blacklistedClicks: blacklistedClicksCount.length > 0 ? blacklistedClicksCount[0].total : 0,
@@ -312,7 +384,8 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
             percentagePhishingClicks: calculatePercentage(phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0, previousPhishingClicksCount.length > 0 ? previousPhishingClicksCount[0].total : 0),
             percentageBlacklistedClicks: calculatePercentage(blacklistedClicksCount.length > 0 ? blacklistedClicksCount[0].total : 0, previousBlacklistedClicksCount.length > 0 ? previousBlacklistedClicksCount[0].total : 0),
             percentageWhitelistReq: calculatePercentage(whitelistReqsCount || 0, previousWhitelistReqsCount || 0),
-            percentageVisitToWhitelistUrls: calculatePercentage(visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0, previousVisitsToWhitelistUrls.length > 0 ? previousVisitsToWhitelistUrls[0].total : 0,)
+            percentageVisitToWhitelistUrls: calculatePercentage(visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0, previousVisitsToWhitelistUrls.length > 0 ? previousVisitsToWhitelistUrls[0].total : 0,),
+            barGraphData
         });
 
     } catch (error) {
