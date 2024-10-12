@@ -8,11 +8,12 @@ const initialState = {
     currentPage: 1,
     loading: false,
     error: null,
+    userDetails: null,
 };
 
 const apiUrl = import.meta.env.VITE_API_URL
 
-export const getUsers = createAsyncThunk('user/get', async ({ page, limit, search, status }, { rejectWithValue }) => {
+export const getUsers = createAsyncThunk('users/get', async ({ page, limit, search, status }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}&search=${search}&status=${status}`, {
@@ -29,6 +30,24 @@ export const getUsers = createAsyncThunk('user/get', async ({ page, limit, searc
         return rejectWithValue(error.message || 'An error occurred');
     }
 });
+
+export const getUser = createAsyncThunk("User/get", async (id, { rejectWithValue }) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+    try {
+        const res = await fetch(`${apiUrl}/user/fetch/${id}`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!res.ok) throw new Error('Failed to fetch user');
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.message || 'An error occurred');
+    }
+})
 
 export const addUser = createAsyncThunk('user/add', async (user, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
@@ -182,6 +201,20 @@ const usersSlice = createSlice({
             .addCase(getUsers.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            .addCase(getUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.userDetails = null
+            })
+            .addCase(getUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.userDetails = action.payload;
+            })
+            .addCase(getUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+                state.userDetails = null;
             })
             .addCase(addUser.pending, (state) => {
                 state.loading = true;

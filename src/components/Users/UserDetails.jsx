@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { delUser, updateUserStatus } from "../../features/Users/usersSlice";
+import { delUser, getUser, updateUserStatus } from "../../features/Users/usersSlice";
 import { toast } from "sonner";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 import DatePicker from 'react-datepicker';
@@ -45,7 +45,9 @@ const UserDetails = () => {
         end: endOfWeek(new Date(), { weekStartsOn: 1 }),
     });
 
+    const theme = useSelector((state) => state.theme);
 
+    const dispatch = useDispatch();
 
     const renderMonthContent = (month, shortMonth, longMonth, day) => {
         const fullYear = new Date(day).getFullYear();
@@ -76,20 +78,15 @@ const UserDetails = () => {
 
 
     useEffect(() => {
+        dispatch(getUser(id))
         fetchActivityCounts(id, selectedDate);
     }, [id, selectedDate])
 
 
     const navigate = useNavigate();
-    const user = useSelector((state) =>
-        state.users.users.find((user) => user._id === id)
-    );
+    const { userDetails: user, loading, error } = useSelector(state => state.users);
 
-    console.log(user)
-
-    const theme = useSelector((state) => state.theme);
-
-    const dispatch = useDispatch();
+    console.log(user);
 
     const handleRemUser = async (id, name) => {
         try {
@@ -159,13 +156,6 @@ const UserDetails = () => {
     if (!user) {
         return <div>User not found</div>;
     }
-
-    const seriesData = [56, 89, 74];
-    const categories = [
-        "Blacklisted urls visited",
-        "whitelist urls requests",
-        "visits to requested urls",
-    ];
 
     const overviewPoints = [
         {

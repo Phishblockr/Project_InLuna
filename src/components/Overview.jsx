@@ -322,22 +322,22 @@ const Overview = () => {
             />
           </div>
         </div>
-        <div className='flex justify-center gap-5'>
+        <div className='flex justify-center gap-5 dark:text-[#f4f4f4]'>
           <div className='rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5'>
             <h2 className='text-lg font-semibold mb-5'> User with Bad Browsing Profile</h2>
             <table className='w-full text-left'>
               <tbody>
                 {badBrowsingProfile.map(user => (
-                  <tr key={user.userId} className='hover:bg-gray-100 dark:hover:bg-gray-800'>
-                    <td className='p-2'>
+                  <tr key={user.userId}>
+                    <td>
                       <Link
                         to={`/users/userDetails/${user.userId}`}
                         title="Click to view details"
                       >
-                        <div className="flex items-center gap-x-3">
+                        <div className="p-2 flex items-center gap-x-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#182A46]">
                           {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
                           <span className="font-medium">{user.name}</span>
-                          <span className="text-gray-500">{user.department}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{user.department}</span>
                         </div>
                       </Link>
                     </td>
@@ -351,16 +351,16 @@ const Overview = () => {
             <table className='w-full text-left'>
               <tbody>
                 {goodBrowsingProfile.map(user => (
-                  <tr key={user.userId} className='hover:bg-gray-100 dark:hover:bg-gray-800'>
-                  <td className='p-2'>
+                  <tr key={user.userId}>
+                  <td>
                     <Link
                       to={`/users/userDetails/${user.userId}`}
                       title="Click to view details"
                     >
-                      <div className="flex items-center gap-x-3">
+                      <div className="p-2 flex items-center gap-x-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#182A46]">
                         {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
                         <span className="font-medium">{user.name}</span>
-                        <span className="text-gray-500">{user.department}</span>
+                        <span className="text-gray-500 dark:text-gray-400">{user.department}</span>
                       </div>
                     </Link>
                   </td>
