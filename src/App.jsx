@@ -30,6 +30,8 @@ import Overview from "./components/Overview.jsx";
 import { useSelector } from "react-redux";
 import Logout from "./components/Auth/Logout.jsx";
 import NotFound from "./components/NotFound.jsx";
+import ReportBug from "./components/Services/ReportBug.jsx";
+import Faqs from "./components/Services/Faqs.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -90,6 +92,8 @@ function App() {
                       <Route path="/logs" element={<Logs />} />
                       <Route path="/profileSettings" element={<AdminSettings />} />
                       <Route path="/settings" element={<Settings />} />
+                      <Route path="/report" element={<ReportBug/>}/>
+                      <Route path="/faq" element={<Faqs/>}/>
                     </Route>
                     <Route path="*" element={<NotFound />} />
                   </Routes>

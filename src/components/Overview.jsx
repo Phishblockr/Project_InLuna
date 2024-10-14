@@ -12,6 +12,7 @@ import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import Plot from 'react-plotly.js';
 import { PiUserCircleLight } from "react-icons/pi";
 import { Link } from 'react-router-dom';
+import socket from '../utils/socket.jsx';
 
 const Overview = () => {
   const dispatch = useDispatch();
@@ -154,6 +155,29 @@ const Overview = () => {
       toast.error("Failed to fetch data");
     }
   };
+
+  useEffect(() => {
+    const events = [
+      "newReqAdded",
+      "reqUpdated",
+      "reqDeleted",
+      "urlAdded",
+      "urlUpdated",
+      "urlDeleted",
+      "urlsByCsvAdded",
+    ];
+
+    const handleSocketEvent = () => {
+      fetchMetrics(selectedDate, timeFrame);
+    };
+
+    events.forEach(event => socket.on(event, handleSocketEvent));
+
+    // Clean up socket listeners on unmount
+    return () => {
+      events.forEach(event => socket.off(event, handleSocketEvent));
+    };
+  }, [selectedDate, timeFrame]); // Dependencies here ensure re-fetching on date/timeFrame changes
 
   useEffect(() => {
     fetchMetrics(selectedDate, timeFrame);
@@ -352,19 +376,19 @@ const Overview = () => {
               <tbody>
                 {goodBrowsingProfile.map(user => (
                   <tr key={user.userId}>
-                  <td>
-                    <Link
-                      to={`/users/userDetails/${user.userId}`}
-                      title="Click to view details"
-                    >
-                      <div className="p-2 flex items-center gap-x-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#182A46]">
-                        {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
-                        <span className="font-medium">{user.name}</span>
-                        <span className="text-gray-500 dark:text-gray-400">{user.department}</span>
-                      </div>
-                    </Link>
-                  </td>
-                </tr>
+                    <td>
+                      <Link
+                        to={`/users/userDetails/${user.userId}`}
+                        title="Click to view details"
+                      >
+                        <div className="p-2 flex items-center gap-x-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#182A46]">
+                          {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
+                          <span className="font-medium">{user.name}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{user.department}</span>
+                        </div>
+                      </Link>
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
