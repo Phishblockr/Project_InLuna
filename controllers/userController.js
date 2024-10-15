@@ -7,6 +7,9 @@ import fs from 'fs';
 import { generateUsername } from '../utils/generateUsername.js';
 import dotenv from 'dotenv';
 
+// for adminLog
+import AdminLogs from "../models/adminlogsModel.js";
+
 dotenv.config();
 // Logger setup
 const logger = winston.createLogger({
@@ -55,6 +58,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
   try {
+    const userId = req.user.userId;
     const orgId = req.user.orgId;
     const { name, email, phone, role, department, gender, userType, img } = req.body;
 
@@ -82,6 +86,13 @@ export const createUser = asyncHandler(async (req, res) => {
     const addedUser = await newUser.save();
     const io = req.app.get("socketio");
     io.emit("userCreated", addedUser);
+
+    // Add Log entry
+    await AdminLogs.create({
+      userId,
+      operationsPerformed: `User created: ${name} with userType ${UserTypeCode}`,
+      orgId
+    })
 
     res.status(201).json(addedUser);
   } catch (error) {
@@ -146,7 +157,11 @@ export const getUser = asyncHandler(async (req, res) => {
 // Update a user
 export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { username, name, email, phone, role, department, orgId } = req.body;
+
+  const userId = req.user.userId;
+  const orgId = req.user.orgId;
+
+  const { username, name, email, phone, role, department } = req.body;
   const updates = {
     username,
     name,
@@ -154,7 +169,6 @@ export const updateUser = asyncHandler(async (req, res) => {
     phone,
     role,
     department,
-    orgId,
   };
   const updatedUser = await User.findByIdAndUpdate(id, updates, {
     new: true,
@@ -163,6 +177,13 @@ export const updateUser = asyncHandler(async (req, res) => {
   if (updatedUser) {
     const io = req.app.get('socketio');
     io.emit('userUpdated', updatedUser);
+
+    // Add Log entry
+    await AdminLogs.create({
+      userId,
+      operationsPerformed: `User updated: ${name} with userType ${UserTypeCode}`,
+      orgId
+    })
 
     res.status(200).json(updatedUser);
   } else {
@@ -174,6 +195,9 @@ export const updateUser = asyncHandler(async (req, res) => {
 export const updateUserStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
+  const userId = req.user.userId;
+  const orgId = req.user.orgId;
+
   const user = await User.findById(id).select("-password");
   if (!user) {
     return res.status(404).json({ error: "User not found" });
@@ -184,6 +208,13 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 
   const io = req.app.get("socketio");
   io.emit("userUpdated", updatedUser);
+
+  // Add Log entry
+  await AdminLogs.create({
+    userId,
+    operationsPerformed: `User updated: ${id}`,
+    orgId
+  })
 
   res.status(200).json(updatedUser);
 })
@@ -211,6 +242,7 @@ export const updateAdminDetails = asyncHandler(async (req, res) => {
 export const updateAdminPwd = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.userId;
+    const orgId = req.user.orgId;
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
@@ -235,6 +267,14 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save()
+
+    // Add Log entry
+    await AdminLogs.create({
+      userId,
+      operationsPerformed: `Admin pwd updated: ${user.name}`,
+      orgId
+    })
+
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -263,6 +303,8 @@ export const verifyAdminPassword = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const adminId = req.user.userId;
+  const orgId = req.user.orgId;
+
   const user = await User.findById(id).select('-password');
   if (user) {
     const userId = user._id.toString()
@@ -273,6 +315,13 @@ export const deleteUser = asyncHandler(async (req, res) => {
       const io = req.app.get('socketio');
       io.emit('userDeleted', user._id);
 
+      // Add Log entry
+      await AdminLogs.create({
+        adminId,
+        operationsPerformed: `user deleted: ${user.name}`,
+        orgId
+      })
+
       res.status(200).json({ message: `User ${user.email} removed successfully` });
     }
   } else {
@@ -281,9 +330,11 @@ export const deleteUser = asyncHandler(async (req, res) => {
 });
 
 export const addUsersFromCsv = asyncHandler(async (req, res) => {
+
   const filePath = req.file.path;
   const users = [];
   const errors = [];
+  const userId = req.user.userId;
   const orgId = req.user.orgId;
 
   try {
@@ -348,6 +399,13 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
       const insertedUsers = await User.insertMany(users);
       const io = req.app.get('socketio');
       io.emit("usersByCsvAdded", insertedUsers);
+
+      // Add Log entry
+      await AdminLogs.create({
+        userId,
+        operationsPerformed: `users added via CSV`,
+        orgId
+      })
 
       res.status(200).json({ message: 'Users added successfully' });
     } else {

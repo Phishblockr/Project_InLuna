@@ -5,6 +5,9 @@ import asyncHandler from '../middlewares/asyncHandler.js';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 
+// for adminLog
+import AdminLogs from "../models/adminlogsModel.js";
+
 export const addUrlExt = async (req, res) => {
     try {
         const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
@@ -143,6 +146,7 @@ export const getUrls = asyncHandler(async (req, res) => {
 
 export const addUrl = asyncHandler(async (req, res) => {
     try {
+        const userId = req.user.userId;
         const orgId = req.user.orgId;
         const { url, isVerified, isPhishing, category, status } = req.body;
         const categoryArray = Array.isArray(category) ? category : [category];
@@ -162,6 +166,13 @@ export const addUrl = asyncHandler(async (req, res) => {
             await newUrl.save();
             const io = req.app.get("socketio");
             io.emit("urlAdded", newUrl);
+
+            // Add Log entry
+            await AdminLogs.create({
+                userId,
+                operationsPerformed: `Added URL: ${url} with status ${status}`,
+                orgId
+            })
             res.status(201).send(newUrl);
         }
     } catch (error) {
@@ -172,6 +183,8 @@ export const addUrl = asyncHandler(async (req, res) => {
 export const updateUrl = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.user.userId;
+        const orgId = req.user.orgId;
         let { url, category, status, isPhishing, isVerified } = req.body;
         const updates = {
             url,
@@ -188,6 +201,14 @@ export const updateUrl = asyncHandler(async (req, res) => {
         if (updatedUrl) {
             const io = req.app.get("socketio");
             io.emit("urlUpdated", updatedUrl);
+
+            // Add Log entry
+            await AdminLogs.create({
+                userId,
+                operationsPerformed: `Updated URL ID: ${id} with url:${url} category:${category} status:${status} phishing: ${isPhishing} isVerified: ${isVerified}`,
+                orgId
+            })
+
             res.status(200).json(updatedUrl);
         } else {
             res.status(404).json({ error: 'Url not found' });
@@ -201,9 +222,19 @@ export const updateUrl = asyncHandler(async (req, res) => {
 export const deleteUrl = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.user.userId;
+        const orgId = req.user.orgId;
         const urlData = await Url.findByIdAndDelete(id);
         const io = req.app.get("socketio");
         io.emit("urlDeleted", id);
+
+        // Add Log entry
+        await AdminLogs.create({
+            userId,
+            operationsPerformed: `Deleted URL ID: ${id}`,
+            orgId
+        })
+
         res.status(200).json(id);
     } catch (error) {
         res.status(400).send(error.message);
@@ -214,6 +245,7 @@ export const addUrlFromCsv = asyncHandler(async (req, res) => {
     const filePath = req.file.path;
     const urls = [];
     const errors = [];
+    const userId = req.user.userId;
     const orgId = req.user.orgId;
 
     const { urlHeader, categoryHeader, status, isPhishing, isVerified } = req.body;
@@ -250,6 +282,14 @@ export const addUrlFromCsv = asyncHandler(async (req, res) => {
             const insertedUrls = await Url.insertMany(urls);
             const io = req.app.get("socketio");
             io.emit("urlsByCsvAdded", insertedUrls);
+
+            // Add Log entry
+            await AdminLogs.create({
+                userId,
+                operationsPerformed: `Added Urls Via CSV`,
+                orgId
+            })
+
             res.status(200).json({ message: "URLs added successfully" })
         } else {
             res.status(400).json({ message: 'No valid URLs to add or all URLs are duplicates' });

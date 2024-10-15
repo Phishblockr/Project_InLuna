@@ -3,6 +3,8 @@ import Url from '../models/urlModel.js';
 import WhitelistReq from '../models/whitelistReqModel.js';
 import mongoose from 'mongoose';
 
+// for adminLog
+import AdminLogs from "../models/adminlogsModel.js";
 
 export const addWhitelistReqExt = async (req, res) => {
     try {
@@ -65,11 +67,11 @@ export const fetchReqs = asyncHandler(async (req, res) => {
         ]
     } : {};
 
-    const statusFilter = status == "all" ? {} : {status};
+    const statusFilter = status == "all" ? {} : { status };
 
     try {
         const whitelistReqs = await WhitelistReq.aggregate([
-            {$match: {orgId, ...statusFilter}},
+            { $match: { orgId, ...statusFilter } },
             {
                 $lookup: {
                     from: "users",
@@ -78,8 +80,8 @@ export const fetchReqs = asyncHandler(async (req, res) => {
                     as: "userDetails"
                 }
             },
-            {$unwind: "$userDetails"},
-            {$match: searchFilter},
+            { $unwind: "$userDetails" },
+            { $match: searchFilter },
             {
                 $project: {
                     _id: 1,
@@ -91,24 +93,24 @@ export const fetchReqs = asyncHandler(async (req, res) => {
                     "userDetails.email": 1
                 }
             },
-            {$sort: {createdAt: -1}},
-            {$skip: skip},
-            {$limit: limit}
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit }
         ]);
 
         const totalReqsAggregation = await WhitelistReq.aggregate([
-            {$match: {orgId, ...statusFilter}},
+            { $match: { orgId, ...statusFilter } },
             {
-                $lookup:{
+                $lookup: {
                     from: "users",
-                    localField:"userId",
-                    foreignField:"_id",
+                    localField: "userId",
+                    foreignField: "_id",
                     as: "userDetails",
                 },
             },
-            {$unwind: "$userDetails"},
-            {$match: searchFilter},
-            {$count: "totalCount"},
+            { $unwind: "$userDetails" },
+            { $match: searchFilter },
+            { $count: "totalCount" },
         ]);
 
         const totalReqs = totalReqsAggregation[0]?.totalCount || 0;
@@ -127,6 +129,9 @@ export const fetchReqs = asyncHandler(async (req, res) => {
 export const approveWhitelistRequest = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
+
+        const userId = req.user.userId;
+        const orgId = req.user.orgId;
 
         const whitelistRequest = await WhitelistReq.findById(id);
         if (!whitelistRequest) {
@@ -147,7 +152,7 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
             url.isVerified = true;
             url.isPhishing = false;
             url.status = "whitelisted",
-            await url.save();
+                await url.save();
         }
 
         const updatedWhitelistRequest = await WhitelistReq.aggregate([
@@ -181,6 +186,13 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
         const io = req.app.get("socketio");
         io.emit("reqUpdated", updatedWhitelistRequest[0]); // Emit the full updated object with user details
 
+        // Add Log entry
+        await AdminLogs.create({
+            userId,
+            operationsPerformed: `Whitelist Request Approved: ${id}`,
+            orgId
+        })
+
         res.json({ message: "Whitelist request approved and URL updated", updatedWhitelistRequest: updatedWhitelistRequest[0] });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
@@ -189,11 +201,22 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
 });
 
 export const deleteRequest = asyncHandler(async (req, res) => {
-    try{
-        const {id} = req.params;
+    try {
+        const { id } = req.params;
+
+        const userId = req.user.userId;
+        const orgId = req.user.orgId;
+
         await WhitelistReq.findByIdAndDelete(id);
         const io = req.app.get("socketio");
         io.emit("reqDeleted", id);
+
+        await AdminLogs.create({
+            userId,
+            operationsPerformed: `Whitelist Request deleted: ${id}`,
+            orgId
+        })
+
         res.status(200).json(id);
     } catch (error) {
         res.status(400).send(error.message);
