@@ -18,7 +18,6 @@ const AddEmp = () => {
     };
 
     const handleAddUser = (user) => {
-        console.log(user);
         if (isValidEmail(user.email)) {
             disp(addUser(user));
             toast.success(`Employee ${user.name} added!!!`);

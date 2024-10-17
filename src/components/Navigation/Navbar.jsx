@@ -115,7 +115,7 @@ const Navbar = () => {
             setDataLoading(false);
         } catch (error) {
             dispatch(fetchUserFailure(error.message))
-            console.log(error)
+            console.error(error)
             clearTimeout(loadingTimer);
             setShowLoading(false);
             setDataLoading(false);

@@ -7,7 +7,6 @@ const Settings = () => {
     // Redux
     const theme = useSelector((state) => state.theme);
     const dispatch = useDispatch();
-    console.log(theme);
     // End of Redux
 
     const handleSetTheme = (value) => {

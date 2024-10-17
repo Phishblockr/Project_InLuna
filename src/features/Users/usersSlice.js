@@ -90,7 +90,7 @@ export const delUser = createAsyncThunk('user/del', async (id, { rejectWithValue
     }
 });
 
-export const updateUserStatus = createAsyncThunk("users/updateStatus", async ({ id, name }, { rejectWithValue }) => {
+export const updateUserStatus = createAsyncThunk("users/updateStatus", async ({ id, status }, { rejectWithValue }) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const response = await fetch(`${apiUrl}/user/updateStatus/${id}`, {
@@ -148,10 +148,12 @@ const usersSlice = createSlice({
     name: "users",
     initialState,
     reducers: {
-        updateStatus(state, action) {
-            const user = state.users.find(user => user.id === action.payload);
-            if (user) {
-                user.status = user.status === "Inactive" ? "Active" : "Inactive";
+        updateStatusFromSocket(state, action) {
+            const updatedUser = action.payload;
+            // Update user status in userDetails if it matches
+            if (state.userDetails && state.userDetails._id === updatedUser._id) {
+                state.userDetails = updatedUser;
+                console.log(updatedUser._id, state.userDetails._id)
             }
         },
         addUserSuccess(state, action) {
@@ -269,9 +271,10 @@ const usersSlice = createSlice({
             })
             .addCase(updateUserStatus.fulfilled, (state, action) => {
                 const updatedUser = action.payload;
-                const existingUser = state.users.find((user) => user._id === updatedUser._id);
-                if (existingUser) {
-                    existingUser.status = updatedUser.status;
+
+                // Update the status in the user details if it matches the updated user's ID
+                if (state.userDetails && state.userDetails._id === updatedUser._id) {
+                    state.userDetails.status = updatedUser.status;
                 }
                 state.loading = false;
             })
@@ -300,6 +303,10 @@ export const startListeningToSocket = () => (dispatch, getState) => {
     socket.on("userDeleted", (userId) => {
         dispatch(deleteUserSuccess(userId));
     });
+
+    socket.on("userStatusUpdated", (updatedUser) => {
+        dispatch(updateStatusFromSocket(updatedUser));
+    });
 }
-export const { deleteUserSuccess, updateStatus, addUserSuccess, updateUserSuccess, addMultipleUsersSuccess } = usersSlice.actions;
+export const { deleteUserSuccess, updateStatusFromSocket, addUserSuccess, updateUserSuccess, addMultipleUsersSuccess } = usersSlice.actions;
 export default usersSlice.reducer;

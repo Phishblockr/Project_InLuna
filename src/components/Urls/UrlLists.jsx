@@ -172,7 +172,7 @@ export default function UrlLists() {
                 toast.success("CSV uploaded successfully");
             }
         } catch (error) {
-            console.log(error)
+            console.error(error)
             toast.error("Failed to upload CSV! Make sure your CSV doesn't contain duplicate email & phone values.");
         }
     }

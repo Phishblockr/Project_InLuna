@@ -77,7 +77,6 @@ const EmpInsights = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const empData = useSelector(state => state.insights.users.find(user => user._id === id))
-    console.log(empData);
 
     const theme = useSelector((state) => state.theme);
 

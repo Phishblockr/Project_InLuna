@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { delUser, getUser, updateUserStatus } from "../../features/Users/usersSlice";
+import { delUser, getUser, startListeningToSocket, updateUserStatus } from "../../features/Users/usersSlice";
 import { toast } from "sonner";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 import DatePicker from 'react-datepicker';
@@ -80,13 +80,12 @@ const UserDetails = () => {
     useEffect(() => {
         dispatch(getUser(id))
         fetchActivityCounts(id, selectedDate);
+        dispatch(startListeningToSocket());
     }, [id, selectedDate])
 
 
     const navigate = useNavigate();
     const { userDetails: user, loading, error } = useSelector(state => state.users);
-
-    console.log(user);
 
     const handleRemUser = async (id, name) => {
         try {

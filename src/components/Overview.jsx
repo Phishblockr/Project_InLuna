@@ -151,7 +151,7 @@ const Overview = () => {
       clearTimeout(loadingTimer);
       setShowLoading(false);
       setDataLoading(false);
-      console.log(error);
+      console.error(error);
       toast.error("Failed to fetch data");
     }
   };
