@@ -170,6 +170,7 @@ export const addUrl = asyncHandler(async (req, res) => {
             // Add Log entry
             await AdminLogs.create({
                 userId,
+                operationType: "add",
                 operationsPerformed: `Added URL: ${url} with status ${status}`,
                 orgId
             })
@@ -205,7 +206,8 @@ export const updateUrl = asyncHandler(async (req, res) => {
             // Add Log entry
             await AdminLogs.create({
                 userId,
-                operationsPerformed: `Updated URL ID: ${id} with url:${url} category:${category} status:${status} phishing: ${isPhishing} isVerified: ${isVerified}`,
+                operationType: "update",
+                operationsPerformed: `Updated URL ID: ${id} with status:${status} phishing: ${isPhishing} isVerified: ${isVerified}`,
                 orgId
             })
 
@@ -231,6 +233,7 @@ export const deleteUrl = asyncHandler(async (req, res) => {
         // Add Log entry
         await AdminLogs.create({
             userId,
+            operationType: "delete",
             operationsPerformed: `Deleted URL ID: ${id}`,
             orgId
         })
@@ -286,6 +289,7 @@ export const addUrlFromCsv = asyncHandler(async (req, res) => {
             // Add Log entry
             await AdminLogs.create({
                 userId,
+                operationType: "add",
                 operationsPerformed: `Added Urls Via CSV`,
                 orgId
             })

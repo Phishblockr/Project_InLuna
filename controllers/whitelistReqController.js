@@ -189,6 +189,7 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
         // Add Log entry
         await AdminLogs.create({
             userId,
+            operationType: "approved",
             operationsPerformed: `Whitelist Request Approved: ${id}`,
             orgId
         })
@@ -213,6 +214,7 @@ export const deleteRequest = asyncHandler(async (req, res) => {
 
         await AdminLogs.create({
             userId,
+            operationType: "delete",
             operationsPerformed: `Whitelist Request deleted: ${id}`,
             orgId
         })

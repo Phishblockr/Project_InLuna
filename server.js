@@ -13,6 +13,8 @@ import urlRoutes from './routes/urlRoutes.js';
 import whitelistReqRoutes from './routes/whitelistReqRoutes.js';
 import feedbackRoutes from "./routes/feedbackRoutes.js"
 import overviewRoutes from "./routes/overviewRoutes.js"
+import logsRoute from "./routes/logsRoute.js"
+
 import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js"
 import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js"
@@ -72,6 +74,9 @@ app.use("/api/feedback", authenticateToken, feedbackRoutes);
 
 // Overview Page Routes
 app.use("/api/overview",dashboardAdminMiddleware, overviewRoutes);
+
+// Logs Route
+app.use("/api/logs/", dashboardAdminMiddleware, logsRoute);
 
 // Error handling middleware
 app.use(errorHandler);

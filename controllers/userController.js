@@ -90,6 +90,7 @@ export const createUser = asyncHandler(async (req, res) => {
     // Add Log entry
     await AdminLogs.create({
       userId,
+      operationType: "add",
       operationsPerformed: `User created: ${name} with userType ${UserTypeCode}`,
       orgId
     })
@@ -181,6 +182,7 @@ export const updateUser = asyncHandler(async (req, res) => {
     // Add Log entry
     await AdminLogs.create({
       userId,
+      operationType: "update",
       operationsPerformed: `User updated: ${name} with userType ${UserTypeCode}`,
       orgId
     })
@@ -212,7 +214,8 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   // Add Log entry
   await AdminLogs.create({
     userId,
-    operationsPerformed: `User status updated: ${id}`,
+    operationType: "update",
+    operationsPerformed: `User status updated: ${updatedUser.email} to ${updatedUser.status}`,
     orgId
   })
 
@@ -271,6 +274,7 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
     // Add Log entry
     await AdminLogs.create({
       userId,
+      operationType: "update",
       operationsPerformed: `Admin pwd updated: ${user.name}`,
       orgId
     })
@@ -317,8 +321,9 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
       // Add Log entry
       await AdminLogs.create({
-        adminId,
-        operationsPerformed: `user deleted: ${user.name}`,
+        userId: adminId,
+        operationType: "delete",
+        operationsPerformed: `user deleted Name: ${user.email}`,
         orgId
       })
 
@@ -403,6 +408,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
       // Add Log entry
       await AdminLogs.create({
         userId,
+        operationType: "add",
         operationsPerformed: `users added via CSV`,
         orgId
       })

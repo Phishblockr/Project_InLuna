@@ -6,6 +6,11 @@ const adminLogsSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "user",
         },
+        operationType: {
+            type: String,
+            enum: ['update', 'delete', 'add', "approved"],
+            required: [true, "Operation type cannot be null"]
+        },
         operationsPerformed: {
             type: String,
             required: [true, "Operations Performed cannot be null"]
