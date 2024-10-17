@@ -207,12 +207,12 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   const updatedUser = await user.save();
 
   const io = req.app.get("socketio");
-  io.emit("userUpdated", updatedUser);
+  io.emit("userStatusUpdated", updatedUser);
 
   // Add Log entry
   await AdminLogs.create({
     userId,
-    operationsPerformed: `User updated: ${id}`,
+    operationsPerformed: `User status updated: ${id}`,
     orgId
   })
 
