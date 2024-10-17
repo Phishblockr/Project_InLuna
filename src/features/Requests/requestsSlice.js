@@ -31,7 +31,7 @@ export const fetchReqs = createAsyncThunk(
             const data = await res.json();
             return data;
         } catch (error) {
-            return rejectWithValue(error.message || "An error occurred");
+            return rejectWithValue(error.message || "An unexpected error occurred while fetching whitelist requests");
         }
     }
 );
@@ -55,7 +55,7 @@ export const delReq = createAsyncThunk(
             }
             return reqId;
         } catch (error) {
-            return rejectWithValue(error.message || "An error occurred");
+            return rejectWithValue(error.message || "An unexpected error occurred while deleting whitelist requests");
         }
     }
 );
@@ -82,7 +82,7 @@ export const approveReq = createAsyncThunk(
             }
             return data;
         } catch (error) {
-            return rejectWithValue(error.message);
+                        return rejectWithValue(error.message || "An unexpected error occurred while approving whitelist requests");
         }
     }
 );

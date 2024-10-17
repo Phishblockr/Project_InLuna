@@ -12,7 +12,7 @@ import Users from "./components/Users/Users.jsx";
 import UrlLists from "./components/Urls/UrlLists.jsx";
 import Requests from "./components/Requests.jsx";
 import Feedbacks from "./components/Services/Feedbacks.jsx";
-import Logs from "./components/Admin_Logs/Logs.jsx";
+import Logs from "./components/Logs.jsx";
 import Sidebar from "./components/Navigation/Sidebar.jsx";
 import Navbar from "./components/Navigation/Navbar.jsx";
 import AddUser from "./components/Users/AddUser.jsx";
