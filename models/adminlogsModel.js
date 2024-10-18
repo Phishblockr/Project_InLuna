@@ -19,6 +19,18 @@ const adminLogsSchema = new mongoose.Schema(
             type: String,
             required: [true, "Organization ID cannot be empty"],
         },
+        entityId: {
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: 'entityType'
+        },
+        entityType: {
+            type: String,
+            required: [true, "Entity type cannot be null"],
+        },
+        entityDetails: {
+            type: Object,
+            default: null
+        }
     },
     { timestamps: true }
 );

@@ -92,7 +92,9 @@ export const createUser = asyncHandler(async (req, res) => {
       userId,
       operationType: "add",
       operationsPerformed: `User created: ${name} with userType ${UserTypeCode}`,
-      orgId
+      orgId,
+      entityId: addedUser._id,
+      entityType: "user"
     })
 
     res.status(201).json(addedUser);
@@ -184,7 +186,9 @@ export const updateUser = asyncHandler(async (req, res) => {
       userId,
       operationType: "update",
       operationsPerformed: `User updated: ${name} with userType ${UserTypeCode}`,
-      orgId
+      orgId,
+      entityId: id,
+      entityType: "user"
     })
 
     res.status(200).json(updatedUser);
@@ -216,7 +220,9 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
     userId,
     operationType: "update",
     operationsPerformed: `User status updated: ${updatedUser.email} to ${updatedUser.status}`,
-    orgId
+    orgId,
+    entityId: id,
+    entityType: "user"
   })
 
   res.status(200).json(updatedUser);
@@ -276,7 +282,9 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
       userId,
       operationType: "update",
       operationsPerformed: `Admin pwd updated: ${user.name}`,
-      orgId
+      orgId,
+      entityId: userId,
+      entityType: "user"
     })
 
     res.status(200).json({ message: "Password updated successfully" });
@@ -324,7 +332,10 @@ export const deleteUser = asyncHandler(async (req, res) => {
         userId: adminId,
         operationType: "delete",
         operationsPerformed: `user deleted Name: ${user.email}`,
-        orgId
+        orgId,
+        entityId: id,
+        entityType: "user",
+        entityDetails: {identifier: user.email, status: user.status, extraInfo: user.department}
       })
 
       res.status(200).json({ message: `User ${user.email} removed successfully` });
@@ -410,7 +421,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
         userId,
         operationType: "add",
         operationsPerformed: `users added via CSV`,
-        orgId
+        orgId,
       })
 
       res.status(200).json({ message: 'Users added successfully' });

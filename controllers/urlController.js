@@ -172,7 +172,9 @@ export const addUrl = asyncHandler(async (req, res) => {
                 userId,
                 operationType: "add",
                 operationsPerformed: `Added URL: ${url} with status ${status}`,
-                orgId
+                orgId,
+                entityId: newUrl._id,
+                entityType: "url"
             })
             res.status(201).send(newUrl);
         }
@@ -208,7 +210,9 @@ export const updateUrl = asyncHandler(async (req, res) => {
                 userId,
                 operationType: "update",
                 operationsPerformed: `Updated URL ID: ${id} with status:${status} phishing: ${isPhishing} isVerified: ${isVerified}`,
-                orgId
+                orgId,
+                entityId: id,
+                entityType: "url"
             })
 
             res.status(200).json(updatedUrl);
@@ -226,7 +230,11 @@ export const deleteUrl = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const userId = req.user.userId;
         const orgId = req.user.orgId;
-        const urlData = await Url.findByIdAndDelete(id);
+        const urlData = await Url.findById(id);
+        if(!urlData){
+            return res.status(404).json({ message: "url not found" });
+        }
+        await Url.findByIdAndDelete(id);
         const io = req.app.get("socketio");
         io.emit("urlDeleted", id);
 
@@ -235,7 +243,10 @@ export const deleteUrl = asyncHandler(async (req, res) => {
             userId,
             operationType: "delete",
             operationsPerformed: `Deleted URL ID: ${id}`,
-            orgId
+            orgId,
+            entityId: id,
+            entityType: "url",
+            entityDetails: {identifier: urlData.url, status: urlData.status, extraInfo: urlData.category}
         })
 
         res.status(200).json(id);

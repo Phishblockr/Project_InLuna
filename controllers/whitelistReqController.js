@@ -191,7 +191,9 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
             userId,
             operationType: "approved",
             operationsPerformed: `Whitelist Request Approved: ${id}`,
-            orgId
+            orgId,
+            entityId: id,
+            entityType: "whitelistReq"
         })
 
         res.json({ message: "Whitelist request approved and URL updated", updatedWhitelistRequest: updatedWhitelistRequest[0] });
@@ -207,7 +209,10 @@ export const deleteRequest = asyncHandler(async (req, res) => {
 
         const userId = req.user.userId;
         const orgId = req.user.orgId;
-
+        const data = await WhitelistReq.findById(id);
+        if (!data) {
+            return res.status(404).json({ message: "Whitelist request not found" });
+        }
         await WhitelistReq.findByIdAndDelete(id);
         const io = req.app.get("socketio");
         io.emit("reqDeleted", id);
@@ -216,7 +221,10 @@ export const deleteRequest = asyncHandler(async (req, res) => {
             userId,
             operationType: "delete",
             operationsPerformed: `Whitelist Request deleted: ${id}`,
-            orgId
+            orgId,
+            entityId: id,
+            entityType: "whitelistReq",
+            entityDetails: { from: data.userId, identifier: data.url, status: data.status, extraInfo: data.reason  } 
         })
 
         res.status(200).json(id);
