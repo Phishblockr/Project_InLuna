@@ -11,13 +11,16 @@ import { getLogs } from "../features/Logs/logsSlice";
 import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 import debounce from "debounce";
 import LoadingOverlay from "../utils/LoadingOverlay";
-import {formatDate} from "../utils/formatDate.jsx"
+import { formatDate } from "../utils/formatDate.jsx"
 
 const LogDetailsModal = ({ show, onClose, logData }) => {
-    if (!show) return null;
+    if (!show || !logData) return null;
+
+    const { userDetails = {}, entityDetails = {}, entityId, entityType, operationType, operationsPerformed, createdAt } = logData;
+
     return (
         <div className="fixed bg-black/50 top-0 left-0 right-0 bottom-0 flex justify-center items-center z-50">
-            <div className="bg-white dark:bg-[#002451] dark:text-[#F4F4F4] p-5 rounded-lg w-full max-w-md relative">
+            <div className="bg-white dark:bg-[#2b2e32] dark:text-[#F4F4F4] p-5 rounded-lg w-full max-w-[1000px] relative">
                 <h1 className="text-2xl font-semibold mb-2">Detailed Info</h1>
                 <button onClick={onClose} className="absolute top-3 right-3">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
@@ -25,10 +28,67 @@ const LogDetailsModal = ({ show, onClose, logData }) => {
                     </svg>
                 </button>
                 <div className="rounded-lg p-4 mt-2">
-                    <h2 className="font-medium text-xl mb-2">User Details</h2>
-                    <p className="font-medium">{logData.userDetails.name}</p>
-                    <p className="text-gray-500">Email: {logData.userDetails.email}</p>
-                    <p className="text-gray-500">Department: {logData.userDetails.department}</p>
+                    <h2 className="font-medium text-xl mb-2">Updates made by</h2>
+                    {userDetails.name ? (
+                        <Link to={`/users/userDetails/${userDetails._id}`} title="Click to view details">
+                            <p className="font-medium text-blue-500 underline">{userDetails.name}</p>
+                        </Link>
+                    ) : (
+                        <p className="text-gray-500">No user details available</p>
+                    )}
+                    <div className="flex flex-row gap-2">
+                        <p>Email:</p>
+                        <p className="text-gray-500">{userDetails.email || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Department:</p>
+                        <p className="text-gray-500">{userDetails.department || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Operation Type:</p>
+                        <p className="text-gray-500">{operationType || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Operations Performed:</p>
+                        <p className="text-gray-500">{operationsPerformed || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>On:</p>
+                        <p className="text-gray-500">{createdAt ? formatDate(createdAt, "24hours") : "N/A"}</p>
+                    </div>
+                </div>
+                <div className="rounded-lg p-4 mt-2">
+                    <h2 className="font-medium text-xl mb-2">Updates made to</h2>
+                    <div className="flex flex-row gap-2">
+                        <p>ID:</p>
+                        <p className="text-gray-500">{entityId || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Type:</p>
+                        <p className="text-gray-500">{entityType || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>From:</p>
+                        {entityDetails.from ? (
+                            <Link to={`/users/userDetails/${entityDetails.from}`} title="Click to view details">
+                                <p className="text-blue-500 underline">{entityDetails.from}</p>
+                            </Link>
+                        ) : (
+                            <p className="text-gray-500">N/A</p>
+                        )}
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Identifier:</p>
+                        <p className="text-gray-500 break-words overflow-hidden w-full">{entityDetails.identifier || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Status:</p>
+                        <p className="text-gray-500">{entityDetails.status || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Extra info:</p>
+                        <p className="text-gray-500">{entityDetails.extraInfo || "N/A"}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -172,14 +232,26 @@ const Logs = () => {
                 <header className="bg-white dark:bg-[#002451] dark:text-[#F4F4F4] p-4 rounded-xl shadow flex justify-between items-center">
                     <h1 className="text-2xl font-medium">Logs</h1>
                     <div className="flex gap-3 items-center">
-                        <input type="text" placeholder="Search Logs" className="border rounded-lg p-2 focus:ring-2 dark:bg-[#001733]" />
-                        <select defaultValue="default" className="p-2 rounded-lg dark:bg-[#001733] border-gray-300">
-                            <option value="default">Sort by</option>
+                        <input onChange={(e) => handleSearch(e.target.value)} type="text" placeholder="Search Logs" className="rounded-lg border-gray-300 border-2 text-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0" />
+                        <select onChange={(e) => handleOperationType(e.target.value)} defaultValue="all" className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0">
+                            <option value="all">Operation Type</option>
+                            <option value="update">Update</option>
+                            <option value="delete">Delete</option>
+                            <option value="add">Add</option>
+                            <option value="approved">Approved</option>
                         </select>
-                        <select defaultValue="default" className="p-2 rounded-lg dark:bg-[#001733] border-gray-300">
-                            <option value="default">Date Range Filter</option>
+                        <select onChange={(e) => handleDateRangeFilter(e.target.value)} defaultValue="all" className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0">
+                            <option value="all">Date Range Filter</option>
+                            <option value="this_week">This Week</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="this_month">This Month</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="this_quarter">This Quarter</option>
+                            <option value="last_quarter">Last Quarter</option>
+                            <option value="this_year">This Year</option>
+                            <option value="last_year">Last Year</option>
                         </select>
-                        <select value={perPageRec} onChange={(e) => handleSetPerPageRec(e.target.value)} className="p-2 rounded-lg border-gray-300 dark:bg-[#001733]">
+                        <select value={perPageRec} onChange={(e) => handleSetPerPageRec(e.target.value)} className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0">
                             {[5, 10, 25, 50, 100].map((val) => (
                                 <option key={val} value={val}>
                                     {val}

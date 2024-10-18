@@ -204,13 +204,13 @@ export default function UrlLists() {
                         <input
                             type="text"
                             placeholder="Search Urls..."
-                            className="rounded-lg border-gray-300 border-2 text-gray-400 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            className="rounded-lg border-gray-300 border-2 text-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
                             onChange={(e) => setQuery(e.target.value)}
                         />
                         <select
                             name="filters"
                             id="filters"
-                            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
                             onChange={(e) => handleStatus(e.target.value)}
                         >
                             <option value="all">Status</option>
@@ -220,7 +220,7 @@ export default function UrlLists() {
                         <select
                             name="perPageRec"
                             id="perPageRec"
-                            className="rounded-lg border-gray-300 border-2 text-gray-400 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
                             onChange={(e) => handleSetPerPageRec(e.target.value)}
                             value={perPageRec}
                         >
