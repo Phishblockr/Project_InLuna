@@ -224,7 +224,7 @@ export const deleteRequest = asyncHandler(async (req, res) => {
             orgId,
             entityId: id,
             entityType: "whitelistReq",
-            entityDetails: { from: data.userId, identifier: data.url, status: data.status, extraInfo: data.reason  } 
+            entityDetails: { from: data.userId, identifier: data.url, status: data.status, extraInfo: `Reason: ${data.reason}`  } 
         })
 
         res.status(200).json(id);

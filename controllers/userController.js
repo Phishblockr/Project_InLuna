@@ -335,7 +335,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
         orgId,
         entityId: id,
         entityType: "user",
-        entityDetails: {identifier: user.email, status: user.status, extraInfo: user.department}
+        entityDetails: {identifier: user.email, status: user.status, extraInfo: `Department: ${user.department}`}
       })
 
       res.status(200).json({ message: `User ${user.email} removed successfully` });

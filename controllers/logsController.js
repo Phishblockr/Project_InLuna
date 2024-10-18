@@ -5,6 +5,10 @@ import { Parser } from 'json2csv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import Url from '../models/urlModel.js';
+import User from '../models/userModel.js';
+import WhitelistReq from '../models/whitelistReqModel.js';
+
 
 
 // Create __dirname equivalent for ES modules
@@ -65,6 +69,14 @@ export const getAllLogs = async (req, res) => {
             { $limit: limit }
         ]);
 
+        const logsWithDetails = await Promise.all(logs.map(async (log) => {
+            const entityDetails = log.entityDetails || await getEntityDetails(log.entityType, log.entityId);
+            return {
+                ...log,
+                entityDetails,
+            };
+        }));
+
         const totalLogsAggregation = await AdminLogs.aggregate([
             { $match: { orgId, ...operationTypeFilter, ...dateFilter } },
             {
@@ -82,7 +94,7 @@ export const getAllLogs = async (req, res) => {
         const totalLogs = totalLogsAggregation[0]?.totalCount || 0;
 
         res.json({
-            data: logs,
+            data: logsWithDetails,
             currentPage: page,
             totalPages: Math.ceil(totalLogs / limit),
             totalLogs
@@ -188,4 +200,46 @@ const getDateRange = (filter) => {
         default:
             return {}; // No date filter for 'all'
     }
+};
+
+const getEntityDetails = async (entityType, entityId) => {
+    let entityDetails = {};
+
+    switch (entityType) {
+        case "user":
+            const user = await User.findById(entityId);
+            if (user) {
+                entityDetails = {
+                    identifier: user.email,
+                    status: user.status,      
+                    extraInfo: `Department: ${user.department}`,        
+                };
+            }
+            break;
+
+        case "url":
+            const url = await Url.findById(entityId);
+            if (url) {
+                entityDetails = {
+                    identifier: url.url,     
+                    status: url.status,      
+                    extraInfo: `Category: ${url.category.join(", ")}`,
+                };
+            }
+            break;
+
+        case "whitelistReq":
+            const whitelistReq = await WhitelistReq.findById(entityId);
+            if (whitelistReq) {
+                entityDetails = {
+                    identifier: whitelistReq.url,
+                    status: whitelistReq.status,    
+                    extraInfo: `Reason: ${whitelistReq.reason}`, 
+                    from: whitelistReq.userId,      
+                };
+            }
+            break;
+    }
+
+    return entityDetails;
 };

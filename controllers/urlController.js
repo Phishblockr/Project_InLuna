@@ -246,7 +246,7 @@ export const deleteUrl = asyncHandler(async (req, res) => {
             orgId,
             entityId: id,
             entityType: "url",
-            entityDetails: {identifier: urlData.url, status: urlData.status, extraInfo: urlData.category}
+            entityDetails: {identifier: urlData.url, status: urlData.status, extraInfo: `Category: ${urlData.category}`}
         })
 
         res.status(200).json(id);
