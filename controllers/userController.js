@@ -60,7 +60,7 @@ export const createUser = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.userId;
     const orgId = req.user.orgId;
-    const { name, email, phone, role, department, gender, userType, img } = req.body;
+    const { name, email, phone, role, department, gender, userType, img, status } = req.body;
 
     let UserTypeCode
 
@@ -74,6 +74,7 @@ export const createUser = asyncHandler(async (req, res) => {
     const newUser = new User({
       username,
       name,
+      status,
       gender,
       email,
       phone,

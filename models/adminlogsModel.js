@@ -25,7 +25,6 @@ const adminLogsSchema = new mongoose.Schema(
         },
         entityType: {
             type: String,
-            required: [true, "Entity type cannot be null"],
         },
         entityDetails: {
             type: Object,
