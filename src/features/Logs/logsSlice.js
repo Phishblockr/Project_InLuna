@@ -8,6 +8,8 @@ const initialState = {
     currentPage: 1,
     loading: false,
     error: null,
+    csvDownloadLoading: false, 
+    csvDownloadError: null, 
 };
 
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -32,6 +34,37 @@ export const getLogs = createAsyncThunk(
     }
 );
 
+export const downloadLogsCsv = createAsyncThunk("logs/downloadCsv", async (_, { rejectWithValue }) => {
+    const token = JSON.parse(localStorage.getItem("user")).token;
+    try {
+        const res = await fetch(`${apiUrl}/logs/exportLogsToCsv`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!res.ok) throw new Error("Failed to download logs as CSV");
+
+        const blob = await res.blob();
+
+        // Create a link element to trigger the download
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+
+        // Set the filename for the download
+        link.download = `logs_${Date.now()}.csv`;
+
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+
+        return true;
+    } catch (error) {
+        return rejectWithValue("Failed to download logs as CSV");
+    }
+})
+
 const logsSlice = createSlice({
     name: "logs",
     initialState,
@@ -52,6 +85,18 @@ const logsSlice = createSlice({
             .addCase(getLogs.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || "Failed to load logs";
+            })
+            // Handle downloading logs as CSV
+            .addCase(downloadLogsCsv.pending, (state) => {
+                state.csvDownloadLoading = true;
+                state.csvDownloadError = null;
+            })
+            .addCase(downloadLogsCsv.fulfilled, (state) => {
+                state.csvDownloadLoading = false;
+            })
+            .addCase(downloadLogsCsv.rejected, (state, action) => {
+                state.csvDownloadLoading = false;
+                state.csvDownloadError = action.payload || "Failed to download logs as CSV";
             });
     }
 });

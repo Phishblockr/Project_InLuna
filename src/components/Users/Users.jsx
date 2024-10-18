@@ -177,13 +177,13 @@ export default function Users() {
                         <input
                             type="text"
                             placeholder="Search User..."
-                            className="rounded-lg border-gray-300 border-2 text-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            className="rounded-lg border-gray-300 border-2 text-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
                             onChange={(e) => handleSearch(e.target.value)}
                         />
                         <select
                             name="filters"
                             id="filters"
-                            className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
                             onChange={(e) => handleStatus(e.target.value)}
                         >
                             <option value="all">Status</option>
@@ -194,7 +194,7 @@ export default function Users() {
                         <select
                             name="perPageRec"
                             id="perPageRec"
-                            className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0"
+                            className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
                             onChange={(e) => handleSetPerPageRec(e.target.value)}
                             value={perPageRec}
                         >
@@ -204,7 +204,7 @@ export default function Users() {
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-300 dark:dark:bg-[#001733] dark:hover:bg-[#001733] transition"
+                        <button className="flex justify-center items-center gap-3 px-4 p-[10px] rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-300 dark:dark:bg-[#001733] dark:hover:bg-[#001733] dark:text-gray-400 transition"
                             onClick={() => setIsModalOpen(true)}>Add users via CSV</button>
                         <Link
                             to={"/users/adduser"}
