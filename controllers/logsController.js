@@ -1,6 +1,16 @@
 import mongoose from 'mongoose';
 import AdminLogs from "../models/adminlogsModel.js"
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subWeeks, subMonths, subQuarters, subYears } from 'date-fns';
+import { Parser } from 'json2csv';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 export const getAllLogs = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
@@ -79,6 +89,79 @@ export const getAllLogs = async (req, res) => {
         })
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+export const exportLogsToCsv = async (req, res) => {
+    try {
+        const orgId = req.user.orgId;
+        const logs = await AdminLogs.aggregate([
+            {
+                $match: { orgId }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userId",
+                    foreignField: "_id",
+                    as: "userDetails"
+                }
+            },
+            {
+                $unwind: "$userDetails"
+            },
+            {
+                $project: {
+                    _id: 1,
+                    operationType: 1,
+                    operationsPerformed: 1,
+                    createdAt: 1,
+                    entityId: 1,
+                    entityType: 1,
+                    entityDetails: 1,
+                    "userDetails.name": 1,
+                    "userDetails.email": 1,
+                    "userDetails.department": 1,
+                }
+            },
+            {
+                $sort: { createdAt: -1 }
+            }
+        ]);
+        if (!logs || logs.length === 0) {
+            return res.status(404).json({ message: 'No logs found for the organization' });
+        }
+        const fields = [
+            { label: 'Log ID', value: '_id' },
+            { label: 'Operation Type', value: (row) => row.operationType || 'NA' },
+            { label: 'Operations Performed', value: (row) => row.operationsPerformed || 'NA' },
+            { label: 'Created At', value: (row) => row.createdAt || 'NA' },
+            { label: 'Entity ID', value: (row) => row.entityId || 'NA' },
+            { label: 'Entity Type', value: (row) => row.entityType || 'NA' },
+            { label: 'Entity Details', value: (row) => row.entityDetails ? JSON.stringify(row.entityDetails) : 'NA' }, // Convert object to string or 'NA'
+            { label: 'User Name', value: (row) => row.userDetails.name || 'NA' },
+            { label: 'User Email', value: (row) => row.userDetails.email || 'NA' },
+            { label: 'User Department', value: (row) => row.userDetails.department || 'NA' }
+        ];
+
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(logs);
+
+        const filePath = path.join(__dirname, '..', 'exports', `logs_${orgId}_${Date.now()}.csv`);
+        fs.writeFileSync(filePath, csv);
+
+        res.download(filePath, `logs_${Date.now()}.csv`, (err) => {
+            if (err) {
+                console.error('Error downloading the CSV file:', err);
+                return res.status(500).json({ message: 'Error downloading the CSV file' });
+            }
+
+            // Optionally, delete the file after download
+            fs.unlinkSync(filePath);
+        });
+    } catch (error) {
+        console.error('Error exporting logs to CSV:', error);
+        res.status(500).json({ message: 'Error exporting logs to CSV', error: error.message });
     }
 };
 
