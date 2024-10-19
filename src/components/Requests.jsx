@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import debounce from "debounce";
 import AuthenticateModal from "../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../utils/handleVerifyPwd";
+import LoadingOverlay from "../utils/LoadingOverlay";
 
 
 export default function Requests() {
@@ -148,6 +149,11 @@ export default function Requests() {
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+            {showLoading && <LoadingOverlay loading={dataLoading} />}
+            <AuthenticateModal isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onConfirm={handlePasswordConfirm}
+            />
             <div>
                 <div className=" bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                     <div>
@@ -264,7 +270,7 @@ export default function Requests() {
                                     </div>
                                     <div className="">
                                 <button
-                                    onClick={() => handleApproveReq(request._id)}
+                                    onClick={() => handlePasswordModalOpen(request._id, "update")}
                                     className="bg-[#0364BD] hover:bg-[#003A70] p-3 text-[#f4f4f4] font-medium rounded-lg mr-2"
                                 >
                                     <span className="flex flex-row items-center gap-x-1">
@@ -272,7 +278,7 @@ export default function Requests() {
                                     </span>
                                 </button>
                                 <button
-                                    onClick={() => handleRem(request._id)}
+                                    onClick={() => handlePasswordModalOpen(request._id, "delete")}
                                     className="bg-gray-200 hover:bg-gray-300 text-red-500 p-3 font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
                                 >
                                     <span className="flex flex-row items-center gap-x-1">
