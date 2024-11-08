@@ -13,6 +13,7 @@ import Plot from 'react-plotly.js';
 import { PiUserCircleLight } from "react-icons/pi";
 import { Link } from 'react-router-dom';
 import socket from '../utils/socket.jsx';
+import Chart from 'react-apexcharts';
 
 const Overview = () => {
   const dispatch = useDispatch();
@@ -31,6 +32,7 @@ const Overview = () => {
     start: startOfWeek(new Date(), { weekStartsOn: 1 }),
     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
   });
+  const [heatmapData, setHeatmapData] = useState([]);
   const [badBrowsingProfile, setBadBrowsingProfile] = useState([])
   const [goodBrowsingProfile, setGoodBrowsingProfile] = useState([])
 
@@ -113,6 +115,18 @@ const Overview = () => {
         }
       });
       const data = await response.json();
+
+      console.log(data)
+
+      setHeatmapData(
+        Object.entries(data.heatmapData).map(([category, values]) => ({
+          name: category,
+          data: values.times.map((time, index) => ({
+            x: time,
+            y: values.visits[index]
+          }))
+        }))
+      )
 
       setBadBrowsingProfile(data.badBrowsingProfile);
       setGoodBrowsingProfile(data.goodBrowsingProfile);
@@ -197,6 +211,8 @@ const Overview = () => {
     phishing: barGraphData.phishingVisits[index],
     blacklisted: barGraphData.blacklistedVisits[index]
   }));
+
+  console.log(heatmapData)
 
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>
@@ -345,6 +361,48 @@ const Overview = () => {
               config={{ responsive: true }}
             />
           </div>
+        </div>
+        <div className="w-full p-2 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]">
+          <h2 className="text-center dark:text-[#F4F4F4]">URL Category Heatmap</h2>
+          <Chart
+  options={{
+    chart: {
+      type: 'heatmap',
+      toolbar: { show: false },
+      background: isDarkMode ? '#001C40' : '#ffffff', // Set background based on theme
+    },
+    plotOptions: {
+      heatmap: {
+        colorScale: {
+                    ranges: [
+                      { from: 0, to: 5, color: "#a9d5ff" },   
+                      { from: 6, to: 10, color: "#57aeff" },
+                      { from: 11, to: 20, color: "#0687ff" },
+                      { from: 21, to: 30, color: "#005cb3" },
+                      { from: 31, to: 40, color: "#003A70" },
+                    ],
+                  },
+                },
+              },
+              dataLabels: {
+                enabled: false,
+              },
+              xaxis: {
+                type: "category",
+                labels: { style: { colors: textColor } },
+                title: { text: "Date", style: { color: textColor } }
+              },
+              yaxis: {
+                labels: { style: { colors: textColor } },
+                title: { text: "Categories", style: { color: textColor } }
+              },
+              legend: { labels: { colors: textColor } },
+              theme: { mode: isDarkMode ? "dark" : "light" },
+            }}
+            series={heatmapData}
+            type="heatmap"
+            height={350}
+          />
         </div>
         <div className='flex justify-center gap-5 dark:text-[#f4f4f4]'>
           <div className='rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5'>
