@@ -174,6 +174,50 @@ export const fetchOrgMetrics = async (req, res) => {
             return departmentData || { department, phishingVisits: 0, blacklistedVisits: 0, totalVisits: 0 };
         })
 
+        // Heat map graph
+        const categoryHeatmapData = await Url.aggregate([
+            {
+                $match: {
+                    orgId: orgId,
+                    createdAt: {$gte: startOfMonth, $lt: endOfMonth}
+                }
+            },
+            {$unwind: "$visitedBy"},
+            {$unwind: "$category"},
+            {
+                $group: {
+                    _id: {
+                        time: timeGroup,
+                        category: "$category"
+                    },
+                    totalVisits: {$sum: "$visitedBy.totalVisits"},
+                    blacklistedVisits: {
+                        $sum: {
+                            $cond:[{$eq: ["$status", "blacklisted"]}, "$visitedBy.totalVisits", 0]
+                        }
+                    },
+                    phishingVisits: {
+                        $sum: {
+                            $cond: [{$eq: ["$isPhishing", true]}, "$visitedBy.totalVisits", 0]
+                        }
+                    }
+                }
+            },
+            { $sort: { "_id.time": 1 } }
+        ])
+
+        const heatmapData = categoryHeatmapData.reduce((acc, item) => {
+            const {time, category} = item._id;
+            if (!acc[category]){
+                acc[category] = {times: [], visits: [], blacklisted: [], phishing:[]};
+            }
+            acc[category].times.push(time);
+            acc[category].visits.push(item.totalVisits);
+            acc[category].blacklisted.push(item.blacklistedVisits);
+            acc[category].phishing.push(item.phishingVisits);
+            return acc;
+        }, {})
+
         // classify Users By Browsing Profile
         const users = await User.find({ orgId });
         const goodBrowsingProfile = [];
@@ -245,6 +289,7 @@ export const fetchOrgMetrics = async (req, res) => {
                 phishingVisits: visitsByTimeFrame.map(item => item.phishingVisits)
             },
             scatterPlotData,
+            heatmapData,
             goodBrowsingProfile,
             badBrowsingProfile
 
