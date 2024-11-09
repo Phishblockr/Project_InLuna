@@ -19,6 +19,8 @@ import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js"
 import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js"
 
+import forgotDetailsRoutes from './routes/forgotDetailsRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -77,6 +79,8 @@ app.use("/api/overview",dashboardAdminMiddleware, overviewRoutes);
 
 // Logs Route
 app.use("/api/logs/", dashboardAdminMiddleware, logsRoute);
+
+app.use("/api/forgot", forgotDetailsRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
