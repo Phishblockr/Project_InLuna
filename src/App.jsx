@@ -32,21 +32,26 @@ import Logout from "./components/Auth/Logout.jsx";
 import NotFound from "./components/NotFound.jsx";
 import ReportBug from "./components/Services/ReportBug.jsx";
 import Faqs from "./components/Services/Faqs.jsx";
+import PasswordReset from "./components/ForgotDetails/PasswordReset.jsx";
+import ForgotDetails from "./components/ForgotDetails/ForgotDetails.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
-  const isLogoutpage = location.pathname === "/logout";
+  const isLogoutPage = location.pathname === "/logout";
+  const isForgotDetailsPage = location.pathname === "/forgotDetails"
+  const isResetPasswordPage = location.pathname.startsWith("/resetPassword");
+
+  const showSidebarAndNavbar = !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage;
 
   return (
     <>
-      {!isLoginPage && !isLogoutpage  && <Sidebar />}
-      {!isLoginPage && !isLogoutpage && <Navbar />}
+      {showSidebarAndNavbar && <Sidebar />}
+      {showSidebarAndNavbar && <Navbar />}
       {children}
     </>
   );
 };
-
 function App() {
   const theme = useSelector((state) => state.theme);
 
@@ -62,6 +67,9 @@ function App() {
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/logout" element={<Logout />} />
+
+                    <Route path="/forgotDetails" element={<ForgotDetails />} />
+                    <Route path = "/resetPassword/:token" element={<PasswordReset/>}/>
 
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>

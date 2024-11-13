@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from '../../utils/AuthProvider';
+import { Link } from "react-router-dom";
 
 const Login = () => {
     const [username, setUsername] = useState("");
@@ -79,12 +80,12 @@ const Login = () => {
                             Login
                         </button>
                         <div className="mt-4 text-center">
-                            <a
-                                href="/forgot-password"
+                            <Link
+                                to="/forgotDetails"
                                 className="text-[#0364BD] hover:underline"
                             >
-                                Forgot Password?
-                            </a>
+                                Forgot Details?
+                            </Link>
                         </div>
                     </form>
                 </div>
