@@ -66,6 +66,12 @@ const userSchema = new Schema({
         type: Date,
         default: Date.now
     },
+    resetPasswordToken: { 
+        type: String 
+    }, 
+    resetPasswordExpires: { 
+        type: Date 
+    },        
     orgId: {
         type: String,
         required: [true, 'Organization ID is required'],

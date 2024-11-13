@@ -1,11 +1,10 @@
 import express from 'express';
-import { forgotPassword, resetPassword, sendUsernameReminder } from '../controllers/forgotDetails.js';
+import { handleForgotDetails, resetPassword } from '../controllers/forgotDetails.js';
 
 const router = express.Router();
 
-router.post('/forgotUsername', sendUsernameReminder);
-router.post('/forgotPassword', forgotPassword);
-router.post('/resetPassword/:token', resetPassword);
+router.post("/forgotDetails", handleForgotDetails);
+router.post("/resetPassword/:token", resetPassword);
 
 
 export default router;

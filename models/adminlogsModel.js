@@ -8,7 +8,7 @@ const adminLogsSchema = new mongoose.Schema(
         },
         operationType: {
             type: String,
-            enum: ['update', 'delete', 'add', "approved"],
+            enum: ['update', 'delete', 'add', "approved", "account recovery"],
             required: [true, "Operation type cannot be null"]
         },
         operationsPerformed: {
