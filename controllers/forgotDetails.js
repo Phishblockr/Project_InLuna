@@ -18,6 +18,17 @@ const generateUsernameReminder = async (user, userId, orgId) => {
     return `<p>Your username is: <strong>${user.username}</strong></p>`;
 };
 
+const generateOrgIdReminder = async (user, userId, orgId) => {
+    // Add Log entry
+    await AdminLogs.create({
+        userId,
+        operationType: "account recovery",
+        operationsPerformed: `Requested OrgId Reminder E-mail`,
+        orgId,
+    })
+    return `<p>Your organization id is: <strong>${user.orgId}</strong></p>`;
+}
+
 const generatePasswordResetLink = async (user, userId, orgId) => {
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = await bcrypt.hash(resetToken, 10);
@@ -51,7 +62,7 @@ const sendEmail = async (to, subject, content) => {
 
 
 export const handleForgotDetails = async (req, res) => {
-    const { email, isPasswordReset, isUsernameReminder } = req.body;
+    const { email, isPasswordReset, isUsernameReminder, isOrgIdRem } = req.body;
 
     if (!isPasswordReset && !isUsernameReminder) {
         return res.status(404).json({ message: "Invalid option" });
@@ -79,6 +90,11 @@ export const handleForgotDetails = async (req, res) => {
         if (isPasswordReset) {
             emailContent += await generatePasswordResetLink(user, userId, orgId);
             responseMessage.push("Password reset link sent.");
+        }
+
+        if (isOrgIdRem) {
+            emailContent += await generateOrgIdReminder(user, userId, orgId);
+            responseMessage.push("Organization id reminder sent.");
         }
 
         // Send the combined email
