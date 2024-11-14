@@ -6,22 +6,24 @@ const ForgotDetails = () => {
     const [email, setEmail] = useState("");
     const [isPasswordReset, setIsPasswordReset] = useState(false);
     const [isUsernameReminder, setIsUsernameReminder] = useState(false);
+    const [isOrgIdRem, setIsOrgIdRem] = useState(false);
 
     const handleSendEmail = async (event) => {
         event.preventDefault();
 
         const formData = {
-            email, 
-            isPasswordReset, 
-            isUsernameReminder
+            email,
+            isPasswordReset,
+            isUsernameReminder,
+            isOrgIdRem
         };
-        try{
+        try {
             const response = await fetch(`${apiUrl}/forgot/forgotDetails`, {
-                method:"POST",
+                method: "POST",
                 headers: {
-                    "Content-Type" : "application/json",
+                    "Content-Type": "application/json",
                 },
-                body : JSON.stringify(formData)
+                body: JSON.stringify(formData)
             });
             if (!response.ok) {
                 const data = await response.json();
@@ -33,7 +35,7 @@ const ForgotDetails = () => {
             toast.error(error.message);
         }
     }
-    
+
     return (
 
         <div className="flex justify-center">
@@ -59,23 +61,32 @@ const ForgotDetails = () => {
                         </div>
                         <div className='mb-4 flex flex-col gap-2'>
                             <div className='flex flex-row gap-2'>
-                            <input 
-                            type="checkbox" 
-                            name="resetPassword" 
-                            id="resetPassword" 
-                            checked={isPasswordReset}
-                            onChange={(e) => setIsPasswordReset(e.target.checked)}
-                            />
-                            <label htmlFor="resetPassword">Send Reset Password Link</label>
+                                <input
+                                    type="checkbox"
+                                    name="resetPassword"
+                                    id="resetPassword"
+                                    checked={isPasswordReset}
+                                    onChange={(e) => setIsPasswordReset(e.target.checked)}
+                                />
+                                <label htmlFor="resetPassword">Request Reset Password Link</label>
                             </div>
                             <div className='flex flex-row gap-2'>
-                            <input type="checkbox" 
-                            name="username" 
-                            id="username" 
-                            checked={isUsernameReminder}
-                            onChange={(e) => setIsUsernameReminder(e.target.checked)}
-                            />
-                            <label htmlFor="username">Send Username Reminder </label>
+                                <input type="checkbox"
+                                    name="username"
+                                    id="username"
+                                    checked={isUsernameReminder}
+                                    onChange={(e) => setIsUsernameReminder(e.target.checked)}
+                                />
+                                <label htmlFor="username">Request Username Reminder </label>
+                            </div>
+                            <div className='flex flex-row gap-2'>
+                                <input type="checkbox"
+                                    name="orgIdRem"
+                                    id="orgIdRem"
+                                    checked={isOrgIdRem}
+                                    onChange={(e) => setIsOrgIdRem(e.target.checked)}
+                                />
+                                <label htmlFor="orgIdRem">Request Organization Reminder </label>
                             </div>
                         </div>
                         <input className="w-full bg-[#0364BD] text-[#f4f4f4] py-2 rounded-md hover:bg-[#003A70] transition-colors font-medium" type="submit" value="Send E-mail" />
