@@ -8,16 +8,42 @@ import csvParser from 'csv-parser';
 // for adminLog
 import AdminLogs from "../models/adminlogsModel.js";
 
+// Helper function to normalize URLs by removing 'www.' and ensuring the URL starts with 'https://'
+function normalizeUrl(url) {
+    console.log(url);
+    
+    try {
+        // If the URL doesn't start with "http://" or "https://", add "https://"
+        if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
+        }
+
+        // Parse the URL using the URL constructor (works in Node.js and browser)
+        const parsedUrl = new URL(url);
+
+        // Remove "www." if it exists
+        const normalizedHost = parsedUrl.hostname.replace(/^www\./, '');
+        
+        // Return the normalized URL (with 'https://')
+        return `${parsedUrl.protocol}//${normalizedHost}${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
+    } catch (error) {
+        throw new Error('Invalid URL');
+    }
+}
+
+// Add a new URL entry with normalization
 export const addUrlExt = async (req, res) => {
     try {
         const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
         const orgId = req.user.orgId;
 
-        const visitedBy = [{ userId }]
-
+        const visitedBy = [{ userId }];
         const { url, isVerified, isPhishing, isUserAdded, category } = req.body;
 
-        const existingUrls = await Url.findOne({ url: url, orgId: orgId });
+        // Normalize the URL before saving
+        const normalizedUrl = normalizeUrl(url);
+
+        const existingUrls = await Url.findOne({ url: normalizedUrl, orgId: orgId });
 
         if (existingUrls) {
             let visitor = existingUrls.visitedBy.find(v => v.userId.equals(visitedBy[0].userId));
@@ -35,7 +61,7 @@ export const addUrlExt = async (req, res) => {
             res.status(200).send(existingUrls);
         } else {
             const newUrl = new Url({
-                url: url,
+                url: normalizedUrl,
                 visitedBy: [{
                     userId: visitedBy[0].userId,
                     visits: [{ timestamp: new Date() }],
@@ -57,6 +83,7 @@ export const addUrlExt = async (req, res) => {
     }
 };
 
+// Fetch URL stats based on user visits
 export const fetchUrlStatsExt = async (req, res) => {
     const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
     const orgId = req.user.orgId;
@@ -92,6 +119,7 @@ export const fetchUrlStatsExt = async (req, res) => {
     }
 };
 
+// Unshorten a URL to its full form
 export const unshortenUrl = async (req, res) => {
     const shortUrl = req.query.url;
     if (!shortUrl) {
@@ -114,7 +142,7 @@ export const unshortenUrl = async (req, res) => {
     }
 };
 
-// Dashboard APIs
+// Dashboard APIs for URL management
 export const getUrls = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
@@ -144,18 +172,23 @@ export const getUrls = asyncHandler(async (req, res) => {
     }
 });
 
+// Add a new URL
 export const addUrl = asyncHandler(async (req, res) => {
     try {
         const userId = req.user.userId;
         const orgId = req.user.orgId;
         const { url, isVerified, isPhishing, category, status } = req.body;
         const categoryArray = Array.isArray(category) ? category : [category];
-        const existingUrls = await Url.findOne({ url: url, orgId: orgId });
+
+        // Normalize the URL before saving
+        const normalizedUrl = normalizeUrl(url);
+
+        const existingUrls = await Url.findOne({ url: normalizedUrl, orgId: orgId });
         if (existingUrls) {
-            res.status(400).json({ error: "Url already exists" })
+            res.status(400).json({ error: "Url already exists" });
         } else {
             const newUrl = new Url({
-                url,
+                url: normalizedUrl,
                 category: categoryArray,
                 isVerified,
                 isPhishing,
@@ -175,27 +208,32 @@ export const addUrl = asyncHandler(async (req, res) => {
                 orgId,
                 entityId: newUrl._id,
                 entityType: "url"
-            })
+            });
             res.status(201).send(newUrl);
         }
     } catch (error) {
         res.status(400).send(error.message);
     }
-})
+});
 
+// Update an existing URL
 export const updateUrl = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.userId;
         const orgId = req.user.orgId;
         let { url, category, status, isPhishing, isVerified } = req.body;
+
+        // Normalize the URL before saving
+        const normalizedUrl = normalizeUrl(url);
+
         const updates = {
-            url,
+            url: normalizedUrl,
             category,
             status,
             isPhishing,
             isVerified,
-        }
+        };
         const updatedUrl = await Url.findByIdAndUpdate(id, updates, {
             new: true,
             runValidators: true
@@ -213,7 +251,7 @@ export const updateUrl = asyncHandler(async (req, res) => {
                 orgId,
                 entityId: id,
                 entityType: "url"
-            })
+            });
 
             res.status(200).json(updatedUrl);
         } else {
@@ -221,10 +259,11 @@ export const updateUrl = asyncHandler(async (req, res) => {
         }
     } catch (error) {
         res.status(400).send(error.message);
-        console.error(error.message)
+        console.error(error.message);
     }
 });
 
+// Delete a URL
 export const deleteUrl = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
@@ -247,14 +286,15 @@ export const deleteUrl = asyncHandler(async (req, res) => {
             entityId: id,
             entityType: "url",
             entityDetails: {identifier: urlData.url, status: urlData.status, extraInfo: `Category: ${urlData.category}`}
-        })
+        });
 
         res.status(200).json(id);
     } catch (error) {
         res.status(400).send(error.message);
     }
-})
+});
 
+// Add URLs from a CSV file
 export const addUrlFromCsv = asyncHandler(async (req, res) => {
     const filePath = req.file.path;
     const urls = [];
@@ -281,8 +321,12 @@ export const addUrlFromCsv = asyncHandler(async (req, res) => {
                     if (existingUrls.has(url)) {
                         return;
                     }
+
+                    // Normalize the URL before saving
+                    const normalizedUrl = normalizeUrl(url);
+
                     const urlEntry = {
-                        url, category, status, isPhishing, isVerified, orgId
+                        url: normalizedUrl, category, status, isPhishing, isVerified, orgId
                     };
 
                     urls.push(urlEntry);
@@ -303,9 +347,9 @@ export const addUrlFromCsv = asyncHandler(async (req, res) => {
                 operationType: "add",
                 operationsPerformed: `Added Urls Via CSV`,
                 orgId
-            })
+            });
 
-            res.status(200).json({ message: "URLs added successfully" })
+            res.status(200).json({ message: "URLs added successfully" });
         } else {
             res.status(400).json({ message: 'No valid URLs to add or all URLs are duplicates' });
         }
@@ -317,4 +361,22 @@ export const addUrlFromCsv = asyncHandler(async (req, res) => {
             fs.unlinkSync(filePath);
         }
     }
-})
+});
+
+// Controller to get all blacklisted URLs
+export const getBlacklistedUrls = asyncHandler(async (req, res) => {
+    try {
+        const orgId = req.user.orgId;  // Assuming the orgId is passed with the user object
+        
+        // Find URLs that are blacklisted in the database for the given orgId
+        const blacklistedUrls = await Url.find({ orgId, status: 'blacklisted' });
+
+        // Extract the 'url' field from the URLs that are blacklisted
+        const urls = blacklistedUrls.map((urlEntry) => urlEntry.url);
+
+        // Send the list of blacklisted URLs as response
+        res.status(200).json({ urls });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
