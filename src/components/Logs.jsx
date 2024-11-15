@@ -245,6 +245,7 @@ const Logs = () => {
                             <option value="delete">Delete</option>
                             <option value="add">Add</option>
                             <option value="approved">Approved</option>
+                            <option value="account recovery">Account Recovery</option>
                         </select>
                         <select onChange={(e) => handleDateRangeFilter(e.target.value)} defaultValue="all" className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0">
                             <option value="all">Date Range Filter</option>
