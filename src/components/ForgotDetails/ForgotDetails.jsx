@@ -15,7 +15,8 @@ const ForgotDetails = () => {
             email,
             isPasswordReset,
             isUsernameReminder,
-            isOrgIdRem
+            isOrgIdRem,
+            reqMadeFrom: "dashboard"
         };
         try {
             const response = await fetch(`${apiUrl}/forgot/forgotDetails`, {
