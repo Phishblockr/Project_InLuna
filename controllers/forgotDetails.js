@@ -7,29 +7,15 @@ import AdminLogs from "../models/adminlogsModel.js";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const generateUsernameReminder = async (user, userId, orgId) => {
-    // Add Log entry
-    await AdminLogs.create({
-        userId,
-        operationType: "account recovery",
-        operationsPerformed: `Requested Username Reminder E-mail`,
-        orgId,
-    })
+const generateUsernameReminder = (user, userId, orgId, reqMadeFrom) => {
     return `<p>Your username is: <strong>${user.username}</strong></p>`;
 };
 
-const generateOrgIdReminder = async (user, userId, orgId) => {
-    // Add Log entry
-    await AdminLogs.create({
-        userId,
-        operationType: "account recovery",
-        operationsPerformed: `Requested OrgId Reminder E-mail`,
-        orgId,
-    })
+const generateOrgIdReminder = (user, userId, orgId, reqMadeFrom) => {
     return `<p>Your organization id is: <strong>${user.orgId}</strong></p>`;
 }
 
-const generatePasswordResetLink = async (user, userId, orgId) => {
+const generatePasswordResetLink = async (user, userId, orgId, reqMadeFrom) => {
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = await bcrypt.hash(resetToken, 10);
 
@@ -38,15 +24,6 @@ const generatePasswordResetLink = async (user, userId, orgId) => {
     await user.save();
 
     const resetLink = `${process.env.FRONT_END_URL}/resetPassword/${resetToken}`;
-
-    // Add Log entry
-    await AdminLogs.create({
-        userId,
-        operationType: "account recovery",
-        operationsPerformed: `Requested Password Reset E-mail`,
-        orgId,
-    })
-
     return `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`;
 };
 
@@ -57,7 +34,7 @@ const sendEmail = async (to, subject, content, user) => {
         subject,
         html: `
         <body>
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;  font-size: 18px; color: #333; background-color: #f4f4f4;">
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;  font-size: 18px; color: #333; background-color: #eeeeee;">
     <header style="padding: 26px; background-color: #0364BD; color: #f4f4f4; font-size: 24px; display: flex; align-items: center; gap: 26px; border-radius: 0px 0px 10px 10px; box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="47.5 47.5 105 105">
             <circle cx="100" cy="100" r="50" fill="white" stroke="red" stroke-width="5"></circle>
@@ -69,7 +46,7 @@ const sendEmail = async (to, subject, content, user) => {
         <p>Hi ${user.name}</p>
         <p>We received your request for account assistance. Here are the details:</p>
         <span>${content}</span>
-        <p>If you did not make this request, it's possible someone else is trying to access your Phishblockr account. <br> <strong>Please ignore this email if you did not request assistance.</strong></p>
+        <p>If you did not made this request, it's possible someone else is trying to access your Phishblockr account. <br> <strong>Please ignore this email if you did not request assistance.</strong></p>
         <p>Sincerely yours,</p>
         <p>The Phishblockr team</p>
     </div>
@@ -102,9 +79,9 @@ const sendEmail = async (to, subject, content, user) => {
 
 
 export const handleForgotDetails = async (req, res) => {
-    const { email, isPasswordReset, isUsernameReminder, isOrgIdRem } = req.body;
+    const { email, isPasswordReset, isUsernameReminder, isOrgIdRem, reqMadeFrom } = req.body;
 
-    if (!isPasswordReset && !isUsernameReminder) {
+    if (!isPasswordReset && !isUsernameReminder && !isOrgIdRem) {
         return res.status(404).json({ message: "Invalid option" });
     }
 
@@ -122,23 +99,33 @@ export const handleForgotDetails = async (req, res) => {
 
         // Generate username reminder if requested
         if (isUsernameReminder) {
-            emailContent += await generateUsernameReminder(user, userId, orgId);
-            responseMessage.push("Username reminder sent.");
+            emailContent += generateUsernameReminder(user, userId, orgId, reqMadeFrom);
+            responseMessage.push(`Requested Username reminder.`);
         }
 
         // Generate password reset link if requested
         if (isPasswordReset) {
-            emailContent += await generatePasswordResetLink(user, userId, orgId);
-            responseMessage.push("Password reset link sent.");
+            emailContent += await generatePasswordResetLink(user, userId, orgId, reqMadeFrom);
+            responseMessage.push(`Requested Password reset link.`);
         }
 
         if (isOrgIdRem) {
-            emailContent += await generateOrgIdReminder(user, userId, orgId);
-            responseMessage.push("Organization id reminder sent.");
+            emailContent += generateOrgIdReminder(user, userId, orgId, reqMadeFrom);
+            responseMessage.push(`Requested Organization id reminder.`);
         }
 
         // Send the combined email
         await sendEmail(email, "Phishblockr Dashboard - Forgot Details Assistance", emailContent, user);
+
+        if (user.userType === process.env.ADMIN) {
+            // Add Log entry
+            await AdminLogs.create({
+                userId,
+                operationType: "account recovery",
+                operationsPerformed: `${responseMessage.join(" ")} for ${reqMadeFrom}`,
+                orgId,
+            })
+        }
 
         res.status(200).json({ message: responseMessage.join(" ") });
     } catch (error) {
