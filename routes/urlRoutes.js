@@ -1,5 +1,5 @@
 import express from 'express';
-import { addUrlExt, fetchUrlStatsExt, getBlacklistedUrls, unshortenUrl, getUrls, addUrl, updateUrl, deleteUrl, addUrlFromCsv } from '../controllers/urlController.js';
+import { addUrlExt, fetchUrlStatsExt, getBlacklistedUrls, unshortenUrl, getUrls, addUrl, updateUrl, deleteUrl, addUrlFromCsv, fetchUrl } from '../controllers/urlController.js';
 import { convertTypes } from '../middlewares/convertTypes.js';
 import multer from 'multer';
 
@@ -15,5 +15,6 @@ router.route("/updateUrl/:id").put(convertTypes(['isPhishing', 'isVerified']), u
 router.route("/deleteUrl/:id").delete(deleteUrl);
 router.post("/addUrlFromCsv", upload.single("file"), addUrlFromCsv)
 router.route("/getBlacklistedUrls").get(getBlacklistedUrls);
+router.route("/fetchUrl").get(fetchUrl);
 
 export default router;

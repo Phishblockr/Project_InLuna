@@ -10,7 +10,7 @@ import AdminLogs from "../models/adminlogsModel.js";
 
 // Helper function to normalize URLs by removing 'www.' and ensuring the URL starts with 'https://'
 function normalizeUrl(url) {
-    console.log(url);
+    // console.log(url);
     
     try {
         // If the URL doesn't start with "http://" or "https://", add "https://"
@@ -380,3 +380,20 @@ export const getBlacklistedUrls = asyncHandler(async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
+export const fetchUrl = asyncHandler (async (req, res) => {
+    try {
+        const orgId = req.user.orgId;
+        const { url } = req.query;
+        const normalizedUrl = normalizeUrl(url);
+        const urlData = await Url.findOne({url: normalizedUrl, orgId})
+        if(!urlData){
+            res.status(400).json({ error: "Url does not exists in db" });
+        } else {
+            res.status(200).json({urlData});
+        }
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+}) 
