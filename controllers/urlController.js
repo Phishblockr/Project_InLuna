@@ -387,7 +387,7 @@ export const fetchUrl = asyncHandler (async (req, res) => {
         const orgId = req.user.orgId;
         const { url } = req.query;
         const normalizedUrl = normalizeUrl(url);
-        const urlData = await Url.findOne({url: normalizedUrl, orgId})
+        const urlData = await Url.findOne({url: normalizedUrl, orgId});
         if(!urlData){
             res.status(400).json({ error: "Url does not exists in db" });
         } else {

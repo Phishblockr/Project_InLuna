@@ -21,6 +21,8 @@ import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js"
 
 import forgotDetailsRoutes from './routes/forgotDetailsRoutes.js';
 
+import heartBeatRoutes from "./routes/heartBeatRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -80,7 +82,11 @@ app.use("/api/overview",dashboardAdminMiddleware, overviewRoutes);
 // Logs Route
 app.use("/api/logs/", dashboardAdminMiddleware, logsRoute);
 
+// forgot Details Route
 app.use("/api/forgot", forgotDetailsRoutes);
+
+// HeartBeat Route
+app.use("/api/heartBeat", authenticateToken, heartBeatRoutes)
 
 // Error handling middleware
 app.use(errorHandler);
