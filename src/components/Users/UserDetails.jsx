@@ -44,6 +44,7 @@ const UserDetails = () => {
         start: startOfWeek(new Date(), { weekStartsOn: 1 }),
         end: endOfWeek(new Date(), { weekStartsOn: 1 }),
     });
+    const [heartbeatStatus, setHeartbeatStatus] = useState("");
 
     const theme = useSelector((state) => state.theme);
 
@@ -80,6 +81,7 @@ const UserDetails = () => {
     useEffect(() => {
         dispatch(getUser(id))
         fetchActivityCounts(id, selectedDate);
+        fetchHeartBeatStatus(id);
         dispatch(startListeningToSocket());
     }, [id, selectedDate])
 
@@ -149,6 +151,29 @@ const UserDetails = () => {
             setDataLoading(false);
         } catch (error) {
             console.error(error.message);
+        }
+    };
+
+    const fetchHeartBeatStatus = async (userId) => {
+        const apiUrl = import.meta.env.VITE_API_URL
+        const token = JSON.parse(localStorage.getItem("user")).token;
+        try {
+            const response = await fetch(`${apiUrl}/heartBeat/fetchHeartBeat/${userId}`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch heartbeat status");
+            }
+
+            const data = await response.json();
+            setHeartbeatStatus(data);
+        } catch (error) {
+            console.error("Error fetching heartbeat status:", error);
         }
     };
 
@@ -317,24 +342,24 @@ const UserDetails = () => {
                         )}
                         <ul className="flex flex-col">
                             <li className="font-medium text-3xl my-2">{user.name}</li>
-                            <li className="font-medium mb-1">
+                            {/* <li className="font-medium mb-1">
                                 <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
                                     Username:
                                 </span>
                                 <span>{user.username}</span>
-                            </li>
+                            </li> */}
                             <li className="font-medium mb-1">
                                 <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
                                     E-mail:
                                 </span>
                                 <span>{user.email}</span>
                             </li>
-                            <li className="font-medium mb-1">
+                            {/* <li className="font-medium mb-1">
                                 <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
                                     Phone:
                                 </span>
                                 <span>{user.phone}</span>
-                            </li>
+                            </li> */}
                             <li className="font-medium mb-1">
                                 <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
                                     Department:
@@ -357,6 +382,18 @@ const UserDetails = () => {
                                     }
                                 >
                                     {user.status}
+                                </span>
+                            </li>
+                            <li className="font-medium mb-1">
+                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
+                                    Heartbeat Status:
+                                </span>
+                                <span
+                                    className={
+                                        heartbeatStatus.heartBeatData.status === "active" ? statusActive : statusInactive
+                                    }
+                                >
+                                    {heartbeatStatus.heartBeatData.status}
                                 </span>
                             </li>
                         </ul>
