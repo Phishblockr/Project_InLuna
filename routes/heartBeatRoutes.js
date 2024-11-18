@@ -4,6 +4,6 @@ import {saveHeartBeat, fetchHeartBeat} from "../controllers/heartBeatController.
 const router = express.Router();
 
 router.route("/saveHeartBeat").post(saveHeartBeat);
-router.route("/fetchHeartBeat").get(fetchHeartBeat);
+router.route("/fetchHeartBeat/:userId").get(fetchHeartBeat);
 
 export default router;
