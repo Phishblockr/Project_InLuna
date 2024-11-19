@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const perPageRecSlice = createSlice({
   name: "perPageRec",
-  initialState: 5,
+  initialState: 10,
   reducers: {
     setPerPageRec: (state, action) => {
         return action.payload

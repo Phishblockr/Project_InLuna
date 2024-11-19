@@ -171,7 +171,7 @@ const UserDetails = () => {
             }
 
             const data = await response.json();
-            setHeartbeatStatus(data);
+            setHeartbeatStatus(data.heartBeatData);
         } catch (error) {
             console.error("Error fetching heartbeat status:", error);
         }
@@ -390,10 +390,10 @@ const UserDetails = () => {
                                 </span>
                                 <span
                                     className={
-                                        heartbeatStatus.heartBeatData.status === "active" ? statusActive : statusInactive
+                                        heartbeatStatus.status === "active" ? statusActive : statusInactive
                                     }
                                 >
-                                    {heartbeatStatus.heartBeatData.status}
+                                    {heartbeatStatus.status}
                                 </span>
                             </li>
                         </ul>
