@@ -121,9 +121,12 @@ export const fetchUrlStatsExt = async (req, res) => {
 
 // Unshorten a URL to its full form
 export const unshortenUrl = async (req, res) => {
-    const shortUrl = req.query.url;
+    let shortUrl = req.query.url;
     if (!shortUrl) {
         return res.status(400).json({ error: 'No URL provided' });
+    }
+    if (!shortUrl.startsWith("https://") && !shortUrl.startsWith("http://")){
+        shortUrl = "https://"+shortUrl;
     }
     try {
         const response = await fetch(shortUrl, {
