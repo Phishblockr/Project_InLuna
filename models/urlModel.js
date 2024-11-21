@@ -54,10 +54,10 @@ const urlSchema = new mongoose.Schema(
       type: String,
       required: [true, "Organization ID cannot be empty"],
     },
-    whitelistReqIds: [
+    RequestIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'WhitelistReq',
+        ref: 'Request',
       }
     ]
   },

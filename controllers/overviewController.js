@@ -1,5 +1,5 @@
 import Url from "../models/urlModel.js";
-import WhitelistReq from "../models/whitelistReqModel.js";
+import WhitelistReq from "../models/RequestModel.js";
 import User from "../models/userModel.js";
 import asyncHandler from '../middlewares/asyncHandler.js';
 import mongoose from 'mongoose';

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const whitelistReqSchema = new mongoose.Schema(
+const RequestSchema = new mongoose.Schema(
     {
         userId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -25,12 +25,17 @@ const whitelistReqSchema = new mongoose.Schema(
             type: String,
             required: [true, "Organization ID cannot be empty"],
         },
+        reqOption:{
+            type : String,
+            enum: ['whitelist', 'blacklist'],
+            required:true,
+        }
     },
     { timestamps: true }
 );
 
-whitelistReqSchema.index({ orgId: 1, createdAt: 1 });
+RequestSchema.index({ orgId: 1, createdAt: 1 });
 
-const WhitelistReq = mongoose.model("whitelistReq", whitelistReqSchema);
+const Request = mongoose.model("Request", RequestSchema);
 
-export default WhitelistReq;
+export default Request;

@@ -1,24 +1,25 @@
 import asyncHandler from '../middlewares/asyncHandler.js';
 import Url from '../models/urlModel.js';
-import WhitelistReq from '../models/whitelistReqModel.js';
+import WhitelistReq from '../models/RequestModel.js';
+import Request from '../models/RequestModel.js';
 import mongoose from 'mongoose';
 
 // for adminLog
 import AdminLogs from "../models/adminlogsModel.js";
 
-export const addWhitelistReqExt = async (req, res) => {
+export const addRequestExt = async (req, res) => {
     try {
         const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
         const orgId = req.user.orgId;
 
-        const { url, reason } = req.body;
+        const { url, reason , reqOption } = req.body;
 
         const existingUrl = await Url.findOne({ url, orgId });
         if (!existingUrl) {
             return res.status(404).json({ message: "Invalid request" })
         }
 
-        const existingRequest = await WhitelistReq.findOne({
+        const existingRequest = await Request.findOne({
             userId,
             url,
             orgId,
@@ -29,22 +30,23 @@ export const addWhitelistReqExt = async (req, res) => {
             return res.status(400).json({ message: "You have already submitted a whitelist request for this URL, pending approval." });
         }
 
-        const newWhitelistReq = new WhitelistReq({
+        const newRequest = new Request({
             userId,
             url,
             reason,
             orgId,
+            reqOption,
         });
-        await newWhitelistReq.save();
+        await newRequest.save();
 
-        existingUrl.whitelistReqIds = existingUrl.whitelistReqIds || [];
-        existingUrl.whitelistReqIds.push(newWhitelistReq._id);
+        existingUrl.RequestIds = existingUrl.RequestIds || [];
+        existingUrl.RequestIds.push(newRequest._id);
         await existingUrl.save();
 
         const io = req.app.get("socketio");
-        io.emit("newReqAdded", newWhitelistReq);
+        io.emit("newReqAdded", newRequest);
 
-        res.status(201).send(newWhitelistReq);
+        res.status(201).send(newRequest);
     } catch (error) {
         res.status(400).send(error.message);
     }
@@ -70,7 +72,7 @@ export const fetchReqs = asyncHandler(async (req, res) => {
     const statusFilter = status == "all" ? {} : { status };
 
     try {
-        const whitelistReqs = await WhitelistReq.aggregate([
+        const Requests = await Request.aggregate([
             { $match: { orgId, ...statusFilter } },
             {
                 $lookup: {
@@ -87,6 +89,7 @@ export const fetchReqs = asyncHandler(async (req, res) => {
                     _id: 1,
                     url: 1,
                     reason: 1,
+                    reqOption:1,
                     status: 1,
                     createdAt: 1,
                     "userDetails.name": 1,
@@ -98,7 +101,7 @@ export const fetchReqs = asyncHandler(async (req, res) => {
             { $limit: limit }
         ]);
 
-        const totalReqsAggregation = await WhitelistReq.aggregate([
+        const totalReqsAggregation = await Request.aggregate([
             { $match: { orgId, ...statusFilter } },
             {
                 $lookup: {
@@ -116,7 +119,7 @@ export const fetchReqs = asyncHandler(async (req, res) => {
         const totalReqs = totalReqsAggregation[0]?.totalCount || 0;
 
         res.json({
-            data: whitelistReqs,
+            data: Requests,
             currentPage: page,
             totalPages: Math.ceil(totalReqs / limit),
             totalReqs
@@ -209,21 +212,21 @@ export const deleteRequest = asyncHandler(async (req, res) => {
 
         const userId = req.user.userId;
         const orgId = req.user.orgId;
-        const data = await WhitelistReq.findById(id);
+        const data = await Request.findById(id);
         if (!data) {
-            return res.status(404).json({ message: "Whitelist request not found" });
+            return res.status(404).json({ message: "Request not found" });
         }
-        await WhitelistReq.findByIdAndDelete(id);
+        await Request.findByIdAndDelete(id);
         const io = req.app.get("socketio");
         io.emit("reqDeleted", id);
 
         await AdminLogs.create({
             userId,
             operationType: "delete",
-            operationsPerformed: `Whitelist Request deleted: ${id}`,
+            operationsPerformed: `Request deleted: ${id}`,
             orgId,
             entityId: id,
-            entityType: "whitelistReq",
+            entityType: "Request",
             entityDetails: { from: data.userId, identifier: data.url, status: data.status, extraInfo: `Reason: ${data.reason}`  } 
         })
 

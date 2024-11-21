@@ -10,7 +10,7 @@ import authenticationRoutes from "./routes/authenticationRoutes.js"
 import organizationRoutes from './routes/organizationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import urlRoutes from './routes/urlRoutes.js';
-import whitelistReqRoutes from './routes/whitelistReqRoutes.js';
+import RequestRoutes from './routes/RequestRoutes.js';
 import feedbackRoutes from "./routes/feedbackRoutes.js"
 import overviewRoutes from "./routes/overviewRoutes.js"
 import logsRoute from "./routes/logsRoute.js"
@@ -69,7 +69,7 @@ app.use('/api/user', userRoutes);
 app.use("/api/url", authenticateToken, urlRoutes);
 
 // Whitelist URL Request Routes
-app.use("/api/whitelistReq", authenticateToken, whitelistReqRoutes);
+app.use("/api/Request", authenticateToken, RequestRoutes);
 
 // Feedback Routes
 app.use("/api/feedback", authenticateToken, feedbackRoutes);

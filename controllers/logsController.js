@@ -7,7 +7,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import Url from '../models/urlModel.js';
 import User from '../models/userModel.js';
-import WhitelistReq from '../models/whitelistReqModel.js';
+import WhitelistReq from '../models/RequestModel.js';
 
 
 
