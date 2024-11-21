@@ -21,7 +21,7 @@ const Login = () => {
 
     return (
         <div className="flex justify-center">
-            <div className="flex flex-col ">
+            <div className="flex flex-col w-[470px]">
                 <h1 className=" flex justify-center text-2xl text-left text-black font-bold tracking-tighter my-5 dark:text-[#F4F4F4]">
                     Phishblokr
                 </h1>
@@ -71,7 +71,7 @@ const Login = () => {
                             <input
                             onChange={(e) => setSaveOrgId(e.target.checked)}
                             type="checkbox" id="saveOrgId" name="saveOrgId" checked={saveOrgId} />
-                            <label htmlFor="saveOrgId"> Save organization Id</label>
+                            <label htmlFor="saveOrgId"> Remember Me </label>
                         </div>
                         <button
                             type="submit"

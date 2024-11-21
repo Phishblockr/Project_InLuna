@@ -13,12 +13,12 @@ const initialState = {
 const apiUrl = import.meta.env.VITE_API_URL;
 //fetch requests
 export const fetchReqs = createAsyncThunk(
-    "whitelistReq/get",
+    "Request/get",
     async ({ page, limit, search, status }, { rejectWithValue }) => {
         const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             const res = await fetch(
-                `${apiUrl}/whitelistReq/fetchReqs?page=${page}&limit=${limit}&search=${search}&status=${status}`,
+                `${apiUrl}/Request/fetchReqs?page=${page}&limit=${limit}&search=${search}&status=${status}`,
                 {
                     method: "GET",
                     headers: {
@@ -38,11 +38,11 @@ export const fetchReqs = createAsyncThunk(
 
 //delete a request
 export const delReq = createAsyncThunk(
-    "whitelistReq/del",
+    "Request/del",
     async ({ reqId }, { rejectWithValue }) => {
         const token = JSON.parse(localStorage.getItem("user")).token;
         try {
-            const res = await fetch(`${apiUrl}/whitelistReq/delReq/${reqId}`, {
+            const res = await fetch(`${apiUrl}/Request/delReq/${reqId}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -89,7 +89,7 @@ export const approveReq = createAsyncThunk(
 
 const fetchMoreRequestsFromNextPage = async (page, limit) => {
     const token = JSON.parse(localStorage.getItem("user")).token;
-    const res = await fetch(`${apiUrl}/whitelistReq/fetchReqs?page=${page}&limit=${limit}`, {
+    const res = await fetch(`${apiUrl}/Request/fetchReqs?page=${page}&limit=${limit}`, {
         method: "GET",
         headers: {
             'Authorization': `Bearer ${token}`,

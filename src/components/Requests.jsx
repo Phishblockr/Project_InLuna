@@ -257,14 +257,18 @@ export default function Requests() {
                                         <li className="font-medium mb-1">
                                             <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Status:</span>
                                             <span
-                                                className={
-                                                    request.status === "approved"
+                                                className={`
+                                                    ${request.status === "approved"
                                                         ? statusActive
-                                                        : statusInactive
-                                                }
+                                                        : statusInactive} capitalize
+                                                `}
                                             >
                                                 {request.status}
                                             </span>
+                                        </li>
+                                        <li>
+                                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Request:</span>
+                                            <span className="capitalize">{request.reqOption}</span>
                                         </li>
                                     </ul>
                                     </div>
