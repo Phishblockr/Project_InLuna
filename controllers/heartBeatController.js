@@ -7,19 +7,42 @@ export const saveHeartBeat = async (req, res) => {
     try {
         const userId = req.user.userId;
         const orgId = req.user.orgId;
-        let { status, timestamp } = req.body;
-        timestamp = timestamp || Date.now();
-        const heartBeat = await HeartBeat.findOneAndUpdate(
+        const { status, oldTimestamp, newTimestamp, duration, reason } = req.body;
+
+        if (!oldTimestamp || !newTimestamp) {
+            return res.status(400).json({ error: "Both old and new timestamps are required." });
+        }
+
+        const oldTime = new Date(oldTimestamp);
+        const newTime = new Date(newTimestamp);
+
+        if (isNaN(oldTime.getTime()) || isNaN(newTime.getTime())) {
+            return res.status(400).json({ error: "Invalid timestamps provided." });
+        }
+
+        const updatedHeartBeat = await HeartBeat.findOneAndUpdate(
             { userId, orgId },
-            { status, timestamp },
-            { new: true, upsert: true }
+            {
+                $set: { status: status || "active", timestamp: newTime },
+                $push: reason
+                    ? {
+                          downtime: {
+                              oldTimestamp: oldTime,
+                              newTimestamp: newTime,
+                              duration,
+                              reason,
+                          },
+                      }
+                    : {},
+            },
+            { upsert: true, new: true } 
         );
 
+
         const io = req.app.get("socketio");
-        io.emit("heartBeat pulsing", heartBeat);
+        io.emit("heartBeat pulsing", updatedHeartBeat);
 
-        return res.status(200).json({ heartBeat });
-
+        return res.status(200).json({ heartBeat: updatedHeartBeat });
     } catch (error) {
         console.error("Error saving heartbeat: ", error);
         return res.status(500).json({ error: "Error saving heartbeat" });
@@ -34,7 +57,7 @@ export const fetchHeartBeat = async (req, res) => {
         if (!heartBeatData) {
             return res.status(400).json({ error: "Invalid HeartBeat" })
         }
-        
+
         const INACTIVITY_THRESHOLD = 2 * 24 * 60 * 60 * 1000; // 2 days in miliseconds
         const cutoffDate = new Date(Date.now() - INACTIVITY_THRESHOLD)
 
