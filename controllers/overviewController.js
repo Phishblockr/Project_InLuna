@@ -1,13 +1,15 @@
 import Url from "../models/urlModel.js";
 import WhitelistReq from "../models/RequestModel.js";
 import User from "../models/userModel.js";
+import HeartBeat from "../models/heartBeatModel.js";
 import asyncHandler from '../middlewares/asyncHandler.js';
 import mongoose from 'mongoose';
 
 const calculatePercentage = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
-    return ((current - previous) / previous) * 100;
-}
+    const percentage = ((current - previous) / previous) * 100;
+    return Math.min(percentage, 100);
+};
 
 export const fetchOrgMetrics = async (req, res) => {
     const { month, year, timeFrame, browsingProfileMetrics } = req.query;
@@ -218,6 +220,10 @@ export const fetchOrgMetrics = async (req, res) => {
             return acc;
         }, {})
 
+        // Integrate Heartbeat quick status with Browsing Profile
+        const INACTIVITY_THRESHOLD = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+        const cutoffDate = new Date(Date.now() - INACTIVITY_THRESHOLD); // Calculate cutoff date for inactivity
+
         // classify Users By Browsing Profile
         const users = await User.find({ orgId });
         const goodBrowsingProfile = [];
@@ -227,7 +233,7 @@ export const fetchOrgMetrics = async (req, res) => {
             const userId = user._id;
 
             const classifyUsersByBrowsingProfile = await Url.aggregate([
-                { $match: { "visitedBy.userId": userId, orgId } },
+                { $match: { "visitedBy.userId": userId, orgId, createdAt: {$gte: startOfMonth, $lt: endOfMonth} } },
                 { $unwind: "$visitedBy" },
                 { $match: { "visitedBy.userId": userId } },
                 {
@@ -241,7 +247,7 @@ export const fetchOrgMetrics = async (req, res) => {
             ]);
             // If no visits, add the user to good profile by default
             if (classifyUsersByBrowsingProfile.length === 0) {
-                goodBrowsingProfile.push({userId, profilePic: user.img, name: user.name, department: user.department});
+                goodBrowsingProfile.push({userId, profilePic: user.img, name: user.name, department: user.department, heartBeatStatus: "not initialized"});
                 continue;
             }
             
@@ -250,11 +256,38 @@ export const fetchOrgMetrics = async (req, res) => {
             const blacklistedRate = (blacklistedVisits / totalVisits) * 100;
 
             if (phishingRate > BPMetrics || blacklistedRate > BPMetrics) {
-                badBrowsingProfile.push({ userId, profilePic: user.img, name: user.name, department: user.department, phishingRate, blacklistedRate });
+                badBrowsingProfile.push({ userId, profilePic: user.img, name: user.name, department: user.department, phishingRate, blacklistedRate, heartBeatStatus: "not initialized" });
             } else {
-                goodBrowsingProfile.push({ userId, profilePic: user.img, name: user.name, department: user.department, phishingRate, blacklistedRate });
+                goodBrowsingProfile.push({ userId, profilePic: user.img, name: user.name, department: user.department, phishingRate, blacklistedRate, heartBeatStatus: "not initialized" });
             }
         }
+
+        // HeartBeat code
+        const heartBeats = await HeartBeat.find({orgId});
+
+        const updateProfileWithHeartbeat = (profile) => {
+            const heartBeat = heartBeats.find((hb) => hb.userId.toString() === profile.userId.toString());
+            if (heartBeat){
+                const isInactive = heartBeat.timestamp < cutoffDate;
+                const hasDownTimeToday = heartBeat.downtime.some((dt) => {
+                    const startOfToday = new Date();
+                    startOfToday.setHours(0, 0, 0, 0);
+                    const endOfToday = new Date();
+                    endOfToday.setHours(23, 59, 59, 999);
+                    return dt.newTimestamp >= startOfToday && dt.newTimestamp <= endOfToday;
+                });
+                if (hasDownTimeToday) {
+                    profile.heartBeatStatus = "downtime detected";
+                } else if (isInactive){
+                    profile.heartBeatStatus = "inactive"
+                } else {
+                    profile.heartBeatStatus = heartBeat.status || "active";
+                }
+            }
+        };
+
+        goodBrowsingProfile.forEach(updateProfileWithHeartbeat);
+        badBrowsingProfile.forEach(updateProfileWithHeartbeat);
 
         let response = {
             totalApprovedWhitelistRequests: approvedWhitelistCount,

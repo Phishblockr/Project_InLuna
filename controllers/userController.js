@@ -1,4 +1,5 @@
 import User from '../models/userModel.js';
+import HeartBeat from '../models/heartBeatModel.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import bcrypt from 'bcryptjs';
 import winston from 'winston';
@@ -48,11 +49,50 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
     const users = await User.find(queryFilter).select('-password').skip(skip).limit(limit);
     const totalUsers = await User.countDocuments(queryFilter);
-    if (users.length > 0) {
-        res.status(200).json({ users, currentPage: page, totalPages: Math.ceil(totalUsers / limit), totalUsers })
-    } else {
-        res.status(400).json({ error: "Users not found" })
+
+    if (users.length === 0) {
+        return res.status(400).json({ error: "Users not found" });
     }
+
+    const userIds = users.map((user) => user._id);
+    const heartBeats = await HeartBeat.find({userId: {$in: userIds}});
+
+    const INACTIVITY_THRESHOLD = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+    const cutoffDate = new Date(Date.now() - INACTIVITY_THRESHOLD)
+
+    const usersWithHeartBeatStatus = users.map((user) => {
+        const heartBeat = heartBeats.find((hb) => hb.userId.toString() === user._id.toString());
+
+        let heartBeatStatus = "not initialized";
+        if (heartBeat){
+            const isInactive = heartBeat.timestamp < cutoffDate;
+            const hasDownTimeToday = heartBeat.downtime.some((dt) => {
+                const startOfToday = new Date();
+                startOfToday.setHours(0, 0, 0, 0);
+                const endOfToday = new Date();
+                endOfToday.setHours(23, 59, 59, 999);
+                return dt.newTimestamp >= startOfToday && dt.newTimestamp <= endOfToday;
+            });
+
+            if (hasDownTimeToday) {
+                heartBeatStatus = "downtime detected";
+            } else if (isInactive) {
+                heartBeatStatus = "inactive";
+            } else {
+                heartBeatStatus = heartBeat.status || "active"
+            }
+        }
+        return {
+            ...user.toObject(),
+            heartBeatStatus,
+        };
+    });
+    res.status(200).json({
+        users: usersWithHeartBeatStatus,
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+        totalUsers,
+    });
 });
 
 // Create a new user

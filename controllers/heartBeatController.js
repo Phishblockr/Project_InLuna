@@ -26,16 +26,16 @@ export const saveHeartBeat = async (req, res) => {
                 $set: { status: status || "active", timestamp: newTime },
                 $push: reason
                     ? {
-                          downtime: {
-                              oldTimestamp: oldTime,
-                              newTimestamp: newTime,
-                              duration,
-                              reason,
-                          },
-                      }
+                        downtime: {
+                            oldTimestamp: oldTime,
+                            newTimestamp: newTime,
+                            duration,
+                            reason,
+                        },
+                    }
                     : {},
             },
-            { upsert: true, new: true } 
+            { upsert: true, new: true }
         );
 
 
@@ -65,9 +65,54 @@ export const fetchHeartBeat = async (req, res) => {
             heartBeatData.status = "inactive";
             await heartBeatData.save();
         }
-        return res.status(200).json({ heartBeatData });
+
+        // Check if downtime occurred today
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+
+        const hasDowntimeToday = heartBeatData.downtime.some(
+            (dt) => dt.newTimestamp >= startOfToday && dt.newTimestamp <= endOfToday
+        );
+
+        // Determine the current status
+        let status = "active";
+        if (hasDowntimeToday) {
+            status = "Downtime Detected";
+        } else if (heartBeatData.timestamp < cutoffDate && heartBeatData.status !== "inactive") {
+            status = "inactive";
+            heartBeatData.status = "inactive"; // Update the status in the database
+            await heartBeatData.save();
+        } else {
+            status = heartBeatData.status || "active";
+        }
+
+        const sortedDowntime = heartBeatData.downtime.sort((a, b) => b.newTimestamp - a.newTimestamp);
+
+        const formattedDowntime = sortedDowntime.map((dt) => {
+            const durationInMs = dt.duration;
+            const hours = Math.floor(durationInMs / (1000 * 60 * 60));
+            const minutes = Math.floor((durationInMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((durationInMs % (1000 * 60)) / 1000);
+
+            return {
+                oldTimestamp: dt.oldTimestamp,
+                newTimestamp: dt.newTimestamp,
+                reason: dt.reason,
+                duration: `${hours}:${minutes}:${seconds}`,
+            };
+        });
+
+        return res.status(200).json({
+            userId: heartBeatData.userId,
+            orgId: heartBeatData.orgId,
+            status,
+            timestamp: heartBeatData.timestamp,
+            downtime: formattedDowntime, 
+        });
     } catch (error) {
         console.error("Error fetching heartbeat: ", error);
         return res.status(500).json({ error: "Error fetching heartbeat" });
     }
-}
+};
