@@ -16,6 +16,54 @@ import socket from '../utils/socket.jsx';
 import Chart from 'react-apexcharts';
 
 const Overview = () => {
+
+    const BrowsingProfileTable = ({ profiles, title }) => {
+      return (
+          <div className="rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5">
+              <h2 className="text-lg font-semibold mb-5">{title}</h2>
+              <table className="w-full text-left border-collapse">
+                  <thead>
+                      <tr className="border-b">
+                          <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Name</th>
+                          <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Department</th>
+                          <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Heartbeat Status</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {profiles.map(user => (
+                          <tr key={user.userId} className="border-b hover:bg-gray-100 dark:hover:bg-[#182A46]">
+                              <td className="p-3 flex items-center gap-x-2">
+                                  <Link to={`/users/userDetails/${user.userId}`} title="Click to view details" className="flex items-center gap-x-2">
+                                      {user.profilePic ? (
+                                          <img src={user.profilePic} alt={`${user.name}'s profile`} className="h-12 w-12 rounded-full" />
+                                      ) : (
+                                          <PiUserCircleLight className="h-12 w-12 text-gray-500" />
+                                      )}
+                                      <span className="font-medium text-gray-800 dark:text-gray-200">{user.name}</span>
+                                  </Link>
+                              </td>
+                              <td className="p-3 text-gray-600 dark:text-gray-400">{user.department}</td>
+                              <td className="p-3">
+                                  <span
+                                      className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${
+                                          user.heartBeatStatus === "active"
+                                              ? "bg-green-100 text-green-800"
+                                              : user.heartBeatStatus === "not initialized"
+                                              ? "bg-yellow-100 text-yellow-800"
+                                              : "bg-red-100 text-red-800"
+                                      }`}
+                                  >
+                                      {user.heartBeatStatus}
+                                  </span>
+                              </td>
+                          </tr>
+                      ))}
+                  </tbody>
+              </table>
+          </div>
+      );
+  };
+
   const dispatch = useDispatch();
   const overviewPoints = useSelector(state => state.overview.linkData);
   const theme = useSelector((state) => state.theme);
@@ -365,17 +413,17 @@ const Overview = () => {
         <div className="w-full p-2 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]">
           <h2 className="text-center dark:text-[#F4F4F4]">URL Category Heatmap</h2>
           <Chart
-  options={{
-    chart: {
-      type: 'heatmap',
-      toolbar: { show: false },
-      background: isDarkMode ? '#001C40' : '#ffffff', // Set background based on theme
-    },
-    plotOptions: {
-      heatmap: {
-        colorScale: {
+            options={{
+              chart: {
+                type: 'heatmap',
+                toolbar: { show: false },
+                background: isDarkMode ? '#001C40' : '#ffffff', // Set background based on theme
+              },
+              plotOptions: {
+                heatmap: {
+                  colorScale: {
                     ranges: [
-                      { from: 0, to: 5, color: "#a9d5ff" },   
+                      { from: 0, to: 5, color: "#a9d5ff" },
                       { from: 6, to: 10, color: "#57aeff" },
                       { from: 11, to: 20, color: "#0687ff" },
                       { from: 21, to: 30, color: "#005cb3" },
@@ -405,52 +453,8 @@ const Overview = () => {
           />
         </div>
         <div className='flex justify-center gap-5 dark:text-[#f4f4f4]'>
-          <div className='rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5'>
-            <h2 className='text-lg font-semibold mb-5'> User with Bad Browsing Profile</h2>
-            <table className='w-full text-left'>
-              <tbody>
-                {badBrowsingProfile.map(user => (
-                  <tr key={user.userId}>
-                    <td>
-                      <Link
-                        to={`/users/userDetails/${user.userId}`}
-                        title="Click to view details"
-                      >
-                        <div className="p-2 flex items-center gap-x-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#182A46]">
-                          {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
-                          <span className="font-medium">{user.name}</span>
-                          <span className="text-gray-500 dark:text-gray-400">{user.department}</span>
-                        </div>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className='rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5'>
-            <h2 className='text-lg font-semibold mb-5'> User with Good Browsing Profile</h2>
-            <table className='w-full text-left'>
-              <tbody>
-                {goodBrowsingProfile.map(user => (
-                  <tr key={user.userId}>
-                    <td>
-                      <Link
-                        to={`/users/userDetails/${user.userId}`}
-                        title="Click to view details"
-                      >
-                        <div className="p-2 flex items-center gap-x-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#182A46]">
-                          {user.img ? <img src={user.profilePic} alt="" className="h-12 w-12 rounded-full" /> : <PiUserCircleLight className="h-12 w-12" />}
-                          <span className="font-medium">{user.name}</span>
-                          <span className="text-gray-500 dark:text-gray-400">{user.department}</span>
-                        </div>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <BrowsingProfileTable profiles={badBrowsingProfile} title={"User with Bad Browsing Profile"}/>
+          <BrowsingProfileTable profiles={goodBrowsingProfile} title={"User with Good Browsing Profile"}/>
         </div>
       </div>
     </div>

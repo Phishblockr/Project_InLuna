@@ -230,6 +230,7 @@ export default function Users() {
                                     <th className="py-3 text-left">Department</th>
                                     <th className="py-3 text-left">Role</th>
                                     <th className="py-3 text-left">Status</th>
+                                    <th className="py-3 text-left">Heartbeat Status</th>
                                     <th className="py-3 text-left">Actions</th>
                                 </tr>
                             </thead>
@@ -261,13 +262,26 @@ export default function Users() {
                                         </td>
                                         <td className="text-left font-medium">
                                             <span
-                                                className={
-                                                    user.status === "active"
-                                                        ? statusActive
-                                                        : statusInactive
-                                                }
+                                                className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.status === "active"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : user.status === "inactive"
+                                                        ? "bg-red-100 text-red-800"
+                                                        : "bg-yellow-100 text-yellow-800"
+                                                    }`}
                                             >
                                                 {user.status}
+                                            </span>
+                                        </td>
+                                        <td className="text-left font-medium">
+                                            <span
+                                                className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.heartBeatStatus === "active"
+                                                        ? "bg-green-100 text-green-800"
+                                                        : user.heartBeatStatus === "not initialized"
+                                                            ? "bg-yellow-100 text-yellow-800"
+                                                            : "bg-red-100 text-red-800"
+                                                    }`}
+                                            >
+                                                {user.heartBeatStatus}
                                             </span>
                                         </td>
                                         <td className="flex flex-row items-center gap-2 mt-5 text-left">
@@ -275,8 +289,8 @@ export default function Users() {
                                                 <RiDeleteBinLine className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
                                             </button>
                                             <button
-                                            onClick={() => navigate(`/users/userDetails/${user._id}`)}
-                                            title="Click to view details"
+                                                onClick={() => navigate(`/users/userDetails/${user._id}`)}
+                                                title="Click to view details"
                                             ><RiEyeLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
                                         </td>
                                     </tr>

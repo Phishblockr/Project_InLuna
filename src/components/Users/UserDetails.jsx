@@ -44,7 +44,9 @@ const UserDetails = () => {
         start: startOfWeek(new Date(), { weekStartsOn: 1 }),
         end: endOfWeek(new Date(), { weekStartsOn: 1 }),
     });
-    const [heartbeatStatus, setHeartbeatStatus] = useState("");
+    const [heartbeatStatus, setHeartbeatStatus] = useState({ "status": "not initialized" });
+
+    console.log(heartbeatStatus)
 
     const theme = useSelector((state) => state.theme);
 
@@ -155,15 +157,20 @@ const UserDetails = () => {
     };
 
     const fetchHeartBeatStatus = async (userId) => {
-        const apiUrl = import.meta.env.VITE_API_URL
+        const apiUrl = import.meta.env.VITE_API_URL;
         const token = JSON.parse(localStorage.getItem("user")).token;
         try {
+            setDataLoading(true);
+            const loadingTimer = setTimeout(() => {
+                setShowLoading(true);
+            }, 500);
+
             const response = await fetch(`${apiUrl}/heartBeat/fetchHeartBeat/${userId}`, {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
+                    "Content-Type": "application/json",
+                },
             });
 
             if (!response.ok) {
@@ -171,9 +178,15 @@ const UserDetails = () => {
             }
 
             const data = await response.json();
-            setHeartbeatStatus(data.heartBeatData);
+            setHeartbeatStatus(data);
+
+            clearTimeout(loadingTimer);
+            setShowLoading(false);
+            setDataLoading(false);
         } catch (error) {
             console.error("Error fetching heartbeat status:", error);
+            setShowLoading(false);
+            setDataLoading(false);
         }
     };
 
@@ -377,9 +390,12 @@ const UserDetails = () => {
                                     Status:
                                 </span>
                                 <span
-                                    className={
-                                        user.status === "active" ? statusActive : statusInactive
-                                    }
+                                    className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.status === "active"
+                                        ? "bg-green-100 text-green-800"
+                                        : user.status === "inactive"
+                                            ? "bg-red-100 text-red-800"
+                                            : "bg-yellow-100 text-yellow-800"
+                                        }`}
                                 >
                                     {user.status}
                                 </span>
@@ -389,9 +405,12 @@ const UserDetails = () => {
                                     Heartbeat Status:
                                 </span>
                                 <span
-                                    className={
-                                        heartbeatStatus.status === "active" ? statusActive : statusInactive
-                                    }
+                                    className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${heartbeatStatus.status === "active"
+                                        ? "bg-green-100 text-green-800"
+                                        : heartbeatStatus.status === "not initialized"
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : "bg-red-100 text-red-800"
+                                        }`}
                                 >
                                     {heartbeatStatus.status}
                                 </span>
@@ -482,6 +501,39 @@ const UserDetails = () => {
 
                         </BarChart>
                     </ResponsiveContainer>
+                </div>
+                <div className="mt-5 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5">
+                    <h2 className="text-lg font-semibold mb-5">Downtime History</h2>
+                    {dataLoading ? ( // Display loading message while data is being fetched
+                        <p className="text-center text-gray-500 dark:text-gray-300">Fetching data...</p>
+                    ) : heartbeatStatus.downtime && heartbeatStatus.downtime.length > 0 ? ( // Render table if downtime data exists
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b">
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Start Time</th>
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">End Time</th>
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Reason</th>
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {heartbeatStatus.downtime.map((entry, index) => (
+                                    <tr key={index} className="border-b hover:bg-gray-100 dark:hover:bg-[#182A46]">
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">
+                                            {new Date(entry.oldTimestamp).toLocaleString()}
+                                        </td>
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">
+                                            {new Date(entry.newTimestamp).toLocaleString()}
+                                        </td>
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">{entry.reason}</td>
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">{entry.duration}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p className="text-center text-gray-500 dark:text-gray-300">No downtime history available.</p>
+                    )}
                 </div>
             </div>
         </div>
