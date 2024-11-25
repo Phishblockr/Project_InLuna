@@ -281,7 +281,7 @@ export const fetchOrgMetrics = async (req, res) => {
                 } else if (isInactive){
                     profile.heartBeatStatus = "inactive"
                 } else {
-                    profile.heartBeatStatus = heartBeat.status || "active";
+                    profile.heartBeatStatus = "active";
                 }
             }
         };

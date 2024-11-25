@@ -85,7 +85,7 @@ export const fetchHeartBeat = async (req, res) => {
             heartBeatData.status = "inactive"; // Update the status in the database
             await heartBeatData.save();
         } else {
-            status = heartBeatData.status || "active";
+            status = "active";
         }
 
         const sortedDowntime = heartBeatData.downtime.sort((a, b) => b.newTimestamp - a.newTimestamp);

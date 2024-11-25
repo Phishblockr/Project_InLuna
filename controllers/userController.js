@@ -79,7 +79,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
             } else if (isInactive) {
                 heartBeatStatus = "inactive";
             } else {
-                heartBeatStatus = heartBeat.status || "active"
+                heartBeatStatus = "active"
             }
         }
         return {
