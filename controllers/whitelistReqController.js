@@ -14,11 +14,17 @@ export const addRequestExt = async (req, res) => {
 
         const { url, reason , reqOption } = req.body;
 
-        const existingUrl = await Url.findOne({ url, orgId });
+        let existingUrl = await Url.findOne({ url, orgId });
         if (!existingUrl) {
-            return res.status(404).json({ message: "Invalid request" })
+            const newUrl = new Url ({
+                url: `${req.body.url}`,
+                orgId: req.user.orgId,
+                isVerified: true,
+                isPhishing: false,
+            })
+            existingUrl = await newUrl.save();
         }
-
+        
         const existingRequest = await Request.findOne({
             userId,
             url,
@@ -27,7 +33,7 @@ export const addRequestExt = async (req, res) => {
         })
 
         if (existingRequest) {
-            return res.status(400).json({ message: "You have already submitted a whitelist request for this URL, pending approval." });
+            return res.status(400).json({ message: `You have already submitted a ${existingRequest.reqOption} request for this URL, pending approval.` });
         }
 
         const newRequest = new Request({
@@ -209,13 +215,19 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
 export const deleteRequest = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
-
         const userId = req.user.userId;
         const orgId = req.user.orgId;
         const data = await Request.findById(id);
         if (!data) {
             return res.status(404).json({ message: "Request not found" });
         }
+        const {url} = data;
+        const existingUrl = await Url.findOne({ url, orgId });
+        const existingUrlReqId = existingUrl.RequestIds;
+        existingUrl.RequestIds = existingUrl.RequestIds.filter(
+            (requestId) => requestId.toString() !== id
+        );
+        await existingUrl.save();
         await Request.findByIdAndDelete(id);
         const io = req.app.get("socketio");
         io.emit("reqDeleted", id);
