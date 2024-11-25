@@ -11,7 +11,7 @@ import AdminLogs from "../models/adminlogsModel.js";
 // Helper function to normalize URLs by removing 'www.' and ensuring the URL starts with 'https://'
 function normalizeUrl(url) {
     // console.log(url);
-    
+
     try {
         // If the URL doesn't start with "http://" or "https://", add "https://"
         if (!/^https?:\/\//i.test(url)) {
@@ -23,7 +23,7 @@ function normalizeUrl(url) {
 
         // Remove "www." if it exists
         const normalizedHost = parsedUrl.hostname.replace(/^www\./, '');
-        
+
         // Return the normalized URL (with 'https://')
         return `${parsedUrl.protocol}//${normalizedHost}${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
     } catch (error) {
@@ -122,26 +122,43 @@ export const fetchUrlStatsExt = async (req, res) => {
 // Unshorten a URL to its full form
 export const unshortenUrl = async (req, res) => {
     let shortUrl = req.query.url;
+
+    // Validate the URL input
     if (!shortUrl) {
         return res.status(400).json({ error: 'No URL provided' });
     }
-    if (!shortUrl.startsWith("https://") && !shortUrl.startsWith("http://")){
-        shortUrl = "https://"+shortUrl;
+    if (!shortUrl.startsWith("https://") && !shortUrl.startsWith("http://")) {
+        shortUrl = "https://" + shortUrl; // Default to HTTPS
     }
+
     try {
+        // Perform a HEAD request
         const response = await fetch(shortUrl, {
             method: "HEAD",
-            redirect: "manual"
+            redirect: "manual",
+            headers: {
+                "User-Agent": "Mozilla/5.0",
+            },
         });
+
         if (response.status === 301 || response.status === 302) {
+            // URL was redirected, return the expanded URL
             const expandedUrl = response.headers.get("Location");
             return res.json({ requested_url: shortUrl, resolved_url: expandedUrl, success: true });
+        } else if (response.status >= 200 && response.status < 300) {
+            // URL is valid but not redirected (not shortened)
+            return res.json({ requested_url: shortUrl, resolved_url: shortUrl, success: false });
         } else {
-            return res.json({ request_url: shortUrl, resolved_url: shortUrl, success: false });
+            // URL returned an error status
+            return res.status(response.status).json({ error: "Unable to resolve URL", status: response.status });
         }
     } catch (error) {
-        console.error("Error expanding URL: ", error);
-        return res.status(500).json({ error: "Failed to expand URL" });
+        // console.error("Error expanding URL:", error.message);
+
+        if (error.code === 'EAI_AGAIN') {
+            return res.status(503).json({ error: "DNS resolution failed. Please try again later." });
+        }
+        return res.status(500).json({ error: "Failed to expand URL", details: error.message });
     }
 };
 
@@ -273,7 +290,7 @@ export const deleteUrl = asyncHandler(async (req, res) => {
         const userId = req.user.userId;
         const orgId = req.user.orgId;
         const urlData = await Url.findById(id);
-        if(!urlData){
+        if (!urlData) {
             return res.status(404).json({ message: "url not found" });
         }
         await Url.findByIdAndDelete(id);
@@ -288,7 +305,7 @@ export const deleteUrl = asyncHandler(async (req, res) => {
             orgId,
             entityId: id,
             entityType: "url",
-            entityDetails: {identifier: urlData.url, status: urlData.status, extraInfo: `Category: ${urlData.category}`}
+            entityDetails: { identifier: urlData.url, status: urlData.status, extraInfo: `Category: ${urlData.category}` }
         });
 
         res.status(200).json(id);
@@ -370,7 +387,7 @@ export const addUrlFromCsv = asyncHandler(async (req, res) => {
 export const getBlacklistedUrls = asyncHandler(async (req, res) => {
     try {
         const orgId = req.user.orgId;  // Assuming the orgId is passed with the user object
-        
+
         // Find URLs that are blacklisted in the database for the given orgId
         const blacklistedUrls = await Url.find({ orgId, status: 'blacklisted' });
 
@@ -385,18 +402,18 @@ export const getBlacklistedUrls = asyncHandler(async (req, res) => {
 });
 
 
-export const fetchUrl = asyncHandler (async (req, res) => {
+export const fetchUrl = asyncHandler(async (req, res) => {
     try {
         const orgId = req.user.orgId;
         const { url } = req.query;
         const normalizedUrl = normalizeUrl(url);
-        const urlData = await Url.findOne({url: normalizedUrl, orgId});
-        if(!urlData){
+        const urlData = await Url.findOne({ url: normalizedUrl, orgId });
+        if (!urlData) {
             res.status(400).json({ error: "Url does not exists in db" });
         } else {
-            res.status(200).json({urlData});
+            res.status(200).json({ urlData });
         }
     } catch (error) {
-        res.status(500).json({error: error.message})
+        res.status(500).json({ error: error.message })
     }
 }) 
