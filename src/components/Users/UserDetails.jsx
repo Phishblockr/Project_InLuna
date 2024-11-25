@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
@@ -22,6 +22,9 @@ const statusInactive =
 const UserDetails = () => {
     const apiUrl = import.meta.env.VITE_API_URL
     const { id } = useParams();
+
+    const targetSectionRef = useRef(null);
+
     const [activityCounts, setActivityCounts] = useState({
         "phishingClicks": 0,
         "blacklistedClicks": 0,
@@ -189,6 +192,10 @@ const UserDetails = () => {
             setDataLoading(false);
         }
     };
+
+    const scrollToSection = () => {
+        targetSectionRef.current.scrollIntoView({ behavior: "smooth" });
+      };
 
     if (!user) {
         return <div>User not found</div>;
@@ -400,24 +407,15 @@ const UserDetails = () => {
                                     {user.status}
                                 </span>
                             </li>
-                            <li className="font-medium mb-1">
-                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">
-                                    Heartbeat Status:
-                                </span>
-                                <span
-                                    className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${heartbeatStatus.status === "active"
-                                        ? "bg-green-100 text-green-800"
-                                        : heartbeatStatus.status === "not initialized"
-                                            ? "bg-yellow-100 text-yellow-800"
-                                            : "bg-red-100 text-red-800"
-                                        }`}
-                                >
-                                    {heartbeatStatus.status}
-                                </span>
-                            </li>
                         </ul>
                     </div>
                     <div className="flex flex-col gap-5">
+                        <button className={`bg-gray-200 hover:bg-gray-300 ${heartbeatStatus.status === "active"? "text-red-600": "text-gray-600"} p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733] flex items-center justify-center gap-2`} title={heartbeatStatus.status}
+                        onClick={scrollToSection}
+                        >
+                            <div className={`h-7 w-7 rounded-full ${heartbeatStatus.status === "active"? "bg-red-600 animation-pulse": "bg-gray-600"}`}></div>
+                            <span>Heartbeat Status</span>
+                        </button>
                         <button
                             onClick={() => handlePasswordModalOpen(user, "updateStatus")}
                             className="bg-[#0364BD] hover:bg-[#003A70] w-[200px] h-[50px] p-2 text-[#f4f4f4] font-medium rounded-lg mr-2 transition-colors"
@@ -502,8 +500,24 @@ const UserDetails = () => {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-5 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5">
-                    <h2 className="text-lg font-semibold mb-5">Downtime History</h2>
+                <div className="mt-5 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5"
+                ref={targetSectionRef}
+                >
+                    <div className="flex flex-row gap-2 items-center  mb-5">
+                    <h2 className="text-lg font-semibold">Downtime History</h2>
+                    <span>Heartbeat Status:</span>
+                    <span
+                                      className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${
+                                        heartbeatStatus.status === "active"
+                                              ? "bg-green-100 text-green-800"
+                                              : heartbeatStatus.status === "not initialized"
+                                              ? "bg-yellow-100 text-yellow-800"
+                                              : "bg-red-100 text-red-800"
+                                      }`}
+                                  >
+                                      {heartbeatStatus.status}
+                                  </span>
+                    </div>
                     {dataLoading ? ( // Display loading message while data is being fetched
                         <p className="text-center text-gray-500 dark:text-gray-300">Fetching data...</p>
                     ) : heartbeatStatus.downtime && heartbeatStatus.downtime.length > 0 ? ( // Render table if downtime data exists
