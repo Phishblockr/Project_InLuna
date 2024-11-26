@@ -26,7 +26,7 @@ const Overview = () => {
                       <tr className="border-b">
                           <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Name</th>
                           <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Department</th>
-                          <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Heartbeat Status</th>
+                          <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Extension Status</th>
                       </tr>
                   </thead>
                   <tbody>

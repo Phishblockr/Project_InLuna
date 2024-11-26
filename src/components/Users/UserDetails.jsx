@@ -48,8 +48,7 @@ const UserDetails = () => {
         end: endOfWeek(new Date(), { weekStartsOn: 1 }),
     });
     const [heartbeatStatus, setHeartbeatStatus] = useState({ "status": "not initialized" });
-
-    console.log(heartbeatStatus)
+    const [isVisible, setIsVisible] = useState(false);
 
     const theme = useSelector((state) => state.theme);
 
@@ -89,6 +88,14 @@ const UserDetails = () => {
         fetchHeartBeatStatus(id);
         dispatch(startListeningToSocket());
     }, [id, selectedDate])
+
+    useEffect(() => {
+        setTimeout(() => {
+            if (isVisible && targetSectionRef.current) {
+                targetSectionRef.current.scrollIntoView({ behavior: "smooth" });
+            }
+        }, 200);
+    }, [isVisible]);
 
 
     const navigate = useNavigate();
@@ -194,8 +201,8 @@ const UserDetails = () => {
     };
 
     const scrollToSection = () => {
-        targetSectionRef.current.scrollIntoView({ behavior: "smooth" });
-      };
+        setIsVisible(!isVisible)
+    };
 
     if (!user) {
         return <div>User not found</div>;
@@ -410,11 +417,11 @@ const UserDetails = () => {
                         </ul>
                     </div>
                     <div className="flex flex-col gap-5">
-                        <button className={`bg-gray-200 hover:bg-gray-300 ${heartbeatStatus.status === "active"? "text-red-600": "text-gray-600"} p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733] flex items-center justify-center gap-2`} title={heartbeatStatus.status}
-                        onClick={scrollToSection}
+                        <button className={`${heartbeatStatus.status === "active" ? "text-red-600" : "text-gray-600"} p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors flex items-center justify-center gap-2`}
+                            title={`Extension status: ${heartbeatStatus.status}\nClick to view History`}
+                            onClick={scrollToSection}
                         >
-                            <div className={`h-7 w-7 rounded-full ${heartbeatStatus.status === "active"? "bg-red-600 animation-pulse": "bg-gray-600"}`}></div>
-                            <span>Heartbeat Status</span>
+                            <div className={`h-5 w-5 rounded-full ${heartbeatStatus.status === "active" ? "bg-red-600 animation-pulse" : "bg-gray-600"}`}></div>
                         </button>
                         <button
                             onClick={() => handlePasswordModalOpen(user, "updateStatus")}
@@ -500,23 +507,23 @@ const UserDetails = () => {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-5 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5"
-                ref={targetSectionRef}
+                <div className={`rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5 overflow-hidden transition-all duration-500 ease-in-out ${isVisible ? " mt-5 max-h-screen opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                    ref={targetSectionRef}
                 >
                     <div className="flex flex-row gap-2 items-center  mb-5">
-                    <h2 className="text-lg font-semibold">Downtime History</h2>
-                    <span>Heartbeat Status:</span>
-                    <span
-                                      className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${
-                                        heartbeatStatus.status === "active"
-                                              ? "bg-green-100 text-green-800"
-                                              : heartbeatStatus.status === "not initialized"
-                                              ? "bg-yellow-100 text-yellow-800"
-                                              : "bg-red-100 text-red-800"
-                                      }`}
-                                  >
-                                      {heartbeatStatus.status}
-                                  </span>
+                        <h2 className="text-lg font-semibold">Downtime History</h2>
+                        <span>Extension Status:</span>
+                        <span
+                            className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${heartbeatStatus.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : heartbeatStatus.status === "not initialized"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                        >
+                            {heartbeatStatus.status}
+                        </span>
                     </div>
                     {dataLoading ? ( // Display loading message while data is being fetched
                         <p className="text-center text-gray-500 dark:text-gray-300">Fetching data...</p>

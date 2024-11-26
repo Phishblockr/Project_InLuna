@@ -230,7 +230,7 @@ export default function Users() {
                                     <th className="py-3 text-left">Department</th>
                                     <th className="py-3 text-left">Role</th>
                                     <th className="py-3 text-left">Status</th>
-                                    <th className="py-3 text-left">Heartbeat Status</th>
+                                    <th className="py-3 text-left">Extension Status</th>
                                     <th className="py-3 text-left">Actions</th>
                                 </tr>
                             </thead>
