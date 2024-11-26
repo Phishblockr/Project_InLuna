@@ -19,10 +19,13 @@ export const addRequestExt = async (req, res) => {
             const newUrl = new Url ({
                 url: `${req.body.url}`,
                 orgId: req.user.orgId,
-                isVerified: true,
+                isVerified: false,
                 isPhishing: false,
             })
             existingUrl = await newUrl.save();
+            return res.status(404).json({
+                message: "The URL you entered is not currently in our database. Please try again or contact support for assistance."
+            });
         }
         
         const existingRequest = await Request.findOne({
@@ -135,36 +138,49 @@ export const fetchReqs = asyncHandler(async (req, res) => {
     }
 })
 
-export const approveWhitelistRequest = asyncHandler(async (req, res) => {
+export const approveRequest = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
 
         const userId = req.user.userId;
         const orgId = req.user.orgId;
 
-        const whitelistRequest = await WhitelistReq.findById(id);
-        if (!whitelistRequest) {
-            return res.status(404).json({ message: "Whitelist request not found" });
+        const RequestData = await Request.findById(id);
+        if (!RequestData) {
+            return res.status(404).json({ message: "Request not found" });
+        }
+        const RequestOption = RequestData.reqOption;
+        let ReqOpt = "";
+        let isPhished = true;
+        if(RequestOption==="blacklist"){
+            ReqOpt = "blacklisted";
+            isPhished;
+        }else if(RequestOption==="whitelist"){
+            ReqOpt = "whitelisted";
+            isPhished= false;
         }
 
-        // Update all whitelist requests associated with the same URL and orgId to approved
-        await WhitelistReq.updateMany(
-            { url: whitelistRequest.url, orgId: whitelistRequest.orgId }, { status: "approved" }
+
+        // Update all Requests associated with the same URL and orgId to approved
+
+        await Request.updateMany(
+            { url: RequestData.url, orgId: RequestData.orgId }, { status: "approved", reqOption: RequestOption }
         )
-        let url = await Url.findOne({ url: whitelistRequest.url, orgId: whitelistRequest.orgId });
+        let url = await Url.findOne({ url: RequestData.url, orgId: RequestData.orgId });
+        
 
         if (!url) {
             return res.status(404).json({ message: "URL not found in the database" });
         } else {
-            // If the URL exists, update it with the whitelist request ID
+            // If the URL exists, update it with the request ID
             url.isUserAdded = true;
             url.isVerified = true;
-            url.isPhishing = false;
-            url.status = "whitelisted",
+            url.isPhishing = isPhished;
+            url.status = ReqOpt,
                 await url.save();
         }
 
-        const updatedWhitelistRequest = await WhitelistReq.aggregate([
+        const updatedRequestData = await Request.aggregate([
             { $match: { _id: new mongoose.Types.ObjectId(id) } },
             {
                 $lookup: {
@@ -188,24 +204,24 @@ export const approveWhitelistRequest = asyncHandler(async (req, res) => {
             }
         ]);
 
-        if (updatedWhitelistRequest.length === 0) {
+        if (updatedRequestData.length === 0) {
             return res.status(404).json({ message: "Updated request not found" });
         }
 
         const io = req.app.get("socketio");
-        io.emit("reqUpdated", updatedWhitelistRequest[0]); // Emit the full updated object with user details
+        io.emit("reqUpdated", updatedRequestData[0]); // Emit the full updated object with user details
 
         // Add Log entry
         await AdminLogs.create({
             userId,
             operationType: "approved",
-            operationsPerformed: `Whitelist Request Approved: ${id}`,
+            operationsPerformed: `Request Approved: ${id}`,
             orgId,
             entityId: id,
             entityType: "whitelistReq"
         })
 
-        res.json({ message: "Whitelist request approved and URL updated", updatedWhitelistRequest: updatedWhitelistRequest[0] });
+        res.json({ message: "Request approved and URL updated", updatedRequestData: updatedRequestData[0] });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
         console.error(error)
@@ -223,7 +239,6 @@ export const deleteRequest = asyncHandler(async (req, res) => {
         }
         const {url} = data;
         const existingUrl = await Url.findOne({ url, orgId });
-        const existingUrlReqId = existingUrl.RequestIds;
         existingUrl.RequestIds = existingUrl.RequestIds.filter(
             (requestId) => requestId.toString() !== id
         );
