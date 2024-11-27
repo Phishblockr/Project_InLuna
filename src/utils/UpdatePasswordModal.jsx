@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { useAuth } from './AuthProvider';
 
-const UpdatePasswordModal = ({ isOpen, onClose }) => {
+const UpdatePasswordModal = ({ isOpen, onClose, token }) => {
     const { logout } = useAuth();
     const dispatch = useDispatch();
     const [oldPassword, setOldPassword] = useState("");
@@ -33,7 +33,7 @@ const UpdatePasswordModal = ({ isOpen, onClose }) => {
 
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
-            const token = JSON.parse(localStorage.getItem("user")).token;
+            // const token = JSON.parse(localStorage.getItem("user")).token;
 
             const response = await fetch(`${apiUrl}/user/updateAdminPwd`, {
                 method: "PUT",
@@ -45,6 +45,7 @@ const UpdatePasswordModal = ({ isOpen, onClose }) => {
             });
 
             const data = await response.json();
+            console.log(data)
             if (!response.ok) {
                 throw new Error(data.message || "Failed to update password");
             }

@@ -18,7 +18,7 @@ export default function AuthenticateModal({ isOpen, onClose, onConfirm }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <div className="bg-white relative p-6 rounded-lg shadow-lg w-96 dark:bg-[#002451] dark:text-[#f4f4f4]">
                 <h2 className="text-xl font-medium mb-4">Confirm Admin Password</h2>
                 <form onSubmit={handleSubmit}>
                     <label className="block mb-2">
@@ -27,7 +27,7 @@ export default function AuthenticateModal({ isOpen, onClose, onConfirm }) {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-2 mt-1 border rounded-lg"
+                            className="w-full p-2 border border-gray-300 rounded-lg dark:bg-[#001C40] dark:border-0"
                             required
                         />
                     </label>
@@ -35,7 +35,7 @@ export default function AuthenticateModal({ isOpen, onClose, onConfirm }) {
                         <button
                             type="button"
                             onClick={handleClose}
-                            className="bg-gray-300 p-2 rounded-lg"
+                            className="bg-gray-300 hover:bg-gray-400 text-black font-medium py-2 px-4 rounded-lg dark:bg-[#001C40] dark:text-[#f4f4f4]"
                         >
                             Cancel
                         </button>
