@@ -196,6 +196,7 @@ export const approveRequest = asyncHandler(async (req, res) => {
                     _id: 1,
                     url: 1,
                     reason: 1,
+                    reqOption: 1,
                     status: 1,
                     createdAt: 1,
                     "userDetails.name": 1,
