@@ -35,7 +35,7 @@ const profileSettings = [
         url: "/logout",
         style:
             "rounded-lg text-red-500 transition hover:bg-white dark:hover:bg-[#00285A]",
-    },
+    }
 ];
 
 const HelpOptions = [

@@ -34,6 +34,8 @@ import ReportBug from "./components/Services/ReportBug.jsx";
 import Faqs from "./components/Services/Faqs.jsx";
 import PasswordReset from "./components/ForgotDetails/PasswordReset.jsx";
 import ForgotDetails from "./components/ForgotDetails/ForgotDetails.jsx";
+import AddCampaign from "./components/Campaign/AddCampaign.jsx";
+import Campaign from "./components/Campaign/Campaign.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -76,6 +78,8 @@ function App() {
                       <Route path="/" element={<Overview />} />
 
                       <Route path="/users" element={<Users />} />
+                      <Route path="/campaign" element={<Campaign />} />
+                      <Route path="/campaign/add" element={<AddCampaign />} />
                       <Route path="/users/adduser" element={<AddUser />} />
                       <Route
                         path="/users/userDetails/:id"
