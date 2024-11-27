@@ -67,7 +67,7 @@ export const approveReq = createAsyncThunk(
         // const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             const response = await fetch(
-                `${apiUrl}/whitelistReq/approveReq/${reqId}`,
+                `${apiUrl}/Request/approveReq/${reqId}`,
                 {
                     method: "PUT",
                     headers: {
@@ -82,7 +82,7 @@ export const approveReq = createAsyncThunk(
             }
             return data;
         } catch (error) {
-                        return rejectWithValue(error.message || "An unexpected error occurred while approving whitelist requests");
+                        return rejectWithValue(error.message || "An unexpected error occurred while approving requests");
         }
     }
 );
