@@ -14,6 +14,7 @@ import RequestRoutes from './routes/RequestRoutes.js';
 import feedbackRoutes from "./routes/feedbackRoutes.js"
 import overviewRoutes from "./routes/overviewRoutes.js"
 import logsRoute from "./routes/logsRoute.js"
+import campaignRoutes from "./routes/campaignRoutes.js"
 
 import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js"
@@ -90,6 +91,9 @@ app.use("/api/heartBeat", authenticateToken, heartBeatRoutes)
 
 // Error handling middleware
 app.use(errorHandler);
+
+// Campaign Routes
+app.use('/api/campaign', authenticateToken, campaignRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
