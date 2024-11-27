@@ -6,11 +6,13 @@ import { addUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import AuthenticateModal from "../../utils/AuthenticateModal";
+import { useAuth } from "../../utils/AuthProvider";
 
 
 
 const AddUrl = () => {
-
+    const { getToken } = useAuth();
+    const token = getToken();
     const textBarStyle = "w-full p-2 rounded-t-lg border-b-2 border-dashed bg-gray-100 border-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-[#001C40]"
 
     const [newTag, setNewTag] = useState(""); // For adding new tags
@@ -30,7 +32,7 @@ const AddUrl = () => {
     }
 
     const executeAddUrl = () => {
-        dispatch(addUrl(url));
+        dispatch(addUrl({url, token}));
         toast.success(`URL added.`);
         navigate("/urllists");
     }
@@ -54,7 +56,7 @@ const AddUrl = () => {
     };
 
     const handlePasswordConfirm = async (password) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         const result = await handleVerifyPwd(password, apiUrl, token);
 
         if (result) {

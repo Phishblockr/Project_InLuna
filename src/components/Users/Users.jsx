@@ -10,12 +10,15 @@ import { PiUserCircleLight } from "react-icons/pi";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 import FileUploadModal from "../../utils/FileUploadModal";
 import AuthenticateModal from "../../utils/AuthenticateModal"
+import { useAuth } from "../../utils/AuthProvider";
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import debounce from "debounce";
 import { useNavigate } from "react-router-dom";
 
 export default function Users() {
     const apiUrl = import.meta.env.VITE_API_URL
+    const { getToken } = useAuth();
+    const token = getToken();
     const navigate = useNavigate();
 
     const usersData = useSelector((state) => state.users.users);
@@ -49,7 +52,7 @@ export default function Users() {
         let loadingTimer = setTimeout(() => {
             setShowLoading(true); // Only show loading overlay after delay
         }, 500);
-        dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status }))
+        dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status, token }))
             .unwrap()
             .finally(() => {
                 clearTimeout(loadingTimer);
@@ -57,17 +60,17 @@ export default function Users() {
                 setDataLoading(false);
             })
 
-        dispatch(startListeningToSocket());
-    }, [dispatch, currentPage, perPageRec, query]);
+        dispatch(startListeningToSocket(token));
+    }, [dispatch, currentPage, perPageRec, query, token]);
 
     const handleSearch = debounce((value) => {
         setQuery(value)
-        dispatch(getUsers({ page: 1, limit: perPageRec, search: value, status }));
+        dispatch(getUsers({ page: 1, limit: perPageRec, search: value, status, token }));
     }, 300);
 
     const handleStatus = (value) => {
         setStatus(value)
-        dispatch(getUsers({ page: 1, limit: perPageRec, search: query, status: value }));
+        dispatch(getUsers({ page: 1, limit: perPageRec, search: query, status: value, token }));
     }
 
     const handleFileSubmit = async (file) => {
@@ -79,7 +82,7 @@ export default function Users() {
 
     const executeCsvUpload = async () => {
         try {
-            const response = dispatch(uploadCsv(csvData)).unwrap()
+            const response = dispatch(uploadCsv({ formData: csvData, token })).unwrap()
             if (response.errors) {
                 setErrors(response.errors);
                 toast.error("CSV contains errors. Please correct them and try again.");
@@ -113,7 +116,7 @@ export default function Users() {
 
     const handleRemUser = async (id) => {
         try {
-            await dispatch(delUser(id)).unwrap();
+            await dispatch(delUser({ id, token })).unwrap();
             toast.success(`User ${id} removed`);
 
             const updatedRecords = usersData.slice(0, perPageRec - 1);
@@ -121,7 +124,7 @@ export default function Users() {
             if (updatedRecords.length === 1 && currentPage > 1) {
                 setCurrentPage((prev) => prev - 1);
             } else {
-                dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status }));
+                dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status, token }));
             }
         } catch (error) {
             toast.error(`Something went wrong: ${error}`);
@@ -135,7 +138,7 @@ export default function Users() {
     };
 
     const handlePasswordConfirm = async (password) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         const result = await handleVerifyPwd(password, apiUrl, token);
 
         if (result) {
@@ -148,8 +151,44 @@ export default function Users() {
         }
     };
 
-    const statusActive = "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
-    const statusInactive = "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
+    function getVisiblePages(totalPages, currentPage) {
+        const maxVisibleAround = 6;
+        const pages = [];
+
+        if (totalPages === 1) {
+            pages.push(1);
+            return pages;
+        }
+
+        pages.push(1);
+
+        if (currentPage > maxVisibleAround + 2) {
+            pages.push("...");
+        }
+
+        const start = Math.max(2, currentPage - maxVisibleAround);
+        const end = Math.min(totalPages - 1, currentPage + maxVisibleAround);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        if (currentPage < totalPages - (maxVisibleAround + 1)) {
+            pages.push("...");
+        }
+
+        pages.push(totalPages);
+
+        return pages;
+    }
+
+    const visiblePages = getVisiblePages(totalPages, currentPage);
+
+    function changeCPage(n) {
+        if (typeof n === "number") {
+            setCurrentPage(n);
+        }
+    }
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -230,7 +269,7 @@ export default function Users() {
                                     <th className="py-3 text-left">Department</th>
                                     <th className="py-3 text-left">Role</th>
                                     <th className="py-3 text-left">Status</th>
-                                    <th className="py-3 text-left">Heartbeat Status</th>
+                                    <th className="py-3 text-left">Extension Status</th>
                                     <th className="py-3 text-left">Actions</th>
                                 </tr>
                             </thead>
@@ -263,10 +302,10 @@ export default function Users() {
                                         <td className="text-left font-medium">
                                             <span
                                                 className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.status === "active"
-                                                    ? "bg-green-100 text-green-800"
-                                                    : user.status === "inactive"
-                                                        ? "bg-red-100 text-red-800"
-                                                        : "bg-yellow-100 text-yellow-800"
+                                                    ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
+                                                    : user.status === "not initialized"
+                                                        ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                                        : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                                                     }`}
                                             >
                                                 {user.status}
@@ -275,10 +314,10 @@ export default function Users() {
                                         <td className="text-left font-medium">
                                             <span
                                                 className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.heartBeatStatus === "active"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : user.heartBeatStatus === "not initialized"
-                                                            ? "bg-yellow-100 text-yellow-800"
-                                                            : "bg-red-100 text-red-800"
+                                                    ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
+                                                    : user.heartBeatStatus === "not initialized"
+                                                        ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                                        : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                                                     }`}
                                             >
                                                 {user.heartBeatStatus}
@@ -302,40 +341,40 @@ export default function Users() {
             </div>
             <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                 <nav className="flex gap-x-1 justify-between">
-                    <div>
-                        <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={currentPage === 1}
-                            onClick={prePage}
-                        >
-                            <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-                        </button>
-                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                        <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
+                    </button>
                     <div className="flex gap-x-2 items-center">
-                        {totalPages && totalPages > 0 ? (
-                            [...Array(totalPages).keys()].map((n) => (
+                        {visiblePages.map((page, index) =>
+                            typeof page === "number" ? (
                                 <button
-                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
+                                    key={index}
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === page
+                                        ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]"
+                                        : "bg-gray-200 dark:bg-[#001C40]"
                                         }`}
-                                    key={n + 1}
-                                    onClick={() => changeCPage(n + 1)}
+                                    onClick={() => changeCPage(page)}
                                 >
-                                    {n + 1}
+                                    {page}
                                 </button>
-                            ))
-                        ) : (
-                            <span></span>
+                            ) : (
+                                <span key={index} className="px-2 py-1">
+                                    {page}
+                                </span>
+                            )
                         )}
                     </div>
-                    <div>
-                        <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={currentPage === totalPages}
-                            onClick={nextPage}
-                        >
-                            Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-                        </button>
-                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    >
+                        Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                    </button>
                 </nav>
             </div>
         </div>

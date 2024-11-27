@@ -6,7 +6,7 @@ const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [orgId, setOrgId] = useState(localStorage.getItem("orgId") || "");
-    const [saveOrgId, setSaveOrgId] = useState(localStorage.getItem("saveOrgId") === "true" || false);
+    const [rememberMe, setRememberMe] = useState(false);
     const { login } = useAuth();
 
     const handleSubmit = async (event) => {
@@ -16,7 +16,11 @@ const Login = () => {
             username: username,
             password: password
         };
-        login(loginData, saveOrgId)
+        try {
+        await login(loginData, rememberMe);
+    } catch (error) {
+        console.error("Login failed:", error)
+    }
     };
 
     return (
@@ -69,9 +73,9 @@ const Login = () => {
                         </div>
                         <div className="mb-6">
                             <input
-                            onChange={(e) => setSaveOrgId(e.target.checked)}
-                            type="checkbox" id="saveOrgId" name="saveOrgId" checked={saveOrgId} />
-                            <label htmlFor="saveOrgId"> Remember Me </label>
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} />
+                            <label htmlFor="rememberMe"> Remember Me </label>
                         </div>
                         <button
                             type="submit"

@@ -13,8 +13,8 @@ const initialState = {
 
 const apiUrl = import.meta.env.VITE_API_URL
 
-export const getUsers = createAsyncThunk('users/get', async ({ page, limit, search, status }, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const getUsers = createAsyncThunk('users/get', async ({ page, limit, search, status, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}&search=${search}&status=${status}`, {
             method: "GET",
@@ -31,8 +31,8 @@ export const getUsers = createAsyncThunk('users/get', async ({ page, limit, sear
     }
 });
 
-export const getUser = createAsyncThunk("User/get", async (id, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const getUser = createAsyncThunk("User/get", async ({id, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const res = await fetch(`${apiUrl}/user/fetch/${id}`, {
             method: "GET",
@@ -49,8 +49,9 @@ export const getUser = createAsyncThunk("User/get", async (id, { rejectWithValue
     }
 })
 
-export const addUser = createAsyncThunk('user/add', async (user, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const addUser = createAsyncThunk('user/add', async ({user, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+    console.log(token)
 
     try {
         const res = await fetch(`${apiUrl}/user/create`, {
@@ -69,8 +70,8 @@ export const addUser = createAsyncThunk('user/add', async (user, { rejectWithVal
     }
 });
 
-export const delUser = createAsyncThunk('user/del', async (id, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const delUser = createAsyncThunk('user/del', async ({id, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
 
     try {
         const res = await fetch(`${apiUrl}/user/delete/${id}`, {
@@ -90,8 +91,8 @@ export const delUser = createAsyncThunk('user/del', async (id, { rejectWithValue
     }
 });
 
-export const updateUserStatus = createAsyncThunk("users/updateStatus", async ({ id, status }, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const updateUserStatus = createAsyncThunk("users/updateStatus", async ({ id, status, token }, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const response = await fetch(`${apiUrl}/user/updateStatus/${id}`, {
             method: "PUT",
@@ -110,9 +111,9 @@ export const updateUserStatus = createAsyncThunk("users/updateStatus", async ({ 
     }
 })
 
-export const uploadCsv = createAsyncThunk('users/uploadCsv', async (formData, { rejectWithValue }) => {
+export const uploadCsv = createAsyncThunk('users/uploadCsv', async ({formData, token}, { rejectWithValue }) => {
     try {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         const response = await fetch(`${apiUrl}/user/addUsersFromCsv`, {
             method: "POST",
             headers: {
@@ -127,8 +128,8 @@ export const uploadCsv = createAsyncThunk('users/uploadCsv', async (formData, { 
     }
 })
 
-const fetchMoreUsersFromNextPage = async (page, limit) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+const fetchMoreUsersFromNextPage = async (page, limit, token) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}`, {
         method: "GET",
         headers: {
@@ -235,12 +236,13 @@ const usersSlice = createSlice({
                 state.error = null;
             })
             .addCase(delUser.fulfilled, (state, action) => {
+                const {token} = action.meta.arg;
                 state.loading = false;
                 state.users = state.users.filter(user => user._id !== action.payload);
                 const totalPages = Math.ceil(state.totalUsers / state.perPageRec);
 
                 if (state.users.length < state.perPageRec && state.currentPage < totalPages) {
-                    fetchMoreUsersFromNextPage(state.currentPage + 1, state.perPageRec).then(newUsers => {
+                    fetchMoreUsersFromNextPage(state.currentPage + 1, state.perPageRec, token).then(newUsers => {
                         state.users.push(...newUsers);
                     });
                 }
@@ -286,10 +288,10 @@ const usersSlice = createSlice({
 });
 
 
-export const startListeningToSocket = () => (dispatch, getState) => {
+export const startListeningToSocket = (token) => (dispatch, getState) => {
     socket.on("usersByCsvAdded", (data) => {
         const perPageRec = getState().perPageRec;
-        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec, search: "", status: "all" }));
+        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec, search: "", status: "all", token }));
     });
 
     socket.on("userCreated", (data) => {

@@ -12,6 +12,7 @@ import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
 import debounce from "debounce";
 import LoadingOverlay from "../utils/LoadingOverlay";
 import { formatDate } from "../utils/formatDate.jsx"
+import { useAuth } from '../utils/AuthProvider.jsx';
 
 const LogDetailsModal = ({ show, onClose, logData }) => {
     if (!show || !logData) return null;
@@ -140,9 +141,10 @@ function Log({ blog, setBlog, showBlog }) {
 
 const Logs = () => {
 
+    const { getToken } = useAuth();
+    const token = getToken();
     const perPageRec = useSelector((state) => state.perPageRec)
     const logsData = useSelector((state) => state.logs.logs);
-    console.log(logsData)
     const totalPages = useSelector((state) => state.logs.totalPages);
     const { csvDownloadLoading, csvDownloadError } = useSelector((state) => state.logs);
 
@@ -162,7 +164,7 @@ const Logs = () => {
 
     const handleSearch = debounce((value) => {
         setQuery(value);
-        dispatch(getLogs({ page: 1, limit: perPageRec, search: value, operationType, dateRangeFilter }));
+        dispatch(getLogs({ page: 1, limit: perPageRec, search: value, operationType, dateRangeFilter, token }));
     }, 300);
     // End of Search Logic
 
@@ -171,7 +173,7 @@ const Logs = () => {
 
     const handleOperationType = (value) => {
         setOperationType(value);
-        dispatch(getLogs({ page: 1, limit: perPageRec, search: query, operationType: value, dateRangeFilter }));
+        dispatch(getLogs({ page: 1, limit: perPageRec, search: query, operationType: value, dateRangeFilter, token }));
     }
     // End of Filter Logic
 
@@ -180,7 +182,7 @@ const Logs = () => {
 
     const handleDateRangeFilter = (value) => {
         setDateRangeFilter(value);
-        dispatch(getLogs({ page: 1, limit: perPageRec, search: query, operationType, dateRangeFilter: value }));
+        dispatch(getLogs({ page: 1, limit: perPageRec, search: query, operationType, dateRangeFilter: value, token }));
     }
     // End of DateRangeFilter Logic
 
@@ -217,7 +219,7 @@ const Logs = () => {
         let loadingTimer = setTimeout(() => {
             setShowLoading(true);
         }, 500);
-        dispatch(getLogs({ page: currentPage, limit: perPageRec, search: query, operationType, dateRangeFilter }))
+        dispatch(getLogs({ page: currentPage, limit: perPageRec, search: query, operationType, dateRangeFilter, token }))
             .unwrap()
             .finally(() => {
                 clearTimeout(loadingTimer);
@@ -227,8 +229,47 @@ const Logs = () => {
     }, [dispatch, perPageRec, currentPage]);
 
     const handleDownload = () => {
-        dispatch(downloadLogsCsv());
+        dispatch(downloadLogsCsv(token));
     };
+
+    function getVisiblePages(totalPages, currentPage) {
+        const maxVisibleAround = 6;
+        const pages = [];
+
+        if (totalPages === 1) {
+            pages.push(1);
+            return pages;
+        }
+
+        pages.push(1);
+
+        if (currentPage > maxVisibleAround + 2) {
+            pages.push("...");
+        }
+
+        const start = Math.max(2, currentPage - maxVisibleAround);
+        const end = Math.min(totalPages - 1, currentPage + maxVisibleAround);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        if (currentPage < totalPages - (maxVisibleAround + 1)) {
+            pages.push("...");
+        }
+
+        pages.push(totalPages);
+
+        return pages;
+    }
+
+    const visiblePages = getVisiblePages(totalPages, currentPage);
+
+    function changeCPage(n) {
+        if (typeof n === "number") {
+            setCurrentPage(n);
+        }
+    }
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -281,40 +322,40 @@ const Logs = () => {
             </div>
             <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                 <nav className="flex gap-x-1 justify-between">
-                    <div>
-                        <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={currentPage === 1}
-                            onClick={prePage}
-                        >
-                            <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-                        </button>
-                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                        <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
+                    </button>
                     <div className="flex gap-x-2 items-center">
-                        {totalPages && totalPages > 0 ? (
-                            [...Array(totalPages).keys()].map((n) => (
+                        {visiblePages.map((page, index) =>
+                            typeof page === "number" ? (
                                 <button
-                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
+                                    key={index}
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === page
+                                        ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]"
+                                        : "bg-gray-200 dark:bg-[#001C40]"
                                         }`}
-                                    key={n + 1}
-                                    onClick={() => changeCPage(n + 1)}
+                                    onClick={() => changeCPage(page)}
                                 >
-                                    {n + 1}
+                                    {page}
                                 </button>
-                            ))
-                        ) : (
-                            <span></span>
+                            ) : (
+                                <span key={index} className="px-2 py-1">
+                                    {page}
+                                </span>
+                            )
                         )}
                     </div>
-                    <div>
-                        <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={currentPage === totalPages}
-                            onClick={nextPage}
-                        >
-                            Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-                        </button>
-                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    >
+                        Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                    </button>
                 </nav>
             </div>
         </div>

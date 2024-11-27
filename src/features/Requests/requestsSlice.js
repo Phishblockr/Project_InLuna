@@ -14,8 +14,8 @@ const apiUrl = import.meta.env.VITE_API_URL;
 //fetch requests
 export const fetchReqs = createAsyncThunk(
     "Request/get",
-    async ({ page, limit, search, status }, { rejectWithValue }) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+    async ({ page, limit, search, status, token }, { rejectWithValue }) => {
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             const res = await fetch(
                 `${apiUrl}/Request/fetchReqs?page=${page}&limit=${limit}&search=${search}&status=${status}`,
@@ -29,6 +29,7 @@ export const fetchReqs = createAsyncThunk(
             );
             if (!res.ok) throw new Error("Failed to fetch URLs");
             const data = await res.json();
+            console.log(data)
             return data;
         } catch (error) {
             return rejectWithValue(error.message || "An unexpected error occurred while fetching whitelist requests");
@@ -39,8 +40,8 @@ export const fetchReqs = createAsyncThunk(
 //delete a request
 export const delReq = createAsyncThunk(
     "Request/del",
-    async ({ reqId }, { rejectWithValue }) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+    async ({ reqId, token }, { rejectWithValue }) => {
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             const res = await fetch(`${apiUrl}/Request/delReq/${reqId}`, {
                 method: "DELETE",
@@ -63,11 +64,11 @@ export const delReq = createAsyncThunk(
 // Async thunk to approve a request
 export const approveReq = createAsyncThunk(
     "whitelistReq/approveReq",
-    async ({ reqId }, { rejectWithValue }) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+    async ({ reqId, token }, { rejectWithValue }) => {
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             const response = await fetch(
-                `${apiUrl}/whitelistReq/approveReq/${reqId}`,
+                `${apiUrl}/Request/approveReq/${reqId}`,
                 {
                     method: "PUT",
                     headers: {
@@ -82,13 +83,13 @@ export const approveReq = createAsyncThunk(
             }
             return data;
         } catch (error) {
-                        return rejectWithValue(error.message || "An unexpected error occurred while approving whitelist requests");
+            return rejectWithValue(error.message || "An unexpected error occurred while approving requests");
         }
     }
 );
 
-const fetchMoreRequestsFromNextPage = async (page, limit) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+const fetchMoreRequestsFromNextPage = async (page, limit, token) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     const res = await fetch(`${apiUrl}/Request/fetchReqs?page=${page}&limit=${limit}`, {
         method: "GET",
         headers: {
@@ -145,12 +146,13 @@ const requestsSlice = createSlice({
                 state.error = action.payload;
             })
             .addCase(delReq.fulfilled, (state, action) => {
+                const {token} = action.meta.arg;
                 state.requests = state.requests.filter((req) => req._id !== action.payload);
                 state.totalReqs -= 1;
                 state.totalPages = Math.ceil(state.totalReqs / state.perPageRec);
 
                 if (state.requests.length < state.perPageRec && state.currentPage < state.totalPages) {
-                    fetchMoreRequestsFromNextPage(state.currentPage + 1, state.perPageRec).then(newRequests => {
+                    fetchMoreRequestsFromNextPage(state.currentPage + 1, state.perPageRec, token).then(newRequests => {
                         state.requests.push(...newRequests);
                     });
                 }
@@ -164,11 +166,11 @@ const requestsSlice = createSlice({
     },
 });
 
-export const startListeningToSocket = () => (dispatch, getState) => {
+export const startListeningToSocket = (token) => (dispatch, getState) => {
     socket.on("newReqAdded", (req) => {
         const perPageRec = getState().perPageRec;
         const currentPage = getState().requests.currentPage;
-        dispatch(fetchReqs({ page: currentPage, limit: perPageRec, search: "", status: "all" }));
+        dispatch(fetchReqs({ page: currentPage, limit: perPageRec, search: "", status: "all", token }));
     });
 
     socket.on("reqUpdated", (req) => {

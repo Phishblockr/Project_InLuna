@@ -14,9 +14,12 @@ import debounce from "debounce";
 import AuthenticateModal from "../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../utils/handleVerifyPwd";
 import LoadingOverlay from "../utils/LoadingOverlay";
+import { useAuth } from "../utils/AuthProvider";
 
 
 export default function Requests() {
+    const { getToken } = useAuth();
+    const token = getToken();
     const apiUrl = import.meta.env.VITE_API_URL
     // Redux
     const perPageRec = useSelector((state) => state.perPageRec)
@@ -44,7 +47,7 @@ export default function Requests() {
 
     const handleSearch = debounce((value) => {
         setQuery(value);
-        dispatch(fetchReqs({ page: 1, limit: perPageRec, search: value, status }));
+        dispatch(fetchReqs({ page: 1, limit: perPageRec, search: value, status, token }));
     }, 300);
     // End of Search Logic
 
@@ -54,7 +57,7 @@ export default function Requests() {
 
     const handleStatus = (value) => {
         setStatus(value);
-        dispatch(fetchReqs({ page: 1, limit: perPageRec, search: query, status: value }));
+        dispatch(fetchReqs({ page: 1, limit: perPageRec, search: query, status: value, token }));
     }
     // End of Filter Logic
 
@@ -86,19 +89,19 @@ export default function Requests() {
         let loadingTimer = setTimeout(() => {
             setShowLoading(true); // Only show loading overlay after delay
         }, 500);
-        dispatch(fetchReqs({ page: currentPage, limit: perPageRec, search: query, status }))
+        dispatch(fetchReqs({ page: currentPage, limit: perPageRec, search: query, status, token }))
             .unwrap()
             .finally(() => {
                 clearTimeout(loadingTimer);
                 setShowLoading(false);
                 setDataLoading(false);
             })
-        dispatch(startListeningToSocket());
+        dispatch(startListeningToSocket(token));
     }, [dispatch, currentPage, perPageRec, query])
 
     async function handleRem(id) {
         try {
-            await dispatch(delReq({reqId: id})).unwrap();
+            await dispatch(delReq({ reqId: id, token })).unwrap();
             toast.success(`Request id: ${id} removed`);
 
             const updatedRecords = requestData.slice(0, perPageRec - 1);
@@ -106,7 +109,7 @@ export default function Requests() {
             if (updatedRecords.length === 1 && currentPage > 1) {
                 setCurrentPage((prev) => prev - 1)
             } else {
-                dispatch(fetchReqs({ page: currentPage, limit: perPageRec, search: query, status }))
+                dispatch(fetchReqs({ page: currentPage, limit: perPageRec, search: query, status, token }))
             }
 
         } catch (error) {
@@ -116,7 +119,7 @@ export default function Requests() {
 
     async function handleApproveReq(id) {
         try {
-            await dispatch(approveReq({reqId: id}));
+            await dispatch(approveReq({ reqId: id, token }));
             toast.success(`Request id: ${id} updated`);
         } catch (error) {
             toast.error(`Something went wrong: ${error}`);
@@ -130,7 +133,8 @@ export default function Requests() {
     };
 
     const handlePasswordConfirm = async (password) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
+
         const result = await handleVerifyPwd(password, apiUrl, token);
 
         if (result) {
@@ -146,6 +150,45 @@ export default function Requests() {
     const truncateUrl = (url, maxLength = 120) => {
         return url.length > maxLength ? `${url.substring(0, maxLength)}...` : url;
     };
+
+    function getVisiblePages(totalPages, currentPage) {
+        const maxVisibleAround = 6;
+        const pages = [];
+
+        if (totalPages === 1) {
+            pages.push(1);
+            return pages;
+        }
+
+        pages.push(1);
+
+        if (currentPage > maxVisibleAround + 2) {
+            pages.push("...");
+        }
+
+        const start = Math.max(2, currentPage - maxVisibleAround);
+        const end = Math.min(totalPages - 1, currentPage + maxVisibleAround);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        if (currentPage < totalPages - (maxVisibleAround + 1)) {
+            pages.push("...");
+        }
+
+        pages.push(totalPages);
+
+        return pages;
+    }
+
+    const visiblePages = getVisiblePages(totalPages, currentPage);
+
+    function changeCPage(n) {
+        if (typeof n === "number") {
+            setCurrentPage(n);
+        }
+    }
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -204,94 +247,95 @@ export default function Requests() {
                             <div className="flex flex-col gap-2">
                                 <div className="flex flex-row items-center justify-between">
                                     <div className="flex flex-row gap-x-5 items-center">
-                                    {request.profileImage ? (
-                                        <img
-                                            className="w-[5rem] h-[5rem] rounded-full object-cover"
-                                            src={request.profileImage}
-                                            alt="user Profile"
-                                        />
-                                    ) : (
-                                        <svg
-                                            className="w-[5rem] h-[5rem] rounded-full object-cover"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="16 16 224 224"
-                                        >
-                                            <path
-                                                d="M63.8,199.37a72,72,0,0,1,128.4,0"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="12"
+                                        {request.profileImage ? (
+                                            <img
+                                                className="w-[5rem] h-[5rem] rounded-full object-cover"
+                                                src={request.profileImage}
+                                                alt="user Profile"
                                             />
-                                            <circle
-                                                cx="128"
-                                                cy="128"
-                                                r="96"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="12"
-                                            />
-                                            <circle
-                                                cx="128"
-                                                cy="120"
-                                                r="40"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="12"
-                                            />
-                                        </svg>
-                                    )}
-                                    <ul className="flex flex-col">
-                                        <li className="font-medium text-3xl my-2">
-                                            {request.userDetails.name}
-                                        </li>
-                                        <li className="font-medium mb-1">
-                                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">E-mail:</span>
-                                            <span>{request.userDetails.email}</span>
-                                        </li>
-                                        <li className="font-medium mb-1">
-                                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Status:</span>
-                                            <span
-                                                className={`
-                                                    ${request.status === "approved"
-                                                        ? statusActive
-                                                        : statusInactive} capitalize
-                                                `}
+                                        ) : (
+                                            <svg
+                                                className="w-[5rem] h-[5rem] rounded-full object-cover"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="16 16 224 224"
                                             >
-                                                {request.status}
-                                            </span>
-                                        </li>
-                                        <li>
-                                            <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Request:</span>
-                                            <span className="capitalize">{request.reqOption}</span>
-                                        </li>
-                                    </ul>
+                                                <path
+                                                    d="M63.8,199.37a72,72,0,0,1,128.4,0"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="12"
+                                                />
+                                                <circle
+                                                    cx="128"
+                                                    cy="128"
+                                                    r="96"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="12"
+                                                />
+                                                <circle
+                                                    cx="128"
+                                                    cy="120"
+                                                    r="40"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="12"
+                                                />
+                                            </svg>
+                                        )}
+                                        <ul className="flex flex-col">
+                                            <li className="font-medium text-3xl my-2">
+                                                {request.userDetails.name}
+                                            </li>
+                                            <li className="font-medium mb-1">
+                                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">E-mail:</span>
+                                                <span>{request.userDetails.email}</span>
+                                            </li>
+                                            <li className="font-medium mb-1">
+                                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Status:</span>
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${request.status === "approved"
+                                                        ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
+                                                        : request.status === "pending"
+                                                            ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                                            : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
+                                                        }`}
+                                                >
+                                                    {request.status}
+                                                </span>
+                                            </li>
+                                            <li>
+                                                <span className="text-gray-500 dark:text-[#F4F4F4] mr-2">Request:</span>
+                                                <span className="capitalize">{request.reqOption}</span>
+                                            </li>
+                                        </ul>
                                     </div>
                                     <div className="">
-                                <button
-                                    onClick={() => handlePasswordModalOpen(request._id, "update")}
-                                    className="bg-[#0364BD] hover:bg-[#003A70] p-3 text-[#f4f4f4] font-medium rounded-lg mr-2"
-                                >
-                                    <span className="flex flex-row items-center gap-x-1">
-                                        <RiLoopLeftLine className="w-6 h-6" /> Update URL Status
-                                    </span>
-                                </button>
-                                <button
-                                    onClick={() => handlePasswordModalOpen(request._id, "delete")}
-                                    className="bg-gray-200 hover:bg-gray-300 text-red-500 p-3 font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
-                                >
-                                    <span className="flex flex-row items-center gap-x-1">
-                                        <RiDeleteBinLine className="w-6 h-6" /> Remove Request
-                                    </span>
-                                </button>
-                            </div>
+                                        <button
+                                            onClick={() => handlePasswordModalOpen(request._id, "update")}
+                                            className="bg-[#0364BD] hover:bg-[#003A70] p-3 text-[#f4f4f4] font-medium rounded-lg mr-2"
+                                        >
+                                            <span className="flex flex-row items-center gap-x-1">
+                                                <RiLoopLeftLine className="w-6 h-6" /> Update URL Status
+                                            </span>
+                                        </button>
+                                        <button
+                                            onClick={() => handlePasswordModalOpen(request._id, "delete")}
+                                            className="bg-gray-200 hover:bg-gray-300 text-red-500 p-3 font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
+                                        >
+                                            <span className="flex flex-row items-center gap-x-1">
+                                                <RiDeleteBinLine className="w-6 h-6" /> Remove Request
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
-                                
+
                                 <div>
                                     <p className="font-medium p-2">
                                         <span>URL: </span>
@@ -299,7 +343,7 @@ export default function Requests() {
                                             href={request.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                             className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600 whitespace-nowrap overflow-hidden text-ellipsis"
+                                            className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600 whitespace-nowrap overflow-hidden text-ellipsis"
                                             title={request.url} // Shows full URL on hover
                                         >
                                             {truncateUrl(request.url)}
@@ -317,40 +361,40 @@ export default function Requests() {
             </div>
             <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                 <nav className="flex gap-x-1 justify-between">
-                    <div>
-                        <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={currentPage === 1}
-                            onClick={prePage}
-                        >
-                            <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-                        </button>
-                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                        <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
+                    </button>
                     <div className="flex gap-x-2 items-center">
-                        {totalPages && totalPages > 0 ? (
-                            [...Array(totalPages).keys()].map((n) => (
+                        {visiblePages.map((page, index) =>
+                            typeof page === "number" ? (
                                 <button
-                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === n + 1 ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]" : "bg-gray-200 dark:bg-[#001C40]"
+                                    key={index}
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === page
+                                        ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]"
+                                        : "bg-gray-200 dark:bg-[#001C40]"
                                         }`}
-                                    key={n + 1}
-                                    onClick={() => changeCPage(n + 1)}
+                                    onClick={() => changeCPage(page)}
                                 >
-                                    {n + 1}
+                                    {page}
                                 </button>
-                            ))
-                        ) : (
-                            <span></span>
+                            ) : (
+                                <span key={index} className="px-2 py-1">
+                                    {page}
+                                </span>
+                            )
                         )}
                     </div>
-                    <div>
-                        <button
-                            className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={currentPage === totalPages}
-                            onClick={nextPage}
-                        >
-                            Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-                        </button>
-                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    >
+                        Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                    </button>
                 </nav>
             </div>
         </div>

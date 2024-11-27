@@ -12,6 +12,7 @@ import AuthenticateModal from "../../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { useAuth } from "../../utils/AuthProvider";
 
 
 const statusActive =
@@ -21,6 +22,8 @@ const statusInactive =
 
 const UserDetails = () => {
     const apiUrl = import.meta.env.VITE_API_URL
+    const { getToken } = useAuth();
+    const token = getToken();
     const { id } = useParams();
 
     const targetSectionRef = useRef(null);
@@ -48,8 +51,7 @@ const UserDetails = () => {
         end: endOfWeek(new Date(), { weekStartsOn: 1 }),
     });
     const [heartbeatStatus, setHeartbeatStatus] = useState({ "status": "not initialized" });
-
-    console.log(heartbeatStatus)
+    const [isVisible, setIsVisible] = useState(false);
 
     const theme = useSelector((state) => state.theme);
 
@@ -84,11 +86,19 @@ const UserDetails = () => {
 
 
     useEffect(() => {
-        dispatch(getUser(id))
+        dispatch(getUser({id, token}))
         fetchActivityCounts(id, selectedDate);
         fetchHeartBeatStatus(id);
         dispatch(startListeningToSocket());
     }, [id, selectedDate])
+
+    useEffect(() => {
+        setTimeout(() => {
+            if (isVisible && targetSectionRef.current) {
+                targetSectionRef.current.scrollIntoView({ behavior: "smooth" });
+            }
+        }, 200);
+    }, [isVisible]);
 
 
     const navigate = useNavigate();
@@ -96,7 +106,7 @@ const UserDetails = () => {
 
     const handleRemUser = async (id, name) => {
         try {
-            await dispatch(delUser(id)).unwrap();
+            await dispatch(delUser({id, token})).unwrap();
             navigate("/users");
             toast.success(`User deleted!`);
         } catch (e) {
@@ -105,7 +115,7 @@ const UserDetails = () => {
     };
 
     const handleUpdateStatus = (id, name) => {
-        dispatch(updateUserStatus({ id, name }));
+        dispatch(updateUserStatus({ id, name, token }));
     };
 
     const fetchActivityCounts = async (id, date) => {
@@ -117,7 +127,7 @@ const UserDetails = () => {
                 setShowLoading(true); // Only show loading overlay after delay
             }, 500);
             const apiUrl = import.meta.env.VITE_API_URL
-            const token = JSON.parse(localStorage.getItem("user")).token;
+            // const token = JSON.parse(localStorage.getItem("user")).token;
             const response = await fetch(`${apiUrl}/overview/user-metrics/${id}/${month}/${year}`, {
                 method: "GET",
                 headers: {
@@ -161,7 +171,8 @@ const UserDetails = () => {
 
     const fetchHeartBeatStatus = async (userId) => {
         const apiUrl = import.meta.env.VITE_API_URL;
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        const token = getToken();
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             setDataLoading(true);
             const loadingTimer = setTimeout(() => {
@@ -194,8 +205,8 @@ const UserDetails = () => {
     };
 
     const scrollToSection = () => {
-        targetSectionRef.current.scrollIntoView({ behavior: "smooth" });
-      };
+        setIsVisible(!isVisible)
+    };
 
     if (!user) {
         return <div>User not found</div>;
@@ -272,7 +283,8 @@ const UserDetails = () => {
     };
 
     const handlePasswordConfirm = async (password) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
+        const token = getToken();
         const result = await handleVerifyPwd(password, apiUrl, token);
 
         if (result) {
@@ -398,10 +410,10 @@ const UserDetails = () => {
                                 </span>
                                 <span
                                     className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.status === "active"
-                                        ? "bg-green-100 text-green-800"
-                                        : user.status === "inactive"
-                                            ? "bg-red-100 text-red-800"
-                                            : "bg-yellow-100 text-yellow-800"
+                                            ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
+                                            : user.status === "not initialized"
+                                                ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                                : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                                         }`}
                                 >
                                     {user.status}
@@ -410,11 +422,11 @@ const UserDetails = () => {
                         </ul>
                     </div>
                     <div className="flex flex-col gap-5">
-                        <button className={`bg-gray-200 hover:bg-gray-300 ${heartbeatStatus.status === "active"? "text-red-600": "text-gray-600"} p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733] flex items-center justify-center gap-2`} title={heartbeatStatus.status}
-                        onClick={scrollToSection}
+                        <button className={`${heartbeatStatus.status === "active" ? "text-red-600" : "text-gray-600"} p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors flex items-center justify-center gap-2`}
+                            title={`Extension status: ${heartbeatStatus.status}\nClick to view History`}
+                            onClick={scrollToSection}
                         >
-                            <div className={`h-7 w-7 rounded-full ${heartbeatStatus.status === "active"? "bg-red-600 animation-pulse": "bg-gray-600"}`}></div>
-                            <span>Heartbeat Status</span>
+                            <div className={`h-5 w-5 rounded-full ${heartbeatStatus.status === "active" ? "bg-red-600 animation-pulse" : "bg-gray-600"}`}></div>
                         </button>
                         <button
                             onClick={() => handlePasswordModalOpen(user, "updateStatus")}
@@ -500,23 +512,23 @@ const UserDetails = () => {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-5 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5"
-                ref={targetSectionRef}
+                <div className={`rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5 overflow-hidden transition-all duration-500 ease-in-out ${isVisible ? " mt-5 max-h-screen opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                    ref={targetSectionRef}
                 >
                     <div className="flex flex-row gap-2 items-center  mb-5">
-                    <h2 className="text-lg font-semibold">Downtime History</h2>
-                    <span>Heartbeat Status:</span>
-                    <span
-                                      className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${
-                                        heartbeatStatus.status === "active"
-                                              ? "bg-green-100 text-green-800"
-                                              : heartbeatStatus.status === "not initialized"
-                                              ? "bg-yellow-100 text-yellow-800"
-                                              : "bg-red-100 text-red-800"
-                                      }`}
-                                  >
-                                      {heartbeatStatus.status}
-                                  </span>
+                        <h2 className="text-lg font-semibold">Downtime History</h2>
+                        <span>Extension Status:</span>
+                        <span
+                            className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${heartbeatStatus.status === "active"
+                                ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
+                                : heartbeatStatus.status === "not initialized"
+                                    ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                    : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
+                                }`}
+                        >
+                            {heartbeatStatus.status}
+                        </span>
                     </div>
                     {dataLoading ? ( // Display loading message while data is being fetched
                         <p className="text-center text-gray-500 dark:text-gray-300">Fetching data...</p>
