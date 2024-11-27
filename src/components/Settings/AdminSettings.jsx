@@ -5,8 +5,10 @@ import { PiUserCircleLight } from "react-icons/pi";
 import { toast } from "sonner";
 import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../../features/userProfile/userProfileSlice";
 import UpdatePasswordModal from "../../utils/UpdatePasswordModal";
+import { useAuth } from "../../utils/AuthProvider";
 
 const AdminSettings = () => {
+    const { getToken } = useAuthh();
     const [image, setImage] = useState(null);
     const hiddenFileInput = useRef(null);
     const dispatch = useDispatch()
@@ -63,7 +65,8 @@ const AdminSettings = () => {
         dispatch(fetchUserStart());
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
-            const token = JSON.parse(localStorage.getItem("user")).token;
+            // const token = JSON.parse(localStorage.getItem("user")).token;
+            const token = getToken();
 
             const response = await fetch(`${apiUrl}/user/updateAdminDetails`, {
                 method: "PUT",

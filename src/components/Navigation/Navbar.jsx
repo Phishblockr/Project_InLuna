@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../../features/userProfile/userProfileSlice";
 import { FaEthernet } from "react-icons/fa6";
 import LoadingOverlay from "../../utils/LoadingOverlay";
+import { useAuth } from "../../utils/AuthProvider";
 
 const profileBtnStyle =
     "rounded-lg dark:text-[#f4f4f4] transition hover:bg-white dark:hover:bg-[#00285A]";
@@ -66,7 +67,7 @@ const HelpOptions = [
 ];
 
 const Navbar = () => {
-
+    const { getToken } = useAuth();
     const dispatch = useDispatch();
     const { details, loading, error } = useSelector((state) => state.userProfile);
 
@@ -99,8 +100,9 @@ const Navbar = () => {
         dispatch(fetchUserStart())
         try {
             const apiUrl = import.meta.env.VITE_API_URL
-            const user = JSON.parse(localStorage.getItem("user"));
-            const token = user.token;
+            // const user = JSON.parse(localStorage.getItem("user"));
+            // const token = user.token;
+            const token = getToken();
             const response = await fetch(`${apiUrl}/user/profile`, {
                 method: "GET",
                 headers: {

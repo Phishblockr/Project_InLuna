@@ -14,6 +14,7 @@ import { PiUserCircleLight } from "react-icons/pi";
 import { Link } from 'react-router-dom';
 import socket from '../utils/socket.jsx';
 import Chart from 'react-apexcharts';
+import { useAuth } from '../utils/AuthProvider.jsx';
 
 const Overview = () => {
 
@@ -47,10 +48,10 @@ const Overview = () => {
                                   <span
                                       className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${
                                           user.heartBeatStatus === "active"
-                                              ? "bg-green-100 text-green-800"
+                                              ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
                                               : user.heartBeatStatus === "not initialized"
-                                              ? "bg-yellow-100 text-yellow-800"
-                                              : "bg-red-100 text-red-800"
+                                              ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                              : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                                       }`}
                                   >
                                       {user.heartBeatStatus}
@@ -63,6 +64,7 @@ const Overview = () => {
           </div>
       );
   };
+  const { getToken } = useAuth();
 
   const dispatch = useDispatch();
   const overviewPoints = useSelector(state => state.overview.linkData);
@@ -153,8 +155,9 @@ const Overview = () => {
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = user.token;
+      // const user = JSON.parse(localStorage.getItem("user"));
+      // const token = user.token;
+      const token = getToken();
       const response = await fetch(`${apiUrl}/overview/org-metrics?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}&timeFrame=${timeFrame}&browsingProfileMetrics=${browsingProfileMetrics}`, {
         method: "GET",
         headers: {

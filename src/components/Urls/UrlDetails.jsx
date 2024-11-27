@@ -6,9 +6,11 @@ import { delUrl, updateUrl } from "../../features/Urls/urlSlice";
 import { toast } from "sonner";
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import AuthenticateModal from "../../utils/AuthenticateModal";
+import { useAuth } from "../../utils/AuthProvider";
 
 const UrlDetails = () => {
-
+    const { getToken } = useAuth();
+    const token = getToken();
     const textBarStyle = "w-full p-2 rounded-t-lg border-b-2 border-dashed bg-gray-100 border-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
 
     const [editUrlData, setEditUrlData] = useState({ url: "", category: [], status: "", isPhishing: false, isVerified: false });
@@ -29,7 +31,7 @@ const UrlDetails = () => {
 
     const handleRemUrl = () => {
         try {
-            dispatch(delUrl(id));
+            dispatch(delUrl({urlId: id, token}));
             toast.success(`URL ${url.url} removed`);
             navigate("/urllists");
         } catch (e) {
@@ -43,7 +45,7 @@ const UrlDetails = () => {
     };
 
     const executeEditUrl = async () => {
-        await dispatch(updateUrl({ id, editUrlData })).unwrap();
+        await dispatch(updateUrl({ id, editUrlData, token })).unwrap();
         toast.success("URL updated successfully");
         navigate("/urllists");
     };
@@ -76,7 +78,7 @@ const UrlDetails = () => {
     };
 
     const handlePasswordConfirm = async (password) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         const result = await handleVerifyPwd(password, apiUrl, token);
 
         if (result) {

@@ -12,6 +12,7 @@ import AuthenticateModal from "../../utils/AuthenticateModal"
 import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { useAuth } from "../../utils/AuthProvider";
 
 
 const statusActive =
@@ -21,6 +22,8 @@ const statusInactive =
 
 const UserDetails = () => {
     const apiUrl = import.meta.env.VITE_API_URL
+    const { getToken } = useAuth();
+    const token = getToken();
     const { id } = useParams();
 
     const targetSectionRef = useRef(null);
@@ -83,7 +86,7 @@ const UserDetails = () => {
 
 
     useEffect(() => {
-        dispatch(getUser(id))
+        dispatch(getUser({id, token}))
         fetchActivityCounts(id, selectedDate);
         fetchHeartBeatStatus(id);
         dispatch(startListeningToSocket());
@@ -103,7 +106,7 @@ const UserDetails = () => {
 
     const handleRemUser = async (id, name) => {
         try {
-            await dispatch(delUser(id)).unwrap();
+            await dispatch(delUser({id, token})).unwrap();
             navigate("/users");
             toast.success(`User deleted!`);
         } catch (e) {
@@ -112,7 +115,7 @@ const UserDetails = () => {
     };
 
     const handleUpdateStatus = (id, name) => {
-        dispatch(updateUserStatus({ id, name }));
+        dispatch(updateUserStatus({ id, name, token }));
     };
 
     const fetchActivityCounts = async (id, date) => {
@@ -124,7 +127,7 @@ const UserDetails = () => {
                 setShowLoading(true); // Only show loading overlay after delay
             }, 500);
             const apiUrl = import.meta.env.VITE_API_URL
-            const token = JSON.parse(localStorage.getItem("user")).token;
+            // const token = JSON.parse(localStorage.getItem("user")).token;
             const response = await fetch(`${apiUrl}/overview/user-metrics/${id}/${month}/${year}`, {
                 method: "GET",
                 headers: {
@@ -168,7 +171,8 @@ const UserDetails = () => {
 
     const fetchHeartBeatStatus = async (userId) => {
         const apiUrl = import.meta.env.VITE_API_URL;
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        const token = getToken();
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             setDataLoading(true);
             const loadingTimer = setTimeout(() => {
@@ -279,7 +283,8 @@ const UserDetails = () => {
     };
 
     const handlePasswordConfirm = async (password) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
+        const token = getToken();
         const result = await handleVerifyPwd(password, apiUrl, token);
 
         if (result) {
@@ -405,10 +410,10 @@ const UserDetails = () => {
                                 </span>
                                 <span
                                     className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.status === "active"
-                                        ? "bg-green-100 text-green-800"
-                                        : user.status === "inactive"
-                                            ? "bg-red-100 text-red-800"
-                                            : "bg-yellow-100 text-yellow-800"
+                                            ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
+                                            : user.status === "not initialized"
+                                                ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                                : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                                         }`}
                                 >
                                     {user.status}
@@ -516,10 +521,10 @@ const UserDetails = () => {
                         <span>Extension Status:</span>
                         <span
                             className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${heartbeatStatus.status === "active"
-                                ? "bg-green-100 text-green-800"
+                                ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
                                 : heartbeatStatus.status === "not initialized"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-red-100 text-red-800"
+                                    ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                    : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                                 }`}
                         >
                             {heartbeatStatus.status}

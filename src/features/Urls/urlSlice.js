@@ -13,8 +13,8 @@ const initialState = {
 
 const apiUrl = import.meta.env.VITE_API_URL
 
-export const getUrls = createAsyncThunk("url/get", async ({ page, limit, search, status }, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const getUrls = createAsyncThunk("url/get", async ({ page, limit, search, status, token }, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const res = await fetch(`${apiUrl}/url/getUrls?page=${page}&limit=${limit}&search=${search}&status=${status}`, {
             method: "GET",
@@ -31,8 +31,8 @@ export const getUrls = createAsyncThunk("url/get", async ({ page, limit, search,
     }
 });
 
-export const addUrl = createAsyncThunk("url/add", async (url, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const addUrl = createAsyncThunk("url/add", async ({url, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
 
     try {
         const res = await fetch(`${apiUrl}/url/addUrl`, {
@@ -51,8 +51,8 @@ export const addUrl = createAsyncThunk("url/add", async (url, { rejectWithValue 
     }
 });
 
-export const delUrl = createAsyncThunk("url/del", async (urlId, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const delUrl = createAsyncThunk("url/del", async ({urlId ,token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     
     try {
         const res = await fetch(`${apiUrl}/url/deleteUrl/${urlId}`, {
@@ -72,8 +72,8 @@ export const delUrl = createAsyncThunk("url/del", async (urlId, { rejectWithValu
     }
 });
 
-export const updateUrl = createAsyncThunk("url/update", async ({ id, editUrlData }, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const updateUrl = createAsyncThunk("url/update", async ({ id, editUrlData, token }, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const res = await fetch(`${apiUrl}/url/updateUrl/${id}`, {
             method: "PUT",
@@ -93,9 +93,9 @@ export const updateUrl = createAsyncThunk("url/update", async ({ id, editUrlData
     }
 });
 
-export const uploadUrlCsv = createAsyncThunk("url/uploadUrlCsv", async (formData, {rejectWithValue}) => {
+export const uploadUrlCsv = createAsyncThunk("url/uploadUrlCsv", async ({formData, token}, {rejectWithValue}) => {
     try {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         const response = await fetch(`${apiUrl}/url/addUrlFromCsv`, {
             method: "POST",
             headers: {
@@ -110,8 +110,8 @@ export const uploadUrlCsv = createAsyncThunk("url/uploadUrlCsv", async (formData
     }
 })
 
-const fetchMoreUrlsFromNextPage = async (page, limit) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+const fetchMoreUrlsFromNextPage = async (page, limit, token) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
     try {
         const res = await fetch(`${apiUrl}/url/getUrls?page=${page}&limit=${limit}`, {
             method: "GET",
@@ -205,12 +205,13 @@ const urlSlice = createSlice({
                 state.error = null;
             })
             .addCase(delUrl.fulfilled, (state, action) => {
+                const {token} = action.meta.arg;
                 state.loading = false;
                 state.urls = state.urls.filter(url => url._id !== action.payload);
                 const totalPages = Math.ceil(state.totalUrls / state.perPageRec);
 
                 if (state.urls.length < state.perPageRec && state.currentPage < totalPages) {
-                    fetchMoreUrlsFromNextPage(state.currentPage + 1, state.perPageRec).then(newUrls => {
+                    fetchMoreUrlsFromNextPage(state.currentPage + 1, state.perPageRec, token).then(newUrls => {
                         state.urls.push(...newUrls);
                     });
                 }
@@ -264,7 +265,7 @@ const urlSlice = createSlice({
     },
 });
 
-export const startListeningToSocket = () => (dispatch, getState) => {
+export const startListeningToSocket = (token) => (dispatch, getState) => {
     socket.on("urlAdded", (data) => {
         dispatch(addUrlSuccess(data));
     });
@@ -278,7 +279,7 @@ export const startListeningToSocket = () => (dispatch, getState) => {
     });
     socket.on("urlsByCsvAdded", (data) => {
         const perPageRec = getState().perPageRec;
-        dispatch(getUrls({page: getState().currentPage, limit: perPageRec, search:"", status: "all"}));
+        dispatch(getUrls({page: getState().currentPage, limit: perPageRec, search:"", status: "all", token}));
     })
 }
 

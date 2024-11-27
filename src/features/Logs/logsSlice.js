@@ -16,8 +16,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 export const getLogs = createAsyncThunk(
     "logs/get",
-    async ({ page, limit, search, operationType, dateRangeFilter }, { rejectWithValue }) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+    async ({ page, limit, search, operationType, dateRangeFilter, token }, { rejectWithValue }) => {
         try {
             const res = await fetch(`${apiUrl}/logs/getAllLogs?page=${page}&limit=${limit}&search=${search}&operationType=${operationType}&dateRangeFilter=${dateRangeFilter}`, {
                 method: "GET",
@@ -34,8 +33,9 @@ export const getLogs = createAsyncThunk(
     }
 );
 
-export const downloadLogsCsv = createAsyncThunk("logs/downloadCsv", async (_, { rejectWithValue }) => {
-    const token = JSON.parse(localStorage.getItem("user")).token;
+export const downloadLogsCsv = createAsyncThunk("logs/downloadCsv", async ({token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+    console.log(token)
     try {
         const res = await fetch(`${apiUrl}/logs/exportLogsToCsv`, {
             headers: {

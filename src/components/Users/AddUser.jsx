@@ -7,8 +7,11 @@ import { PiUserCircleLight } from "react-icons/pi";
 import { RiUploadCloud2Line, RiAddFill } from "react-icons/ri";
 import AuthenticateModal from '../../utils/AuthenticateModal';
 import { handleVerifyPwd } from '../../utils/handleVerifyPwd';
+import { useAuth } from '../../utils/AuthProvider';
 
 const AddUser = () => {
+    const { getToken } = useAuth();
+    const token = getToken();
     const textBarStyle = "w-full p-2 rounded-t-lg border-b-2 border-dashed bg-gray-100 border-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
     const [image, setImage] = useState(null);
     const hiddenFileInput = useRef(null);
@@ -61,9 +64,9 @@ const AddUser = () => {
 
     const executeAddUser = async () => {
         try {
-            await dispatch(addUser(formData));
+            console.log(token)
+            await dispatch(addUser({user: formData, token}));
             toast.success('User added successfully');
-            dispatch(getUsers());
             navigate('/users');
         } catch (error) {
             toast.error('Failed to add user');
@@ -77,7 +80,7 @@ const AddUser = () => {
     };
 
     const handlePasswordConfirm = async (password) => {
-        const token = JSON.parse(localStorage.getItem("user")).token;
+        // const token = JSON.parse(localStorage.getItem("user")).token;
         const result = await handleVerifyPwd(password, apiUrl, token);
 
         if (result) {
