@@ -1,101 +1,67 @@
-import Image from "next/image";
+import React from 'react';
+import MailCard from './components/MailCard';
+import Link from 'next/link';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+export default function Page() {
+  const emails = [
+    {
+      from: "phisher@example.com",
+      subject: "Urgent: Update Your Bank Info",
+      body: `
+        <div class="email-container">
+          <p>Dear User,</p>
+          <p>We received a request to update your bank details: <strong>[Your Email Address]</strong>.</p>
+          <p>If you made this request, you can update your details by following the instructions below:</p>
+          <p><strong>Update Your Details:</strong></p>
+          <p>Click the link below to update your bank details: <a href="#">Update Bank Details</a></p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      `,
+      time: "2024-11-27",
+      id: "email-001",
+      to: "alice@example.com",
+    },
+    {
+      from: "safe@shopping.com",
+      subject: "Your Receipt for Order #12345",
+      body: "Thank you for your purchase. Your order is on its way!",
+      time: "2024-11-26",
+      id: "email-002",
+      to: "alice@example.com",
+    },
+    // More emails here...
+  ];
+
+  return (
+    <div className='w-full bg-white h-screen flex gap-4 flex-col p-4'>
+      <div className='flex justify-between gap-3 items-center'>
+        <div className='flex justify-start items-center gap-3'>
+          <h1 className='text-black text-4xl font-bold'>Inbox</h1>
+          <div>
+            <input type='text' className='border-2 text-black border-gray-200 text-3xl p-2 px-4 rounded-xl focus:outline-none' placeholder='enter text to search' />
+          </div>
+        </div>
+        <div>
+          <Link href={'/account'}>
+            <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQa4xjShh4ynJbrgYrW_aB4lhKSxeMzQ3cO_A&s' className='h-[100px] w-[100px] object-cover rounded-full' />
+          </Link>
+        </div>
+      </div>
+      <div className='flex flex-col w-full gap-3 overflow-y-scroll'>
+        {emails.map(el => (
+          <MailCard 
+            key={el.id} 
+            time={el.time} 
+            from={el.from} 
+            body={el.body} 
+            subject={el.subject} 
+            id={el.id} 
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ))}
+      </div>
+      <div className='w-full justify-between items-center flex'>
+        <button className='bg-gray-100 text-black p-2 px-4 text-2xl rounded-lg'>previous</button>
+        <button className='bg-gray-100 text-black p-2 px-4 text-2xl rounded-lg'>next</button>
+      </div>
     </div>
   );
 }
