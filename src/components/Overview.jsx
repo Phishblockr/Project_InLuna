@@ -167,8 +167,6 @@ const Overview = () => {
       });
       const data = await response.json();
 
-      console.log(data)
-
       setHeatmapData(
         Object.entries(data.heatmapData).map(([category, values]) => ({
           name: category,
@@ -262,8 +260,6 @@ const Overview = () => {
     phishing: barGraphData.phishingVisits[index],
     blacklisted: barGraphData.blacklistedVisits[index]
   }));
-
-  console.log(heatmapData)
 
   return (
     <div className='z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4'>

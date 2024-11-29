@@ -4,56 +4,63 @@ import LoadingOverlay from "./LoadingOverlay";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// TODO: Change salt for refresh token.
-
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [accessToken, setAccessToken] = useState(null);
     const navigate = useNavigate();
     const refreshTimeout = useRef(null);
 
-    const storage = {
-        set: (key, value, persistent) => {
-            if (persistent) {
-                localStorage.setItem(key, JSON.stringify(value));
-            } else {
-                sessionStorage.setItem(key, JSON.stringify(value));
-            }
-        },
-        get: (key) => {
-            const value = localStorage.getItem(key) || sessionStorage.getItem(key);
-            return value ? JSON.parse(value) : null;
-        },
-        remove: (key) => {
-            localStorage.removeItem(key);
-            sessionStorage.removeItem(key);
-        },
+    const getToken = () => {
+        return accessToken;
     };
 
-    const getToken = () => {
-        const user = storage.get("user");
-        return user ? user.token : null;
-    };
+    const initializeAuth = async () => {
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const response = await fetch(`${apiUrl}/auth/checkAuthDas`, {
+                method: "GET",
+                credentials: "include",
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                const token = data.token;
+    
+                if (isTokenExpired(token)) {
+                    await refreshAuthToken();
+                } else {
+                    setAccessToken(token);
+                    setIsAuthenticated(true);
+                    scheduleTokenRefresh(token);
+                    if (window.location.pathname === '/login') {
+                        toast.success("Welcome back");
+                        navigate('/');
+                    }
+    
+                }
+            } else {
+                setIsAuthenticated(false);
+            }
+        } catch (error) {
+            console.error("Failed to check authentication:", error);
+            setIsAuthenticated(false);
+        } finally {
+            setLoading(false);
+        }
+    };    
+
 
     useEffect(() => {
-        const user = storage.get("user");
-        console.log(user)
+        initializeAuth();
 
-        if (user) {
-            const tokenExpired = isTokenExpired(user.token);
-
-            if (tokenExpired) {
-                logout(false, "Session expired please login again", "error");
-            } else {
-                setIsAuthenticated(true);
-                scheduleTokenRefresh(user.token);
+        return () => {
+            if (refreshTimeout.current) {
+                clearTimeout(refreshTimeout.current);
             }
-        }
-
-        setLoading(false);
-        return () => clearTimeout(refreshTimeout.current)
+        };
     }, []);
 
     const isTokenExpired = (token) => {
@@ -93,34 +100,39 @@ export const AuthProvider = ({ children }) => {
     };
 
     const refreshAuthToken = async () => {
-        const user = storage.get("user");
-        if (!user || !user.refreshToken) {
-            return;
-        }
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
+    
             const response = await fetch(`${apiUrl}/auth/refreshTokenDas`, {
                 method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                },
-                body: JSON.stringify({ refreshToken: user.refreshToken }),
+                credentials: "include", 
             });
+    
             if (!response.ok) {
+                if (response.status === 401) {
+                    console.warn("Refresh token expired. Logging out...");
+                } else {
+                    console.error("Failed to refresh token. Response status:", response.status);
+                }
                 throw new Error("Failed to refresh token.");
             }
-
+    
             const data = await response.json();
-            storage.set("user", data, !!localStorage.getItem("user"));
-            scheduleTokenRefresh(data.token);
+            const newAccessToken = data.token;
+    
+            setAccessToken(newAccessToken);
+            setIsAuthenticated(true);
+    
+            scheduleTokenRefresh(newAccessToken);
+    
             console.log("Token refreshed successfully");
         } catch (error) {
             console.error("Token refresh failed:", error);
             logout(false, "Session expired, please log in again.", "error");
         }
-    };
+    };    
 
-    const login = async (loginData, rememberMe) => {
+    const login = async (loginData) => {
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
             const response = await fetch(`${apiUrl}/auth/loginDas`, {
@@ -129,6 +141,7 @@ export const AuthProvider = ({ children }) => {
                     "content-type": "application/json",
                 },
                 body: JSON.stringify(loginData),
+                credentials: "include",
             });
 
             if (!response.ok) {
@@ -140,7 +153,6 @@ export const AuthProvider = ({ children }) => {
             const userType = import.meta.env.VITE_USERTYPE;
 
             if (decodedToken.userType === userType) {
-                storage.set("user", data, rememberMe);
 
                 setIsAuthenticated(true);
                 scheduleTokenRefresh(data.token);
@@ -157,27 +169,14 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async (setClearOrgId, message, toastStatus) => {
         try {
-            const storedUser = storage.get("user");
-            if (storedUser && storedUser.refreshToken) {
-                const refreshToken = storedUser.refreshToken;
                 const apiUrl = import.meta.env.VITE_API_URL;
                 await fetch(`${apiUrl}/auth/logoutDas`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ refreshToken }),
+                    credentials:"include",
                 });
-            }
-            if (setClearOrgId === true) {
-                storage.remove("orgId");
-            }
-            storage.remove("user");
 
-            setIsAuthenticated(false);
-            navigate("/login");
+            clearAuthState(setClearOrgId);
 
-            // Show toast notification
             if (toastStatus === "success") {
                 toast.success(message);
             } else {
@@ -185,17 +184,24 @@ export const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Logout failed:", error);
-
-            if (setClearOrgId === true) {
-                storage.remove("orgId");
-            }
-            storage.remove("user");
-            setIsAuthenticated(false);
-            navigate("/login");
+            clearAuthState(false);
             toast.error("Failed to logout completely, but you are logged out locally.");
         }
 
     };
+
+    const clearAuthState = (clearOrgId) => {
+        if (clearOrgId) {
+            localStorage.removeItem("orgId");
+        }
+
+        setIsAuthenticated(false);
+        if (refreshTimeout.current) {
+            clearTimeout(refreshTimeout.current);
+        }
+        navigate("/login");
+    };
+
 
     if (loading) {
         return <LoadingOverlay loading={loading} />;

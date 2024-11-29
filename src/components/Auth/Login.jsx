@@ -14,10 +14,11 @@ const Login = () => {
         const loginData = {
             orgId: orgId,
             username: username,
-            password: password
+            password: password,
+            rememberMe: rememberMe
         };
         try {
-        await login(loginData, rememberMe);
+        await login(loginData);
     } catch (error) {
         console.error("Login failed:", error)
     }
