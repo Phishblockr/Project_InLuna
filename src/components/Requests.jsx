@@ -337,7 +337,7 @@ export default function Requests() {
                                 </div>
 
                                 <div>
-                                    <p className="font-medium p-2">
+                                    <p className="font-medium p-2 overflow-hidden">
                                         <span>URL: </span>
                                         <a
                                             href={request.url}
@@ -353,6 +353,40 @@ export default function Requests() {
                                         <span className="font-medium">Reason: </span>{" "}
                                         {request.reason}
                                     </p>
+                                </div>
+                                {/* Add Reputation Details */}
+                                <div className="mt-3">
+                                    <h4 className="font-medium text-lg">Domain Reputation:</h4>
+                                    {request.reputationDetails ? (
+                                        <ul className="bg-gray-50 p-3 rounded-lg dark:bg-[#001733]">
+                                            <li>
+                                                <span className="font-medium">Harmless: </span>
+                                                {request.reputationDetails.harmless ?? "N/A"}
+                                            </li>
+                                            <li>
+                                                <span className="font-medium">Malicious: </span>
+                                                {request.reputationDetails.malicious ?? "N/A"}
+                                            </li>
+                                            <li>
+                                                <span className="font-medium">Suspicious: </span>
+                                                {request.reputationDetails.suspicious ?? "N/A"}
+                                            </li>
+                                            <li>
+                                                <span className="font-medium">Undetected: </span>
+                                                {request.reputationDetails.undetected ?? "N/A"}
+                                            </li>
+                                            <li>
+                                                <span className="font-medium">Timeout: </span>
+                                                {request.reputationDetails.timeout ?? "N/A"}
+                                            </li>
+                                            <li>
+                                                <span className="font-medium">Reputation Score: </span>
+                                                {request.reputationScore ?? "N/A"}
+                                            </li>
+                                        </ul>
+                                    ) : (
+                                        <p className="text-gray-500">No reputation data available for this URL.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
