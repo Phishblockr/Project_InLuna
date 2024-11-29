@@ -77,6 +77,7 @@ const userSchema = new Schema({
         required: [true, 'Organization ID is required'],
     },
     refreshToken: { type: String },
+    refreshTokenExt: { type: String },
 });
 
 userSchema.index({orgId: 1});
