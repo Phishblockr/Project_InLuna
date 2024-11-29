@@ -1,18 +1,54 @@
 import asyncHandler from '../middlewares/asyncHandler.js';
 import Url from '../models/urlModel.js';
-import WhitelistReq from '../models/RequestModel.js';
 import Request from '../models/RequestModel.js';
 import mongoose from 'mongoose';
 
 // for adminLog
 import AdminLogs from "../models/adminlogsModel.js";
 
+//Virus Total domain reputation and url scan
+const VIRUSTOTAL_API_KEY = process.env.VIRUSTOTAL_API_KEY;
+const VIRUSTOTAL_API_URL = "https://www.virustotal.com/api/v3/domains/";
+
+async function checkDomainReputation(domain) {
+    try {
+        const url = `${VIRUSTOTAL_API_URL}${domain}`;
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "x-apikey": VIRUSTOTAL_API_KEY,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`VirusTotal API error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const stats = data.data.attributes.last_analysis_stats;
+
+        return {
+            isSafe: stats.malicious === 0,
+            stats: stats,
+            reputation: data.data.attributes.reputation,
+        };
+    } catch (error) {
+        console.error("Error fetching domain reputation:", error.message);
+        throw new Error("Failed to check domain reputation");
+    }
+}
+
+
 export const addRequestExt = async (req, res) => {
     try {
         const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
         const orgId = req.user.orgId;
-
         const { url, reason , reqOption } = req.body;
+
+        // Extract domain from URL
+        const domain = new URL(url).hostname;
+        // Check domain reputation using VirusTotal
+        const reputationResult = await checkDomainReputation(domain);
 
         let existingUrl = await Url.findOne({ url, orgId });
         if (!existingUrl) {
@@ -45,6 +81,8 @@ export const addRequestExt = async (req, res) => {
             reason,
             orgId,
             reqOption,
+            reputationDetails: reputationResult.stats, // Save reputation stats
+            reputationScore: reputationResult.reputation, // Save reputation score
         });
         await newRequest.save();
 
@@ -54,10 +92,21 @@ export const addRequestExt = async (req, res) => {
 
         const io = req.app.get("socketio");
         io.emit("newReqAdded", newRequest);
+        //res.status(201).send(newRequest);
 
-        res.status(201).send(newRequest);
+        // Respond with the new request and reputation details
+        res.status(201).json({
+            message: "Request submitted successfully",
+            request: newRequest,
+            reputation: {
+                isSafe: reputationResult.isSafe,
+                stats: reputationResult.stats,
+                reputationScore: reputationResult.reputation,
+            },
+        });
     } catch (error) {
-        res.status(400).send(error.message);
+        //res.status(400).send(error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
@@ -102,7 +151,9 @@ export const fetchReqs = asyncHandler(async (req, res) => {
                     status: 1,
                     createdAt: 1,
                     "userDetails.name": 1,
-                    "userDetails.email": 1
+                    "userDetails.email": 1,
+                    reputationDetails: 1, // Include VirusTotal reputation details
+                    reputationScore: 1, // Include VirusTotal reputation score
                 }
             },
             { $sort: { createdAt: -1 } },

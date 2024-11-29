@@ -29,7 +29,15 @@ const RequestSchema = new mongoose.Schema(
             type : String,
             enum: ['whitelist', 'blacklist'],
             required:true,
-        }
+        },
+        reputationDetails: { 
+            type: Object, 
+            default: null,
+        }, // Store VirusTotal analysis stats
+        reputationScore: { 
+            type: Number, 
+            default: 0,
+        }, // Store VirusTotal reputation score
     },
     { timestamps: true }
 );
