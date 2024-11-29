@@ -24,13 +24,32 @@ import forgotDetailsRoutes from './routes/forgotDetailsRoutes.js';
 
 import heartBeatRoutes from "./routes/heartBeatRoutes.js";
 
+import cookieParser from 'cookie-parser';
+
 dotenv.config();
 
 const app = express();
 // Increase the size limit for JSON and URL-encoded bodies
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use(cors());
+// CORS Configuration
+const allowedOrigins = ['http://localhost:5173']; // Replace with your frontend origin(s)
+
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        credentials: true, // Allow cookies and credentials
+    })
+);
+
+app.use(cookieParser());
+
 
 const server = http.createServer(app);
 const io = new Server(server,  {
