@@ -6,6 +6,7 @@ import {
     RiPagesLine,
     RiFeedbackLine,
     RiGitRepositoryLine,
+    RiBookLine,
 } from "react-icons/ri";
 import { CgInsights } from "react-icons/cg";
 import { NavLink } from "react-router-dom";
@@ -50,6 +51,12 @@ const links = [
         icon: <RiGitRepositoryLine className={iconStyle} />,
         title: "Logs",
         url: "/logs",
+    },
+    {
+        id: 6,
+        icon: <RiBookLine className={iconStyle} />,
+        title: "Campaign",
+        url: "/campaign ",
     },
 ];
 
