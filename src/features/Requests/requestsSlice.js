@@ -29,7 +29,6 @@ export const fetchReqs = createAsyncThunk(
             );
             if (!res.ok) throw new Error("Failed to fetch URLs");
             const data = await res.json();
-            console.log(data)
             return data;
         } catch (error) {
             return rejectWithValue(error.message || "An unexpected error occurred while fetching whitelist requests");

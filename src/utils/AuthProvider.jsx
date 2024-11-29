@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const user = storage.get("user");
-        console.log(user)
 
         if (user) {
             const tokenExpired = isTokenExpired(user.token);
