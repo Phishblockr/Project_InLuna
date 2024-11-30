@@ -15,7 +15,7 @@ const Login = () => {
             orgId: orgId,
             username: username,
             password: password,
-            rememberMe: rememberMe
+            rememberMe: rememberMe,
         };
         try {
         await login(loginData);
