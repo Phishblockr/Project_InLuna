@@ -82,7 +82,17 @@ export const refreshTokenExt = asyncHandler(async (req, res) => {
 // Login admin (dashboard)
 export const loginAdmin = asyncHandler(async (req, res) => {
     const { orgId, username, password, rememberMe } = req.body;
-    // console.log(rememberMe)
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+    };
+
+    if (rememberMe) {
+        cookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    }
+
     try {
         const user = await User.findOne({ orgId, username });
 
@@ -102,16 +112,10 @@ export const loginAdmin = asyncHandler(async (req, res) => {
             const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, { algorithm: 'HS256', expiresIn: rememberMe ? "7d" : "1d" })
 
             const encryptedRefreshToken = await encrypt(refreshToken);
-
             user.refreshToken = encryptedRefreshToken;
             await user.save();
 
-            res.cookie('refreshToken', encryptedRefreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: rememberMe ? 7 * 24 * 60 * 60 * 1000 : null, // 7 days Persistent or session cookie
-            });
+            res.cookie('refreshToken', encryptedRefreshToken, cookieOptions);
             res.status(200).json({ token });
         } else {
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -199,7 +203,6 @@ export const checkAuthDas = async (req, res) => {
     try {
         // Extract the encrypted refresh token from cookies
         const { refreshToken: encryptedRefreshToken } = req.cookies;
-        // console.log("Encrypted RE Token: ", encryptedRefreshToken)
 
         if (!encryptedRefreshToken) {
             return res.status(401).json({ error: "No refresh token provided" });
@@ -207,7 +210,6 @@ export const checkAuthDas = async (req, res) => {
 
         // Decrypt the refresh token
         const refreshToken = decrypt(encryptedRefreshToken);
-        // console.log("Decrypted: ", refreshToken)
 
         // Verify the refresh token
         const payload = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
@@ -245,7 +247,7 @@ export const logoutDas = async (req, res) => {
             if (!user) {
                 return res.status(400).json({ message: "Invalid user" });
             }
-            user.refreshToken = null; 
+            user.refreshToken = null;
             await user.save();
         }
 
