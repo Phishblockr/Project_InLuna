@@ -33,20 +33,37 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // CORS Configuration
-const allowedOrigins = ['http://localhost:5173']; // Replace with your frontend origin(s)
+// Development only
+const allowedOrigins = ['http://localhost:5173', 'chrome-extension://'];
 
 app.use(
     cors({
-        origin: function (origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) {
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
                 callback(null, true);
             } else {
                 callback(new Error('Not allowed by CORS'));
             }
         },
-        credentials: true, // Allow cookies and credentials
+        credentials: true,
     })
 );
+
+// Production
+// const allowedOrigins = ['http://domain.com/', 'chrome-extension://<PUBLISHED_EXTENSION_ID>']; // Replace with your frontend origin(s)
+
+// app.use(
+//     cors({
+//         origin: function (origin, callback) {
+//             if (!origin || allowedOrigins.includes(origin)) {
+//                 callback(null, true);
+//             } else {
+//                 callback(new Error('Not allowed by CORS'));
+//             }
+//         },
+//         credentials: true, // Allow cookies and credentials
+//     })
+// );
 
 app.use(cookieParser());
 
