@@ -7,7 +7,8 @@ import mongoose from 'mongoose';
 
 const calculatePercentage = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
-    const percentage = ((current - previous) / previous) * 100;
+    let percentage = ((current - previous) / previous) * 100;
+    percentage = Math.trunc(percentage);
     return Math.min(percentage, 100);
 };
 
