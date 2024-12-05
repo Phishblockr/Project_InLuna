@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { RiAddFill, RiDeleteBinLine, RiShareBoxLine, RiEyeLine   } from "react-icons/ri";
+import { RiAddFill, RiDeleteBinLine, RiShareBoxLine, RiEyeLine } from "react-icons/ri";
 import {
     MdOutlineArrowBackIos,
     MdOutlineArrowForwardIos,
@@ -67,7 +67,7 @@ export default function UrlLists() {
 
     const handleStatus = (value) => {
         setStatus(value)
-        dispatch(getUrls({ page: currentPage, limit: perPageRec, search: query, status:value, token }));
+        dispatch(getUrls({ page: currentPage, limit: perPageRec, search: query, status: value, token }));
     }
 
     // End of Filter Logic
@@ -118,7 +118,7 @@ export default function UrlLists() {
 
     const handleRemUrl = async (id) => {
         try {
-            await dispatch(delUrl({urlId: id, token})).unwrap();
+            await dispatch(delUrl({ urlId: id, token })).unwrap();
             toast.success(`URL removed`);
 
             const updatedRecords = urlData.slice(0, perPageRec - 1);
@@ -167,7 +167,7 @@ export default function UrlLists() {
 
     const executeCsvUpload = async () => {
         try {
-            const response = await dispatch(uploadUrlCsv({formData: csvData, token})).unwrap();
+            const response = await dispatch(uploadUrlCsv({ formData: csvData, token })).unwrap();
             if (response.errors) {
                 setErrors(response.errors);
                 toast.error("CSV contains errors. Please correct them and try again.");
@@ -326,19 +326,19 @@ export default function UrlLists() {
                                         </td>
                                         <td className=" mt-5 flex flex-row gap-2 items-center text-left ">
                                             <button
+                                                onClick={() => navigate(`/urllists/urldetails/${url._id}`)}
+                                                title="View Url Details"
+                                            ><RiEyeLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
+                                            <button
+                                                title="Visit Url"
+                                                onClick={() => { window.open(url.url, '_blank'); }}
+                                            ><RiShareBoxLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
+                                            <button
                                                 onClick={() => handlePasswordModalOpen(url._id, "delete")}
-                                                title = "Delete Url"
+                                                title="Delete Url"
                                             >
                                                 <RiDeleteBinLine size={24} className="text-red-500 hover:text-red-700 transition-colors" />
                                             </button>
-                                            <button
-                                            title = "Visit Url"
-                                            onClick={() => {window.open(url.url, '_blank');}}
-                                            ><RiShareBoxLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
-                                            <button
-                                            onClick={() => navigate(`/urllists/urldetails/${url._id}`)}
-                                            title = "View Url Details"
-                                            ><RiEyeLine size={24} className="hover:text-[#0364BD] transition-colors"/></button>
                                         </td>
                                     </tr>
                                 ))}

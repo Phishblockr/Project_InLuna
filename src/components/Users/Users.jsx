@@ -324,13 +324,13 @@ export default function Users() {
                                             </span>
                                         </td>
                                         <td className="flex flex-row items-center gap-2 mt-5 text-left">
-                                            <button onClick={() => handlePasswordModalOpen(user._id, "delete")}>
-                                                <RiDeleteBinLine className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
-                                            </button>
-                                            <button
+                                        <button
                                                 onClick={() => navigate(`/users/userDetails/${user._id}`)}
                                                 title="Click to view details"
                                             ><RiEyeLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
+                                            <button onClick={() => handlePasswordModalOpen(user._id, "delete")}>
+                                                <RiDeleteBinLine className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

@@ -8,24 +8,21 @@ const initialState = {
       date: "10/02/2024",
       groups: "All",
       courses: "Phishing Alerts and Emails V2",
-      status: "Completed",
-      statusColor: "bg-green-500",
+      status: "completed",
     },
     {
       name: "Phishing Email Campaign",
       date: "10/02/2024",
       groups: "Accounts",
       courses: "Phishing Alerts and Emails V2",
-      status: "In Progress",
-      statusColor: "bg-yellow-500",
+      status: "in progress",
     },
     {
       name: "Phishing Email Campaign",
       date: "10/02/2024",
       groups: "Engineering",
       courses: "Phishing Alerts and Emails V2",
-      status: "Scheduled",
-      statusColor: "bg-red-500",
+      status: "scheduled",
     },
   ],
   loading: false,
@@ -40,8 +37,7 @@ const campaignSlice = createSlice({
     addCampaign(state, action) {
       const newCampaign = {
         ...action.payload,
-        status: "Scheduled", // Default status for new campaigns
-        statusColor: "bg-red-500", // Default color for scheduled campaigns
+        status: "scheduled", // Default status for new campaigns
       };
       state.campaigns.push(newCampaign);
     },
