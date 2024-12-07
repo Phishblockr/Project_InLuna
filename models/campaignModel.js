@@ -6,10 +6,6 @@ const campaignSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  date: {
-    type: String,
-    required: true,
-  },
   groups: {
     type: String,
     required: true,
@@ -21,14 +17,8 @@ const campaignSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ["Scheduled", "In Progress", "Completed"],
-    default: "Scheduled",
-  },
-  statusColor: {
-    type: String,
-    required: true,
-    enum: ["bg-red-500", "bg-yellow-500", "bg-green-500"],
-    default: "bg-red-500",
+    enum: ["scheduled", "in progress", "completed"],
+    default: "scheduled",
   },
   startDate: {
     type: Date,
@@ -38,6 +28,10 @@ const campaignSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  orgId: {
+    type: String,
+    required: [true, 'Organization ID is required'],
+},
 });
 
 const Campaign = mongoose.model('Campaign', campaignSchema);

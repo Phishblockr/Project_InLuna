@@ -125,11 +125,12 @@ app.use("/api/forgot", forgotDetailsRoutes);
 // HeartBeat Route
 app.use("/api/heartBeat", authenticateToken, heartBeatRoutes)
 
+// Campaign Routes
+app.use('/api/campaign', dashboardAdminMiddleware, campaignRoutes);
+
 // Error handling middleware
 app.use(errorHandler);
 
-// Campaign Routes
-app.use('/api/campaign', authenticateToken, campaignRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

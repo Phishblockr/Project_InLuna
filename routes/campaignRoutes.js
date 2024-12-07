@@ -10,18 +10,18 @@ import {
 const router = express.Router();
 
 // GET all campaigns
-router.get("/", getAllCampaigns);
+router.get("/fetchAll", getAllCampaigns);
 
 // GET a single campaign by ID
-router.get("/:id", getCampaignById);
+router.get("/fetch/:id", getCampaignById);
 
 // POST a new campaign
-router.post("/", addCampaign);
+router.post("/add", addCampaign);
 
 // PUT update a campaign
-router.put("/:id", updateCampaign);
+router.put("/update/:id", updateCampaign);
 
 // DELETE a campaign
-router.delete("/:id", deleteCampaign);
+router.delete("/delete/:id", deleteCampaign);
 
 export default router;
