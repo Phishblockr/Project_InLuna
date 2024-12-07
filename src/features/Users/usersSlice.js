@@ -51,7 +51,6 @@ export const getUser = createAsyncThunk("User/get", async ({id, token}, { reject
 
 export const addUser = createAsyncThunk('user/add', async ({user, token}, { rejectWithValue }) => {
     // const token = JSON.parse(localStorage.getItem("user")).token;
-    console.log(token)
 
     try {
         const res = await fetch(`${apiUrl}/user/create`, {

@@ -78,7 +78,7 @@ export const updateUrl = createAsyncThunk("url/update", async ({ id, editUrlData
         const res = await fetch(`${apiUrl}/url/updateUrl/${id}`, {
             method: "PUT",
             headers: {
-                Authorization: `Bearer ${token}`,
+                "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(editUrlData)
@@ -139,12 +139,6 @@ const urlSlice = createSlice({
             if (!existingUrl) {
                 state.urls.push(action.payload);
             }
-            // const url = {
-            //     url: action.payload.url,
-            //     category: action.payload.category,
-            //     status: action.payload.status,
-            // }
-            // state.urls.push(url);
         },
         deleteUrlSuccess(state, action) {
             state.urls = state.urls.filter(url => url._id !== action.payload)
@@ -167,7 +161,6 @@ const urlSlice = createSlice({
     },
     extraReducers: builder => {
         builder
-
             // fetching urls
             .addCase(getUrls.pending, (state) => {
                 state.loading = true;

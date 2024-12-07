@@ -71,15 +71,13 @@ function App() {
                     <Route path="/logout" element={<Logout />} />
 
                     <Route path="/forgotDetails" element={<ForgotDetails />} />
-                    <Route path = "/resetPassword/:token" element={<PasswordReset/>}/>
+                    <Route path="/resetPassword/:token" element={<PasswordReset />} />
 
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<Overview />} />
 
                       <Route path="/users" element={<Users />} />
-                      <Route path="/campaign" element={<Campaign />} />
-                      <Route path="/campaign/add" element={<AddCampaign />} />
                       <Route path="/users/adduser" element={<AddUser />} />
                       <Route
                         path="/users/userDetails/:id"
@@ -91,21 +89,22 @@ function App() {
                       <Route
                         path="/insights/empinsight/:id"
                         element={<EmpInsights />}
-                      />
-                    */}
+                      />*/}
                       <Route path="/urllists" element={<UrlLists />} />
                       <Route path="/urllists/addurl" element={<AddUrl />} />
                       <Route
                         path="/urllists/urldetails/:id"
                         element={<UrlDetails />}
                       />
+                      <Route path="/campaign" element={<Campaign />} />
+                      <Route path="/campaign/add" element={<AddCampaign />} />
                       <Route path="/requests" element={<Requests />} />
                       <Route path="/feedback" element={<Feedbacks />} />
                       <Route path="/logs" element={<Logs />} />
                       <Route path="/profileSettings" element={<AdminSettings />} />
                       <Route path="/settings" element={<Settings />} />
-                      <Route path="/report" element={<ReportBug/>}/>
-                      <Route path="/faq" element={<Faqs/>}/>
+                      <Route path="/report" element={<ReportBug />} />
+                      <Route path="/faq" element={<Faqs />} />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                   </Routes>
