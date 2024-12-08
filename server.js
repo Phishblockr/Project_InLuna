@@ -6,25 +6,29 @@ import {Server} from "socket.io"
 import dotenv from 'dotenv';
 import winston from 'winston';
 
-import authenticationRoutes from "./routes/authenticationRoutes.js"
+import authenticationRoutes from "./routes/authenticationRoutes.js";
 import organizationRoutes from './routes/organizationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import urlRoutes from './routes/urlRoutes.js';
 import RequestRoutes from './routes/RequestRoutes.js';
-import feedbackRoutes from "./routes/feedbackRoutes.js"
-import overviewRoutes from "./routes/overviewRoutes.js"
-import logsRoute from "./routes/logsRoute.js"
-import campaignRoutes from "./routes/campaignRoutes.js"
+import feedbackRoutes from "./routes/feedbackRoutes.js";
+import overviewRoutes from "./routes/overviewRoutes.js";
+import logsRoute from "./routes/logsRoute.js";
+import campaignRoutes from "./routes/campaignRoutes.js";
+import phishtankRoutes from "./routes/phishtankRoutes.js";
 
 import errorHandler from './middlewares/errorHandler.js';
-import authenticateToken from "./middlewares/authenticateToken.js"
-import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js"
+import authenticateToken from "./middlewares/authenticateToken.js";
+import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js";
 
 import forgotDetailsRoutes from './routes/forgotDetailsRoutes.js';
 
 import heartBeatRoutes from "./routes/heartBeatRoutes.js";
 
 import cookieParser from 'cookie-parser';
+
+import fetchAndSavePhishtankData from './cronJobs/phishtankJob.js';
+
 
 dotenv.config();
 
@@ -127,6 +131,12 @@ app.use("/api/heartBeat", authenticateToken, heartBeatRoutes)
 
 // Campaign Routes
 app.use('/api/campaign', dashboardAdminMiddleware, campaignRoutes);
+
+// Phishtank Routes
+app.use('/api/phishtank', phishtankRoutes);
+
+// Start cron job
+fetchAndSavePhishtankData();
 
 // Error handling middleware
 app.use(errorHandler);
