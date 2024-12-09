@@ -54,6 +54,14 @@ const urlSchema = new mongoose.Schema(
       type: String,
       required: [true, "Organization ID cannot be empty"],
     },
+    reputationDetails: { 
+        type: Object, 
+        default: null,
+    }, // Store VirusTotal analysis stats
+    reputationScore: { 
+        type: Number, 
+        default: 0,
+    }, // Store VirusTotal reputation score
     RequestIds: [
       {
         type: mongoose.Schema.Types.ObjectId,

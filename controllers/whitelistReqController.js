@@ -2,6 +2,7 @@ import asyncHandler from '../middlewares/asyncHandler.js';
 import Url from '../models/urlModel.js';
 import Request from '../models/RequestModel.js';
 import mongoose from 'mongoose';
+import domainReputation from '../models/domainReputationModel.js';
 
 // for adminLog
 import AdminLogs from "../models/adminlogsModel.js";
@@ -47,8 +48,20 @@ export const addRequestExt = async (req, res) => {
 
         // Extract domain from URL
         const domain = new URL(url).hostname;
-        // Check domain reputation using VirusTotal
-        const reputationResult = await checkDomainReputation(domain);
+
+        let existingReputation = await domainReputation.findOne({urlDomain:domain});
+        if(!existingReputation){
+            
+            // Check domain reputation using VirusTotal
+            const reputationResult = await checkDomainReputation(domain);
+            const newDomainReputation = new domainReputation({
+                urlDomain: domain,
+                reputationDetails: reputationResult.stats, 
+                reputationScore: reputationResult.reputation,
+            })
+            existingReputation = await newDomainReputation.save();
+            
+        }
 
         let existingUrl = await Url.findOne({ url, orgId });
         if (!existingUrl) {
@@ -57,6 +70,8 @@ export const addRequestExt = async (req, res) => {
                 orgId: req.user.orgId,
                 isVerified: false,
                 isPhishing: false,
+                reputationDetails:existingReputation.reputationDetails,
+                reputationScore:existingReputation.reputationScore,
             })
             existingUrl = await newUrl.save();
             return res.status(404).json({
@@ -74,18 +89,17 @@ export const addRequestExt = async (req, res) => {
         if (existingRequest) {
             return res.status(400).json({ message: `You have already submitted a ${existingRequest.reqOption} request for this URL, pending approval.` });
         }
-
+        
         const newRequest = new Request({
             userId,
             url,
             reason,
             orgId,
             reqOption,
-            reputationDetails: reputationResult.stats, // Save reputation stats
-            reputationScore: reputationResult.reputation, // Save reputation score
+            reputationDetails: existingReputation.reputationDetails, // Save reputation stats
+            reputationScore: existingReputation.reputationScore, // Save reputation score
         });
         await newRequest.save();
-
         existingUrl.RequestIds = existingUrl.RequestIds || [];
         existingUrl.RequestIds.push(newRequest._id);
         await existingUrl.save();
@@ -99,9 +113,8 @@ export const addRequestExt = async (req, res) => {
             message: "Request submitted successfully",
             request: newRequest,
             reputation: {
-                isSafe: reputationResult.isSafe,
-                stats: reputationResult.stats,
-                reputationScore: reputationResult.reputation,
+                stats: existingReputation.reputationDetails,
+                reputationScore: existingReputation.reputationScore,
             },
         });
     } catch (error) {
