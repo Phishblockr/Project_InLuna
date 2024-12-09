@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
+import { LiaUserShieldSolid } from "react-icons/lia";
+import { VscWorkspaceUnknown } from "react-icons/vsc";
+import { IoTimeOutline, IoShieldCheckmarkOutline  } from "react-icons/io5";
 import {
     MdOutlineArrowBackIos,
     MdOutlineArrowForwardIos,
 } from "react-icons/md";
-import { PiUserCircleLight } from "react-icons/pi";
+import { PiUserCircleLight, PiShieldWarningBold, PiWarningLight   } from "react-icons/pi";
 
 import { useDispatch, useSelector } from "react-redux";
 import { delReq, updateStatus, fetchReqs, approveReq, startListeningToSocket } from "../features/Requests/requestsSlice";
@@ -358,29 +361,35 @@ export default function Requests() {
                                 <div className="mt-3">
                                     <h4 className="font-medium text-lg">Domain Reputation:</h4>
                                     {request.reputationDetails ? (
-                                        <ul className="bg-gray-50 p-3 rounded-lg dark:bg-[#001733]">
-                                            <li>
-                                                <span className="font-medium">Harmless: </span>
+                                        <ul className="bg-gray-50 p-3 rounded-lg dark:bg-[#001733] flex justify-between">
+                                            <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
+                                                <LiaUserShieldSolid className="text-3xl"/>
+                                                <span className="font-medium">Harmless </span>
                                                 {request.reputationDetails.harmless ?? "N/A"}
                                             </li>
-                                            <li>
-                                                <span className="font-medium">Malicious: </span>
+                                            <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
+                                            <PiShieldWarningBold className="text-3xl" />
+                                                <span className="font-medium">Malicious </span>
                                                 {request.reputationDetails.malicious ?? "N/A"}
                                             </li>
-                                            <li>
-                                                <span className="font-medium">Suspicious: </span>
+                                            <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
+                                                <PiWarningLight className="text-3xl" />
+                                                <span className="font-medium">Suspicious </span>
                                                 {request.reputationDetails.suspicious ?? "N/A"}
                                             </li>
-                                            <li>
-                                                <span className="font-medium">Undetected: </span>
+                                            <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
+                                                <VscWorkspaceUnknown className="text-3xl" />
+                                                <span className="font-medium">Undetected </span>
                                                 {request.reputationDetails.undetected ?? "N/A"}
                                             </li>
-                                            <li>
-                                                <span className="font-medium">Timeout: </span>
+                                            <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
+                                                <IoTimeOutline className="text-3xl" />
+                                                <span className="font-medium">Timeout </span>
                                                 {request.reputationDetails.timeout ?? "N/A"}
                                             </li>
-                                            <li>
-                                                <span className="font-medium">Reputation Score: </span>
+                                            <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
+                                                <IoShieldCheckmarkOutline className="text-3xl" />
+                                                <span className="font-medium">Reputation Score </span>
                                                 {request.reputationScore ?? "N/A"}
                                             </li>
                                         </ul>
