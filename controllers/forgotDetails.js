@@ -40,24 +40,24 @@ const sendEmail = async (to, subject, content, user) => {
             <circle cx="100" cy="100" r="50" fill="white" stroke="red" stroke-width="5"></circle>
             <circle cx="100" cy="100" r="25" fill="black"></circle>
         </svg>
-        <span style="font-weight: bold;">Phishblockr - Support</span>
+        <span style="font-weight: bold;">InLuna - Support</span>
     </header>
     <div style="padding: 10px; width: 100%;">
         <p>Hi ${user.name}</p>
         <p>We received your request for account assistance. Here are the details:</p>
         <span>${content}</span>
-        <p>If you did not made this request, it's possible someone else is trying to access your Phishblockr account. <br> <strong>Please ignore this email if you did not request assistance.</strong></p>
+        <p>If you did not made this request, it's possible someone else is trying to access your InLuna account. <br> <strong>Please ignore this email if you did not request assistance.</strong></p>
         <p>Sincerely yours,</p>
-        <p>The Phishblockr team</p>
+        <p>The InLuna team</p>
     </div>
     <footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4; border-radius: 10px 10px 0px 0px;">
         <p>If you need further assistance, please contact our support team at 
-            <a href="mailto:support@excellitude.com" style="color: #f4f4f4; text-decoration: none;">support@phishblockr.com</a>.
+            <a href="mailto:support@excellitude.com" style="color: #f4f4f4; text-decoration: none;">support@InLuna.com</a>.
         </p>
         <p style="margin-top: 10px;">Excellitude Pvt ltd. | 1234 Cybersecurity Lane, Suite 100 | Security City, SC 12345</p>
         <p style="margin-top: 10px;">
-            <a href="https://phishblockr.com/privacy-policy" style="color: #f4f4f4; text-decoration: none;">Privacy Policy</a> | 
-            <a href="https://phishblockr.com/terms-of-service" style="color: #f4f4f4; text-decoration: none;">Terms of Service</a>
+            <a href="https://InLuna.com/privacy-policy" style="color: #f4f4f4; text-decoration: none;">Privacy Policy</a> | 
+            <a href="https://InLuna.com/terms-of-service" style="color: #f4f4f4; text-decoration: none;">Terms of Service</a>
         </p>
     </footer>
     </div>
@@ -115,7 +115,7 @@ export const handleForgotDetails = async (req, res) => {
         }
 
         // Send the combined email
-        await sendEmail(email, "Phishblockr Dashboard - Forgot Details Assistance", emailContent, user);
+        await sendEmail(email, "InLuna Dashboard - Forgot Details Assistance", emailContent, user);
 
         if (user.userType === process.env.ADMIN) {
             // Add Log entry
