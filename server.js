@@ -136,7 +136,7 @@ app.use('/api/campaign', dashboardAdminMiddleware, campaignRoutes);
 app.use('/api/phishtank', phishtankRoutes);
 
 // Start cron job
-fetchAndSavePhishtankData();
+// fetchAndSavePhishtankData();
 
 // Error handling middleware
 app.use(errorHandler);
