@@ -65,7 +65,7 @@ const Sidebar = () => {
         <div className="w-64 l-0 r-0 bg-white fixed h-full px-4 py-2 z-10 dark:bg-[#002451]">
             <div className="my-2 mb-6">
                 <h1 className="text-2xl text-left text-black font-medium tracking-tighter dark:text-[#F4F4F4]">
-                    <NavLink to={'/'}>Phishblokr</NavLink>
+                    <NavLink to={'/'}>InLuna</NavLink>
                 </h1>
             </div>
             <ul className="mt-4 text-black flex flex-col font-medium gap-2 dark:text-[#F4F4F4]">
