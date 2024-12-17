@@ -36,6 +36,8 @@ import PasswordReset from "./components/ForgotDetails/PasswordReset.jsx";
 import ForgotDetails from "./components/ForgotDetails/ForgotDetails.jsx";
 import AddCampaign from "./components/Campaign/AddCampaign.jsx";
 import Campaign from "./components/Campaign/Campaign.jsx";
+import CreateTemplate from "./components/Campaign/CreateTemplate.jsx";
+import CreateBlog from "./components/Campaign/CreateBlog.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -98,6 +100,8 @@ function App() {
                       />
                       <Route path="/campaign" element={<Campaign />} />
                       <Route path="/campaign/add" element={<AddCampaign />} />
+                      <Route path="/campaign/manageTemplate" element={<CreateTemplate />} />
+                      <Route path="/campaign/manageBlog" element={<CreateBlog />} />
                       <Route path="/requests" element={<Requests />} />
                       <Route path="/feedback" element={<Feedbacks />} />
                       <Route path="/logs" element={<Logs />} />
