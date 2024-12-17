@@ -12,7 +12,8 @@ import {
   verifyAdminPassword,
   deleteUser,
   fetchProfile,
-  addUsersFromCsv
+  addUsersFromCsv,
+  setupPassword
 } from '../controllers/userController.js';
 import multer from 'multer';
 
@@ -32,5 +33,6 @@ router.route("/updateAdminPwd").put(dashboardAdminMiddleware, updateAdminPwd)
 router.route("/verifyAdminPassword").post(dashboardAdminMiddleware, verifyAdminPassword);
 router.route("/authenticateAdmin").put(dashboardAdminMiddleware, updateAdminPwd);
 router.post("/addUsersFromCsv", upload.single("file"),dashboardAdminMiddleware, addUsersFromCsv);
+router.post("/setupPassword/:token",setupPassword)
 
 export default router;
