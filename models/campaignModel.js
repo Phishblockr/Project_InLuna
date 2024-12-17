@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
 const campaignSchema = new mongoose.Schema({
   name: {
@@ -6,13 +6,9 @@ const campaignSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  groups: {
+  text: {
     type: String,
-    required: true,
-  },
-  courses: {
-    type: String,
-    required: true,
+    required: true
   },
   status: {
     type: String,
@@ -20,18 +16,27 @@ const campaignSchema = new mongoose.Schema({
     enum: ["scheduled", "in progress", "completed"],
     default: "scheduled",
   },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-    required: true,
+  datetime: {
+    type: String,
+    required: true
   },
   orgId: {
     type: String,
     required: [true, 'Organization ID is required'],
-},
+  },
+  // Additional fields from the frontend
+  bodyText: {
+    type: String,
+    required: true,
+  },
+  templateBody: {
+    type: String,
+    required: true,
+  },
+  users: {
+    type: String,
+    required: true,
+  },
 });
 
 const Campaign = mongoose.model('Campaign', campaignSchema);

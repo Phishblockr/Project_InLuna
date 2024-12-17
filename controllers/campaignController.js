@@ -60,25 +60,25 @@ export const getCampaignById = async (req, res) => {
 // Add a new campaign
 export const addCampaign = async (req, res) => {
     const orgId = req.user.orgId;
-    const { name, date, groups, courses, status, startDate, endDate, category } = req.body;
-    console.log({ name, date, groups, courses, status, startDate, endDate, category, orgId })
+    const { name, text, status, datetime, bodyText, templateBody, users } = req.body;
 
     try {
         const newCampaign = new Campaign({
             name,
-            date,
-            groups,
-            courses,
-            startDate,
-            endDate,
+            text,
             status,
-            category,
-            orgId
+            bodyText,
+            datetime,
+            templateBody,
+            users,
+            orgId,
         });
 
-        newData = await newCampaign.save();
+        const newData = await newCampaign.save();
+
         const io = req.app.get("socketio");
         io.emit("campaignCreated", newData);
+
         res.status(201).json({ success: true, message: "Campaign added successfully", data: newCampaign });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
