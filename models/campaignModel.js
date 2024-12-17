@@ -6,13 +6,9 @@ const campaignSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  groups: {
+  text: {
     type: String,
-    required: true,
-  },
-  courses: {
-    type: String,
-    required: true,
+    required: true
   },
   status: {
     type: String,
@@ -20,13 +16,9 @@ const campaignSchema = new mongoose.Schema({
     enum: ["scheduled", "in progress", "completed"],
     default: "scheduled",
   },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-    required: true,
+  datetime: {
+    type: String,
+    required: true
   },
   orgId: {
     type: String,

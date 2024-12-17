@@ -60,17 +60,15 @@ export const getCampaignById = async (req, res) => {
 // Add a new campaign
 export const addCampaign = async (req, res) => {
     const orgId = req.user.orgId;
-    const { name, groups, courses, status, startDate, endDate, bodyText, templateBody, users } = req.body;
+    const { name, text, status, datetime, bodyText, templateBody, users } = req.body;
 
     try {
         const newCampaign = new Campaign({
             name,
-            groups,
-            courses,
+            text,
             status,
-            startDate,
-            endDate,
             bodyText,
+            datetime,
             templateBody,
             users,
             orgId,
