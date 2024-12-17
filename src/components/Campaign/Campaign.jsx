@@ -148,8 +148,18 @@ export default function Campaign() {
                                 <option value="100">100</option>
                             </select>
                             <Link to={'/campaign/add'}>
-                                <button className="rounded-lg text-xl p-3 px-4 bg-[#0364BD] text-white font-medium">
+                                <button className="rounded-lg text-sm p-3 px-4 bg-[#0364BD] text-white font-medium">
                                     Add Campaign
+                                </button>
+                            </Link>     
+                            <Link to={'/campaign/manageTemplate'}>
+                                <button className="rounded-lg text-sm p-3 px-4 bg-[#0364BD] text-white font-medium">
+                                    Add Template
+                                </button>
+                            </Link>
+                            <Link to={'/campaign/manageBlog'}>
+                                <button className="rounded-lg text-sm p-3 px-4 bg-[#0364BD] text-white font-medium">
+                                    Add Blogs
                                 </button>
                             </Link>
                         </div>
