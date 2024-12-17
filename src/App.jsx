@@ -36,6 +36,7 @@ import PasswordReset from "./components/ForgotDetails/PasswordReset.jsx";
 import ForgotDetails from "./components/ForgotDetails/ForgotDetails.jsx";
 import AddCampaign from "./components/Campaign/AddCampaign.jsx";
 import Campaign from "./components/Campaign/Campaign.jsx";
+import SetupPassword from "./components/Users/SetupPassword.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -43,8 +44,9 @@ const MainLayout = ({ children }) => {
   const isLogoutPage = location.pathname === "/logout";
   const isForgotDetailsPage = location.pathname === "/forgotDetails"
   const isResetPasswordPage = location.pathname.startsWith("/resetPassword");
+  const isSetupPasswordPage = location.pathname.startsWith("/setupPassword")
 
-  const showSidebarAndNavbar = !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage;
+  const showSidebarAndNavbar = !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage && !isSetupPasswordPage;
 
   return (
     <>
@@ -72,6 +74,8 @@ function App() {
 
                     <Route path="/forgotDetails" element={<ForgotDetails />} />
                     <Route path="/resetPassword/:token" element={<PasswordReset />} />
+
+                    <Route path="/setupPassword/:token" element={<SetupPassword/>} />
 
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>
