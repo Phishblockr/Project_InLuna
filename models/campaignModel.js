@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
 const campaignSchema = new mongoose.Schema({
   name: {
@@ -31,7 +31,20 @@ const campaignSchema = new mongoose.Schema({
   orgId: {
     type: String,
     required: [true, 'Organization ID is required'],
-},
+  },
+  // Additional fields from the frontend
+  bodyText: {
+    type: String,
+    required: true,
+  },
+  templateBody: {
+    type: String,
+    required: true,
+  },
+  users: {
+    type: String,
+    required: true,
+  },
 });
 
 const Campaign = mongoose.model('Campaign', campaignSchema);

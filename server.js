@@ -16,6 +16,8 @@ import overviewRoutes from "./routes/overviewRoutes.js";
 import logsRoute from "./routes/logsRoute.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
 import phishtankRoutes from "./routes/phishtankRoutes.js";
+import templateRoutes from "./routes/templateRoutes.js";
+import blogRoutes from "./routes/blogRoutes.js";
 
 import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js";
@@ -75,9 +77,10 @@ app.use(cookieParser());
 const server = http.createServer(app);
 const io = new Server(server,  {
   cors: {
-    origin: "http://localhost:5173", // Dashboard's URL
+    origin: "*", // ALl Origin for dev purposes
   }
 });
+
 app.set("socketio", io);
 
 const logger = winston.createLogger({
@@ -135,12 +138,17 @@ app.use('/api/campaign', dashboardAdminMiddleware, campaignRoutes);
 // Phishtank Routes
 app.use('/api/phishtank', phishtankRoutes);
 
+// Template Route
+app.use('/api/template', dashboardAdminMiddleware, templateRoutes);
+
+// b Route
+app.use('/api/template', dashboardAdminMiddleware, blogRoutes);
+
 // Start cron job
 // fetchAndSavePhishtankData();
 
 // Error handling middleware
 app.use(errorHandler);
-
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
