@@ -42,7 +42,7 @@ const ForgotDetails = () => {
         <div className="flex justify-center">
             <div className="flex flex-col ">
                 <h1 className=" flex justify-center text-2xl text-left text-black font-bold tracking-tighter my-5 dark:text-[#F4F4F4]">
-                    Phishblokr
+                    InLuna
                 </h1>
                 <div className="bg-white rounded-lg shadow p-10 dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                     <form onSubmit={handleSendEmail}>
