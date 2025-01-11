@@ -15,7 +15,7 @@ const dashboardAdminMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
 
-        if (req.user.userType == process.env.ADMIN) {
+        if (req.user.userType == process.env.ADMIN || req.user.userType == process.env.SUPERADM) {
             next();
         } else {
             return res.status(403).json({ error: "Access denied. Admins only." });

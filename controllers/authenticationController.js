@@ -127,6 +127,52 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     }
 });
 
+// Login on Super Dashboard (only super admin)
+export const loginSuperAdm = asyncHandler(async (req, res) => {
+    const {username, password, rememberMe} = req.body;
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+    };
+
+    if (rememberMe) {
+        cookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    }
+    try {
+        const user = await User.findOne({ username });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Invalid Credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (username === user.username && isMatch && user.userType === process.env.SUPERADM) {
+            const payload = {
+                userId: user.id,
+                userType: user.userType
+            }
+            const token = jwt.sign(payload, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
+            const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, { algorithm: 'HS256', expiresIn: rememberMe ? "7d" : "1d" })
+
+            const encryptedRefreshToken = await encrypt(refreshToken);
+            user.refreshToken = encryptedRefreshToken;
+            await user.save();
+
+            res.cookie('refreshToken', encryptedRefreshToken, cookieOptions);
+            res.status(200).json({ token });
+        } else {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+    } catch (error) {
+        console.error('Error logging in:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+})
+
 export const refreshTokenDas = async (req, res) => {
     try {
         const { refreshToken: encryptedRefreshToken } = req.cookies;
@@ -164,12 +210,20 @@ export const refreshTokenDas = async (req, res) => {
         if (decryptedStoredToken !== refreshToken) {
             return res.status(403).json({ message: "Invalid refresh token" });
         }
-
-        const newPayload = {
-            userId: user.id,
-            orgId: user.orgId,
-            userType: user.userType,
-        };
+        let newPayload
+        if (user.userType === process.env.SUPERADM){
+            newPayload = {
+                userId: user.id,
+                userType: user.userType,
+            };
+        }
+        else{
+            newPayload = {
+                userId: user.id,
+                orgId: user.orgId,
+                userType: user.userType,
+            };
+        }
 
         const newToken = jwt.sign(newPayload, process.env.JWT_SECRET, {
             algorithm: "HS256",

@@ -81,6 +81,7 @@ const userSchema = new Schema({
     orgId: {
         type: String,
         required: [true, 'Organization ID is required'],
+        default:8131120110,
     },
     refreshToken: { type: String },
     refreshTokenExt: { type: String },
