@@ -31,6 +31,9 @@ import cookieParser from 'cookie-parser';
 
 import fetchAndSavePhishtankData from './cronJobs/phishtankJob.js';
 
+// Training Platform
+import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
+
 
 dotenv.config();
 
@@ -139,10 +142,13 @@ app.use('/api/campaign', dashboardAdminMiddleware, campaignRoutes);
 app.use('/api/phishtank', phishtankRoutes);
 
 // Template Route
-app.use('/api/template', dashboardAdminMiddleware, templateRoutes);
+// app.use('/api/template', dashboardAdminMiddleware, templateRoutes);
 
-// b Route
-app.use('/api/template', dashboardAdminMiddleware, blogRoutes);
+// blog Route
+// app.use('/api/template', dashboardAdminMiddleware, blogRoutes);
+
+// Training Platform Routes
+app.use("/api/emailTemplate", emailTemplateRoutes)
 
 // Start cron job
 // fetchAndSavePhishtankData();
