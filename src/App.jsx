@@ -9,10 +9,13 @@ import Overview from './components/Overview';
 import NotFound from './components/NotFound';
 import Navbar from './components/Navigation/Navbar';
 import Sidebar from './components/Navigation/Sidebar';
-import Course from './components/Course';
-import Email from "./components/Email";
+import Course from './components/Course/Course';
+import Email from "./components/Email/Email";
 import { Toaster } from 'sonner';
 import { useSelector } from 'react-redux';
+import EmailList from './components/Email/EmailList';
+import EmailEditor from './components/Email/EmailEditor';
+import EditEmailTemplate from './components/Email/EditEmailTemplate';
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -58,7 +61,10 @@ function App() {
                           <Route element={<ProtectedRoute />}>
                             <Route path="/" element={<Overview />} />
                             <Route path="/course" element={<Course />} />
-                            <Route path="/email" element={<Email />} />
+                            <Route path="/emails" element={<EmailList />} />
+                            <Route path="/emails/emailCreator" element={<EmailEditor />} />
+                            <Route path="/emails/emailEditor/:id" element={<EditEmailTemplate />} />
+
                           </Route>
                           <Route path="*" element={<NotFound />} />
                         </Routes>

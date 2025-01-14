@@ -25,7 +25,7 @@ const links = [
         id: 3,
         icon: <RiMailLine className={iconStyle} />,
         title: "Email",
-        url: "/email",
+        url: "/emails",
     },
 ];
 
