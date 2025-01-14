@@ -4,19 +4,19 @@ import EmailTemplate from "../../models/trainingPlatform/emailTemplateModel.js"
 // Create a new email template
 export const createEmailTemplate = asyncHandler(async (req, res) => {
     try {
-        const {title, htmlContent, phishingMarkers, images} = req.body;
+        const {title, htmlContent, group, isPhishing} = req.body
         if (!title || !htmlContent){
             return res.status(400).json({success: false, message: "Title and HTML Content are required."});
         }
         const emailTemplate = new EmailTemplate({
             title,
             htmlContent,
-            phishingMarkers: phishingMarkers || [],
-            images: images || []
+            group,
+            isPhishing
         });
         // save to mongo
         const  savedTemplate = await emailTemplate.save();
-        res.status(201).json({success: ture, template: savedTemplate});
+        res.status(201).json({success: true, template: savedTemplate});
     } catch (error){
         res.status(500).json({ success: false, message: error.message });
     }
@@ -63,3 +63,38 @@ export const getAllEmailTemplates = async (req, res) => {
       res.status(500).json({ success: false, message: error.message });
     }
   };
+
+  // Edit an email template by ID
+  export const editEmailTemplate = asyncHandler(async(req, res) => {
+    const {id} = req.params;
+    const {title, htmlContent, group, isPhishing} = req.body;
+
+    try {
+      const updatedTemplate = await EmailTemplate.findByIdAndUpdate(
+        id, 
+        {title, htmlContent, group, isPhishing},
+        {new: true, runValidators: true}
+      );
+      if(!updatedTemplate){
+        return res.status(404).json({message: "Template not found"});
+      }
+      res.status(200).json(updatedTemplate);
+    } catch (error){
+      console.error("Error updating template: ", error);
+      res.status(500).json({message: "Internal Server Error"});
+    }
+  });
+
+  // fetch group list
+  export const getTemplatesGroups = asyncHandler(async(req, res) => {
+    try{
+      const groups = await EmailTemplate.find({}, "group");
+
+      const uniqueGroups = [...new Set(groups.map((doc) => doc.group))];
+      res.json(uniqueGroups);
+    } catch (error) {
+      console.error("Error fetching groups: ",error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  })
+

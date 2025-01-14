@@ -9,25 +9,14 @@ const emailTemplateSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    phishingMarkers: [
-        {
-            elementId: { type: String, required: true },
-            elementType: { type: String, required: true },
-            description: { type: String },
-        },
-    ],
-    images: [
-        {
-            url: {
-                type: String,
-                required: true,
-            },
-            altText: {
-                type: String,
-                default: "",
-            },
-        },
-    ]
+    group:{
+        type:String,
+        required:true,
+    },
+    isPhishing:{
+        type:Boolean,
+        required:true
+    },
 },
     { timestamps: true }
 );
