@@ -16,6 +16,7 @@ import {
   setupPassword
 } from '../controllers/userController.js';
 import multer from 'multer';
+import authenticateToken from '../middlewares/authenticateToken.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -27,7 +28,7 @@ router.route("/fetch/:id").get(dashboardAdminMiddleware, getUser);
 router.route("/update/:id").put(dashboardAdminMiddleware, updateUser);
 router.route("/updateStatus/:id").put(dashboardAdminMiddleware, updateUserStatus);
 router.route("/delete/:id").delete(dashboardAdminMiddleware, deleteUser);
-router.route("/profile").get(dashboardAdminMiddleware, fetchProfile);
+router.route("/profile").get(authenticateToken, fetchProfile); //dashboardAdminMiddleware 
 router.route("/updateAdminDetails").put(dashboardAdminMiddleware, updateAdminDetails);
 router.route("/updateAdminPwd").put(dashboardAdminMiddleware, updateAdminPwd)
 router.route("/verifyAdminPassword").post(dashboardAdminMiddleware, verifyAdminPassword);

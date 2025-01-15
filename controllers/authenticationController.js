@@ -89,6 +89,8 @@ export const loginAdmin = asyncHandler(async (req, res) => {
         sameSite: 'strict',
     };
 
+    console.log(req.body);
+
     if (rememberMe) {
         cookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
     }
@@ -96,13 +98,15 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     try {
         const user = await User.findOne({ orgId, username });
 
+        console.log(user);
+
         if (!user) {
             return res.status(404).json({ error: 'Invalid Credentials' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
-        if (username === user.username && isMatch && user.userType === process.env.ADMIN) {
+        if (username === user.username && isMatch) {
             const payload = {
                 userId: user.id,
                 orgId: user.orgId,
@@ -116,7 +120,16 @@ export const loginAdmin = asyncHandler(async (req, res) => {
             await user.save();
 
             res.cookie('refreshToken', encryptedRefreshToken, cookieOptions);
-            res.status(200).json({ token });
+
+            if (user.userType === process.env.ADMIN) {
+                console.log("Admin Logged in");
+                res.status(200).json({ token, redirectUrl: process.env.FRONT_END_URL });
+            } else if (user.userType === process.env.USER) {
+                console.log("User Logged in");
+                res.status(200).json({ token, redirectUrl: process.env.TRAINING_FRONTEND_URL });
+            } else {
+                res.status(403).json({ error: 'Unauthorized role' });
+            }
         } else {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
