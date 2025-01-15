@@ -53,7 +53,7 @@ const links = [
         url: "/logs",
     },
     {
-        id: 6,
+        id: 7,
         icon: <RiBookLine className={iconStyle} />,
         title: "Campaign",
         url: "/campaign",
