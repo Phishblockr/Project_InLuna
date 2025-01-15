@@ -51,9 +51,6 @@ export const AuthProvider = ({ children }) => {
             setLoading(false); // Always reset loading state
         }
     };
-
-
-
     useEffect(() => {
         initializeAuth();
 
@@ -152,14 +149,22 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
             const decodedToken = jwtDecode(data.token);
             const userType = import.meta.env.VITE_USERTYPE;
-
+            const userTypeUser = import.meta.env.VITE_USERTYPE_USER;
+            
+            localStorage.setItem("userType",decodedToken.userType);
+            
             if (decodedToken.userType === userType) {
-
                 setIsAuthenticated(true);
                 scheduleTokenRefresh(data.token);
                 setAccessToken(data.token)
-                toast.success("Login successful");
+                toast.success("Admin Login successful");
                 navigate("/");
+            } else if (decodedToken.userType == userTypeUser) {
+                setIsAuthenticated(true);
+                scheduleTokenRefresh(data.token);
+                setAccessToken(data.token)
+                toast.success("User Login successful");
+                window.location.href = import.meta.env.VITE_TRAINING_URL
             } else {
                 toast.error("Unauthorized");
             }
