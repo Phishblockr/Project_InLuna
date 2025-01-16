@@ -33,6 +33,7 @@ import fetchAndSavePhishtankData from './cronJobs/phishtankJob.js';
 
 // Training Platform
 import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
+import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
 
 
 dotenv.config();
@@ -149,6 +150,8 @@ app.use('/api/phishtank', phishtankRoutes);
 
 // Training Platform Routes
 app.use("/api/emailTemplate", emailTemplateRoutes)
+
+app.use("/api/course", courseRoutes)
 
 // Start cron job
 // fetchAndSavePhishtankData();
