@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 import DOMPurify from "dompurify";
 import { toast } from "sonner";
+import { useAuth } from "../../utils/AuthProvider";
 
 const EmailEditor = () => {
     const apiUrl = import.meta.env.VITE_API_URL; // Replace with your API URL
@@ -13,9 +14,18 @@ const EmailEditor = () => {
     const [otherValue, setOtherValue] = useState("");
     const editorRef = React.useRef(null);
 
+    const { getToken } = useAuth();
+    const token = getToken();
+
     const fetchOptions = async () => {
         try {
-            const response = await fetch(`${apiUrl}/emailTemplate/getGroups`); // Backend endpoint
+            const response = await fetch(`${apiUrl}/emailTemplate/getGroups`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }); // Backend endpoint
             const data = await response.json();
             setGroupOptions(data);
         } catch (error) {
@@ -151,7 +161,7 @@ const EmailEditor = () => {
                 style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
             />
 
-<label htmlFor="selectField" className="block text-lg font-medium mb-2">
+            <label htmlFor="selectField" className="block text-lg font-medium mb-2">
                 Template Group
             </label>
             <select

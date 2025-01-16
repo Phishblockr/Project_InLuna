@@ -1,24 +1,70 @@
 import React, { useState, useEffect } from "react";
 import { RiDeleteBinLine, RiEyeLine } from "react-icons/ri";
+import { MdOutlineArrowBackIos, MdOutlineArrowForwardIos } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../utils/AuthProvider";
+import { useDispatch, useSelector } from "react-redux";
+import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
+import debounce from "debounce";
 
 const EmailList = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
+    const { getToken } = useAuth();
+    const token = getToken();
+
+    const perPageRec = useSelector((state) => state.perPageRec);
+    const dispatch = useDispatch();
+
     const [templates, setTemplates] = useState([]);
+
+    // For Pagination and Data Filter
+    const [currentPage, setCurrentPage] = useState(1);
+    const [query, setQuery] = useState("");
+    const [group, setGroup] = useState("all");
+    const [groupOptions, setGroupOptions] = useState([]);
+
+    // temporary
+    const [totalPages, setTotalPages] = useState(1);
+
+    // For Loading Overlay
+    const [dataLoading, setDataLoading] = useState(true);
+    const [showLoading, setShowLoading] = useState(false);
+
     useEffect(() => {
-        fetchTemplates();
+        /*setDataLoading(true)
+        let loadingTimer = setTimeout(() => {
+            setShowLoading(true);
+        }, 500);
+                dispatch(getUsers({ page: currentPage, limit: perPageRec, search: query, status, token }))
+            .unwrap()
+            .finally(() => {
+                clearTimeout(loadingTimer);
+                setShowLoading(false);
+                setDataLoading(false);
+            })
+        */
+        fetchTemplates({ page: currentPage, limit: perPageRec, search: query, group, token });
+        fetchOptions();
+        // dispatch(startListeningToSocket(token));
     }, []);
 
-    const fetchTemplates = async () => {
+    const fetchTemplates = async ({ page, limit, search, group, token }) => {
         try {
-            const res = await fetch(`${apiUrl}/emailTemplate/getAll`);
+            const res = await fetch(`${apiUrl}/emailTemplate/getAll?page=${page}&limit=${limit}&search=${search}&group=${group}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             const data = await res.json();
 
             if (res.ok) {
                 setTemplates(data.templates);
+                setTotalPages(data.totalPages);
             } else {
                 toast.error(data.message || "Error fetching templates");
             }
@@ -26,8 +72,91 @@ const EmailList = () => {
             toast.error("Error fetching templates:", error.message)
         }
     }
-    console.log(templates)
 
+    const fetchOptions = async () => {
+        try {
+            const response = await fetch(`${apiUrl}/emailTemplate/getGroups`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }); // Backend endpoint
+            const data = await response.json();
+            setGroupOptions(data);
+        } catch (error) {
+            console.error("Error fetching options:", error);
+        }
+    };
+
+    function getVisiblePages(totalPages, currentPage) {
+        const maxVisibleAround = 6;
+        const pages = [];
+
+        if (totalPages === 1) {
+            pages.push(1);
+            return pages;
+        }
+
+        pages.push(1);
+
+        if (currentPage > maxVisibleAround + 2) {
+            pages.push("...");
+        }
+
+        const start = Math.max(2, currentPage - maxVisibleAround);
+        const end = Math.min(totalPages - 1, currentPage + maxVisibleAround);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        if (currentPage < totalPages - (maxVisibleAround + 1)) {
+            pages.push("...");
+        }
+
+        pages.push(totalPages);
+
+        return pages;
+    }
+
+    const visiblePages = getVisiblePages(totalPages, currentPage);
+
+    function changeCPage(n) {
+        if (typeof n === "number") {
+            setCurrentPage(n);
+        }
+    }
+
+    const handleSetPerPageRec = (value) => {
+        dispatch(setPerPageRec(value));
+    };
+
+    function nextPage() {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    }
+
+    function prePage() {
+        if (currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
+        }
+    }
+
+    function changeCPage(n) {
+        setCurrentPage(n);
+    }
+
+    const handleSearch = debounce((value) => {
+        setQuery(value)
+        fetchTemplates({ page: 1, limit: perPageRec, search: value, group, token });
+    }, 300);
+
+    const handleGroup = (value) => {
+        setGroup(value)
+        fetchTemplates({ page: 1, limit: perPageRec, search: query, group: value, token });
+    }
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
@@ -40,27 +169,31 @@ const EmailList = () => {
                     <div className="flex items-center gap-x-3">
                         <input
                             type="text"
-                            placeholder="Search User..."
+                            placeholder="Search Template..."
                             className="rounded-lg border-gray-300 border-2 text-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
-                        // onChange={(e) => handleSearch(e.target.value)}
+                            onChange={(e) => handleSearch(e.target.value)}
                         />
+
                         <select
                             name="filters"
                             id="filters"
                             className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
-                        // onChange={(e) => handleStatus(e.target.value)}
+                            onChange={(e) => handleGroup(e.target.value)}
                         >
-                            <option value="all">Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="all">Group</option>
+                            {groupOptions.map((groupOption, index) => (
+                                <option key={index} value={groupOption}>
+                                    {groupOption}
+                                </option>
+                            ))}
                         </select>
 
                         <select
                             name="perPageRec"
                             id="perPageRec"
                             className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
-                            // onChange={(e) => handleSetPerPageRec(e.target.value)}
-                            // value={perPageRec}
+                            onChange={(e) => handleSetPerPageRec(e.target.value)}
+                            value={perPageRec}
                         >
                             <option value="5">5</option>
                             <option value="10">10</option>
@@ -131,6 +264,44 @@ const EmailList = () => {
                         </table>
                     </div>
                 )}
+            </div>
+            <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+                <nav className="flex gap-x-1 justify-between">
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                        <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
+                    </button>
+                    <div className="flex gap-x-2 items-center">
+                        {visiblePages.map((page, index) =>
+                            typeof page === "number" ? (
+                                <button
+                                    key={index}
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === page
+                                        ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]"
+                                        : "bg-gray-200 dark:bg-[#001C40]"
+                                        }`}
+                                    onClick={() => changeCPage(page)}
+                                >
+                                    {page}
+                                </button>
+                            ) : (
+                                <span key={index} className="px-2 py-1">
+                                    {page}
+                                </span>
+                            )
+                        )}
+                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    >
+                        Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                    </button>
+                </nav>
             </div>
         </div>
     );
