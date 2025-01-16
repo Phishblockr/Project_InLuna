@@ -19,7 +19,7 @@ const links = [
         id: 2,
         icon: <RiPlayCircleLine className={iconStyle} />,
         title: "Course",
-        url: "/course",
+        url: "/courses",
     },
     {
         id: 3,
