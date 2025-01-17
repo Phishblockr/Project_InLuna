@@ -12,9 +12,9 @@ import Sidebar from './components/Navigation/Sidebar';
 import Course from './components/Course/Course';
 import { Toaster } from 'sonner';
 import { useSelector } from 'react-redux';
-import EmailList from './components/Email/EmailList';
-import EmailEditor from './components/Email/EmailEditor';
-import EditEmailTemplate from './components/Email/EditEmailTemplate';
+import Email from './components/Email/Email';
+import EmailCreator from './components/Email/EmailCreator';
+import EditEditor from './components/Email/EmailEditor';
 import CourseCreator from './components/Course/courseCreator';
 import CourseEditor from './components/Course/CourseEditor';
 
@@ -65,9 +65,9 @@ function App() {
                             <Route path="/courses/courseCreator" element={<CourseCreator />} />
                             <Route path="/courses/courseEditor/:id" element={<CourseEditor />} />
 
-                            <Route path="/emails" element={<EmailList />} />
-                            <Route path="/emails/emailCreator" element={<EmailEditor />} />
-                            <Route path="/emails/emailEditor/:id" element={<EditEmailTemplate />} />
+                            <Route path="/emails" element={<Email />} />
+                            <Route path="/emails/emailCreator" element={<EmailCreator />} />
+                            <Route path="/emails/emailEditor/:id" element={<EditEditor />} />
 
                           </Route>
                           <Route path="*" element={<NotFound />} />
