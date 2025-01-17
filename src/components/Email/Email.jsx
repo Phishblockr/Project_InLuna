@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import debounce from "debounce";
 
-const EmailList = () => {
+const Email = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
     const { getToken } = useAuth();
@@ -307,4 +307,4 @@ const EmailList = () => {
     );
 }
 
-export default EmailList;
+export default Email;

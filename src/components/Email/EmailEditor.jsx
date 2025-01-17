@@ -1,25 +1,62 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import DOMPurify from "dompurify";
 import { toast } from "sonner";
+import { useParams } from "react-router-dom";
+import LoadingOverlay from "../../utils/LoadingOverlay";
 import { useAuth } from "../../utils/AuthProvider";
 
-const EmailEditor = () => {
-    const apiUrl = import.meta.env.VITE_API_URL; // Replace with your API URL
-    const [title, setTitle] = useState("");
-    const [htmlContent, setHtmlContent] = useState("");
-    const [isPhishing, setIsPhishing] = useState(false);
-    const [groupOptions, setGroupOptions] = useState([]);
-    const [selectedOption, setSelectedOption] = useState([]);
-    const [otherValue, setOtherValue] = useState("");
-    const editorRef = React.useRef(null);
+const EmailCreator = () => {
+    const { id } = useParams();
+    const apiUrl = import.meta.env.VITE_API_URL;
 
     const { getToken } = useAuth();
     const token = getToken();
 
+    const [title, setTitle] = useState("");
+    const [htmlContent, setHtmlContent] = useState("");
+    const [isPhishing, setIsPhishing] = useState(false);
+    const [selectedGroup, setSelectedGroup] = useState(""); // Track selected value
+    const [updatedDate, setUpdatedDate] = useState("");
+    const [createdDate, setCreatedDate] = useState("");
+
+    // dynamic select
+    const [groupOptions, setGroupOptions] = useState([]); // Store options fetched from the backend
+    const [otherValue, setOtherValue] = useState(""); // Track input for "Other" value
+
+    const [loading, setLoading] = useState(true);
+
+    const editorRef = React.useRef(null);
+
+    const fetchTemplate = async () => {
+        try {
+            const res = await fetch(`${apiUrl}/emailTemplate/get/${id}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setTitle(data.template.title);
+                setHtmlContent(data.template.htmlContent);
+                setSelectedGroup(data.template.group);
+                setIsPhishing(data.template.isPhishing);
+                setUpdatedDate(data.template.updatedAt);
+                setCreatedDate(data.template.createdDate);
+            } else {
+                toast.error(data.message || "Error fetching templates");
+            }
+        } catch (error) {
+            toast.error("Error fetching templates:", error.message)
+        }
+    }
+
     const fetchOptions = async () => {
         try {
-            const response = await fetch(`${apiUrl}/emailTemplate/getGroups`, {
+            const response = await fetch(`${apiUrl}/emailTemplate/getGroups` , {
                 method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -33,9 +70,46 @@ const EmailEditor = () => {
         }
     };
 
-    // Save a reference to the editor instance
+    const handleEditorChange = (value) => {
+        const sanitizedContent = DOMPurify.sanitize(value);
+        setHtmlContent(sanitizedContent);
+    };
+
     const handleEditorMount = (editor) => {
         editorRef.current = editor;
+        if (htmlContent) {
+            editor.setValue(htmlContent);
+        }
+    };
+
+    const saveTemplate = async () => {
+        try {
+
+            const finalGroup = selectedGroup === "other" ? otherValue : selectedGroup;
+
+            const res = await fetch(`${apiUrl}/emailTemplate/update/${id}`, {
+                method: "PUT",
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    "Content-Type": "application/json" 
+                },
+                body: JSON.stringify({
+                    title,
+                    htmlContent,
+                    group: finalGroup,
+                    isPhishing
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                toast.success("Template updated successfully");
+            } else {
+                toast.error(data.message || "Error updating template.");
+            }
+        } catch (error) {
+            toast.error(`Error updating template: ${error.message}`);
+        }
     };
 
     // Handle Set as Phishing functionality
@@ -110,55 +184,26 @@ const EmailEditor = () => {
         }
     };
 
-    // Handle content change
-    const handleEditorChange = (value) => {
-        const sanitizedContent = DOMPurify.sanitize(value);
-        setHtmlContent(sanitizedContent);
-    };
-
-    // Save the template
-    const saveTemplate = async () => {
-        try {
-
-            const finalGroup = selectedOption === "other" ? otherValue : selectedOption;
-
-            const res = await fetch(`${apiUrl}/emailTemplate/create`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title,
-                    htmlContent,
-                    isPhishing,
-                    group: finalGroup,
-                }),
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                toast.success("Template added successfully");
-            } else {
-                toast.error(data.message || "Error saving template");
-            }
-        } catch (error) {
-            toast.error(`Error saving template: ${error.message}`);
-        }
-    };
 
     useEffect(() => {
+        setLoading(true); // Start loading
+        fetchTemplate();
         fetchOptions();
-    }, [])
+        setLoading(false); // Stop loading
+    }, [id])
 
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-            <h1>Email Template Editor</h1>
-
-            {/* Title Input */}
+            {loading && <LoadingOverlay loading={loading} />}
+            <h1>Edit Template</h1>
+            <label htmlFor="title"> Title</label>
             <input
                 type="text"
+                name="title"
                 placeholder="Enter template title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
+                className="w-full p-2 mb-4 border border-gray-300 rounded"
             />
 
             <label htmlFor="selectField" className="block text-lg font-medium mb-2">
@@ -167,8 +212,8 @@ const EmailEditor = () => {
             <select
                 id="selectField"
                 className="bg-white w-full p-2 border border-gray-300 rounded mb-4"
-                value={selectedOption}
-                onChange={(e) => setSelectedOption(e.target.value)}
+                value={selectedGroup}
+                onChange={(e) => setSelectedGroup(e.target.value)}
             >
                 {groupOptions.map((groupOption, index) => (
                     <option key={index} value={groupOption}>
@@ -178,7 +223,7 @@ const EmailEditor = () => {
                 <option value="other">Other</option>
             </select>
 
-            {selectedOption === "other" && (
+            {selectedGroup === "other" && (
                 <div>
                     <label htmlFor="otherField" className="block text-lg font-medium mb-2">
                         Enter Other Value
@@ -239,7 +284,7 @@ const EmailEditor = () => {
                         <Editor
                             className="h-full min-h-[500px]"
                             defaultLanguage="html"
-                            defaultValue="<!-- Enter your HTML here -->"
+                            value={htmlContent}
                             onChange={handleEditorChange}
                             onMount={handleEditorMount}
                             options={{
@@ -262,12 +307,16 @@ const EmailEditor = () => {
                 </div>
             </div>
 
-            {/* Save Button */}
-            <button onClick={saveTemplate} className="px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors">
+            <button
+                onClick={saveTemplate}
+                className="px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors"
+            >
                 Save Template
             </button>
-        </div>
-    );
-};
 
-export default EmailEditor;
+
+        </div>
+    )
+}
+
+export default EmailCreator
