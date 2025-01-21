@@ -6,3 +6,19 @@ body {
     box-sizing: border-box;
     font-family: 'Inter', sans-serif;
 }
+
+.quill-editor-container {
+    background-color: white; /* Set the background color */
+    height: 300px; /* Ensure the full container height is used */
+    display: flex;
+    flex-direction: column;
+}
+
+.quill-editor-container .ql-toolbar {
+    background-color: white; /* Optional: Match toolbar color */
+}
+
+.quill-editor-container .ql-container {
+    flex: 1; /* Ensure the editor takes remaining space */
+    background-color: white; /* Ensure the editor matches */
+}

@@ -3,20 +3,10 @@ import "react-quill/dist/quill.snow.css";
 import ReactQuill, { Quill } from "react-quill";
 import DOMPurify from "dompurify";
 import { RiArrowDownSFill } from "react-icons/ri";
-import LoadingOverlay from "../../utils/LoadingOverlay";
-import { useAuth } from "../../utils/AuthProvider";
 
 const CourseCreator = () => {
-
-    const apiUrl = import.meta.env.VITE_API_URL;
-
-    const { getToken } = useAuth();
-    const token = getToken();
-
     const [categoryOptions, setCategoryOptions] = useState([]);
     const quillRef = useRef(null); // Ref for ReactQuill
-
-    const [loading, setLoading] = useState(true);
 
     const [course, setCourse] = useState({
         name: "",
@@ -25,23 +15,6 @@ const CourseCreator = () => {
         isDraft: true,
         videos: [],
     })
-
-
-    const fetchCategory = async () => {
-        try {
-            const response = await fetch(`${apiUrl}/course/getCategories`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            }); // Backend endpoint
-            const data = await response.json();
-            setCategoryOptions(data);
-        } catch (error) {
-            console.error("Error fetching options:", error);
-        }
-    };
 
     // Add a new lecture to the course
     const addLecture = () => {
@@ -54,7 +27,11 @@ const CourseCreator = () => {
                     url: "",
                     duration: 0,
                     description: "",
+                    resources: [],
                     assignEmail: "",
+                    showVideoUpload: false,
+                    showDescription: false,
+                    showResources: false,
                     showDetails: false,
                 },
             ],
@@ -105,15 +82,8 @@ const CourseCreator = () => {
         updateLecture(index, "description", value)
     }
 
-    useEffect(() => {
-        setLoading(true); // Start loading
-        fetchCategory();
-        setLoading(false); // Stop loading
-    }, [])
-
     return (
         <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-            {loading && <LoadingOverlay loading={loading} />}
             <div>
                 <h1 className="pt-3 pl-5 text-2xl font-medium">Add Course</h1>
                 <div>
@@ -170,10 +140,10 @@ const CourseCreator = () => {
                     <div>
                         <h2 className="block text-lg font-medium mb-2 mt-5">Lecture Structure</h2>
                         {course.videos.map((video, index) => (
-                            <div className="mb-5">
+                            <div>
                                 <div className="flex flex-row gap-5 border-2 rounded bg-white p-2">
                                     <div className=" justify-center items-center w-full mx-2 flex gap-2">
-                                        <label className="text-lg font-medium w-[150px]" htmlFor="lectureName">Lecture {index + 1} Title:</label>
+                                        <label className="w-[105px]" htmlFor="lectureName">Lecture Title:</label>
                                         <input
                                             onChange={(e) =>
                                                 updateLecture(index, "title", e.target.value)
@@ -181,65 +151,91 @@ const CourseCreator = () => {
                                             className=" w-full border-2 rounded" type="text" name="lectureName" />
                                     </div>
                                     <button
+                                        onClick={() =>
+                                            updateLecture(index, "showVideoUpload", !video.showVideoUpload)
+                                        }
+                                        className="bg-gray-200 border-2 border-gray-300 rounded w-[200px]">+ Content</button>
+                                    <button
                                         className="flex items-center justify-center p-2"
-                                        onClick={() => updateLecture(index, "showDetails", !video.showDetails)}
+                                        onClick={() =>
+                                            updateLecture(index, "showDetails", !video.showDetails)
+                                        }
                                     ><RiArrowDownSFill /></button>
                                 </div>
 
+                                {/* Video Upload Section */}
+                                {video.showVideoUpload && (
+                                    <div className="bg-white border-x-2 border-b-2 p-2 rounded flex-row">
+                                        <div className="flex flex-col gap-2">
+                                            <label htmlFor="videoFile" className="block text-sm font-medium">
+                                                Upload Video:
+                                            </label>
+                                            <input
+                                                type="file"
+                                                id="videoFile"
+                                                className="p-2 border border-gray-300 rounded"
+                                                onChange={(e) =>
+                                                    updateLecture(
+                                                        index,
+                                                        "url",
+                                                        URL.createObjectURL(e.target.files[0])
+                                                    )
+                                                }
+
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Details Section */}
                                 {video.showDetails && (
                                     <div className="bg-white border-x-2 border-b-2 p-2 rounded flex-row">
-                                        {/* Video Upload Section */}
-                                        <div className="mb-5">
-                                            <div className="flex flex-col gap-2">
-                                                <label htmlFor="videoFile" className="block text-lg font-medium mb-2">
-                                                    Upload Video:
-                                                </label>
-                                                <input
-                                                    type="file"
-                                                    id="videoFile"
-                                                    className="p-2 border border-gray-300 rounded"
-                                                    onChange={(e) =>
-                                                        updateLecture(
-                                                            index,
-                                                            "url",
-                                                            URL.createObjectURL(e.target.files[0])
-                                                        )
-                                                    }
+                                        <div>
+                                            {/* Description Button */}
+                                            <button className="bg-gray-200 border-2 border-gray-300 rounded w-[200px] mb-2"
+                                                onClick={() =>
+                                                    updateLecture(
+                                                        index,
+                                                        "showDescription",
+                                                        !video.showDescription
+                                                    )
+                                                }
+                                            >+ Description
+                                            </button>
+                                            {video.showDescription && (
 
+                                                <ReactQuill
+                                                    className="mb-5"
+                                                    ref={quillRef}
+                                                    value={video.description}
+                                                    onChange={(value) => handleVidDescInput(index, value)}
                                                 />
-                                            </div>
+
+                                            )}
                                         </div>
                                         <div>
-                                            {/* Description */}
-                                            <label htmlFor="description" className="block text-lg font-medium mb-2">Lecture Description</label>
-                                            <ReactQuill
-                                                className="mb-5 quill-editor-container"
-                                                ref={quillRef}
-                                                value={video.description}
-                                                onChange={(value) => handleVidDescInput(index, value)}
-                                            />
+                                            {/* Resources Button */}
+                                            <button
+                                                className="bg-gray-200 border-2 border-gray-300 rounded w-[200px]"
+                                                onClick={() =>
+                                                    updateLecture(index, "showResources", !video.showResources)
+                                                }
+                                            > + Email Exercise</button>
+                                            {video.showResources && (
+                                                <div className="">
+                                                    <input
+                                                        type="text"
+                                                        className=""
+                                                        placeholder="Resource Title"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        className=""
+                                                        placeholder="Resource URL"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                        <div>
-                                            {/* interactive Email */}
-                                            <div className="flex flex-col">
-                                                <label htmlFor="emailGroup" className="block text-lg font-medium mb-2">Select Email Group for Email based Interactive Lectures</label>
-                                                <select
-                                                    name="emailGroup"
-                                                    id="emailGroup"
-                                                    className="bg-white w-full p-2 border border-gray-300 rounded mb-4"
-                                                    onChange={(e) => updateLecture(index, "assignEmail", e.target.value)}
-                                                >
-                                                    <option value="null">--Select Email Group--</option>
-                                                </select>
-                                                <span className="text-gray-700">If you don't want to include or send training email after completion of video just leave field as it is.</span>
-                                                <span className="text-gray-700">When you select email groups emails will be randomly assigned (with in given group) to the user after user completes the video.</span>
-                                            </div>
-                                        </div>
-                                        <button className="my-2 text-red-700 bg-gray-200 border-2 border-gray-300 rounded w-[200px] mb-2"
-                                            onClick={() => deleteVideo(index)}
-                                        >Delete Lecture</button>
                                     </div>
                                 )}
                             </div>
