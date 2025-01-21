@@ -178,8 +178,10 @@ export const AuthProvider = ({ children }) => {
 
             if (toastStatus === "success") {
                 toast.success(message);
+                clearAuthState(false);
             } else {
                 toast.error(message);
+                clearAuthState(false);
             }
         } catch (error) {
             console.error("Logout failed:", error);

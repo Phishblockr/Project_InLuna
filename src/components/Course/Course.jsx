@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import debounce from "debounce";
 
-const course = () => {
+const Course = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
     const { getToken } = useAuth();
@@ -159,7 +159,7 @@ const course = () => {
     }
 
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
             <div>
 
                 <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
@@ -306,4 +306,4 @@ const course = () => {
     );
 }
 
-export default course;
+export default Course;

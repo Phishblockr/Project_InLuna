@@ -7,8 +7,6 @@ import Login from './components/auth/Login';
 import Logout from './components/auth/Logout';
 import Overview from './components/Overview';
 import NotFound from './components/NotFound';
-import Navbar from './components/Navigation/Navbar';
-import Sidebar from './components/Navigation/Sidebar';
 import Course from './components/Course/Course';
 import { Toaster } from 'sonner';
 import { useSelector } from 'react-redux';
@@ -17,25 +15,7 @@ import EmailCreator from './components/Email/EmailCreator';
 import EditEditor from './components/Email/EmailEditor';
 import CourseCreator from './components/Course/courseCreator';
 import CourseEditor from './components/Course/CourseEditor';
-
-const MainLayout = ({ children }) => {
-  const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
-  const isLogoutPage = location.pathname === '/logout';
-  const isForgotDetailsPage = location.pathname === '/forgotDetails';
-  const isResetPasswordPage = location.pathname.startsWith('/resetPassword');
-
-  const showSidebarAndNavbar =
-    !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage;
-
-  return (
-    <>
-      {showSidebarAndNavbar && <Sidebar />}
-      {showSidebarAndNavbar && <Navbar />}
-      {children}
-    </>
-  );
-};
+import Layout from "./layout/Layout"
 
 function App() {
   const theme = useSelector((state) => state.theme);
@@ -51,14 +31,14 @@ function App() {
                   <Route
                     path="*"
                     element={
-                      <MainLayout>
-                        <Routes>
-                          <Route path="/login" element={<Login />} />
-                          <Route path="/logout" element={<Logout />} />
-                          <Route path="/forgotDetails" element={<ForgotDetails />} />
-                          <Route path="/resetPassword/:token" element={<PasswordReset />} />
+                      <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/logout" element={<Logout />} />
+                        <Route path="/forgotDetails" element={<ForgotDetails />} />
+                        <Route path="/resetPassword/:token" element={<PasswordReset />} />
 
-                          {/* Protected Routes */}
+                        {/* Protected Routes */}
+                        <Route element={<Layout />}>
                           <Route element={<ProtectedRoute />}>
                             <Route path="/" element={<Overview />} />
                             <Route path="/courses" element={<Course />} />
@@ -68,11 +48,10 @@ function App() {
                             <Route path="/emails" element={<Email />} />
                             <Route path="/emails/emailCreator" element={<EmailCreator />} />
                             <Route path="/emails/emailEditor/:id" element={<EditEditor />} />
-
                           </Route>
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </MainLayout>
+                        </Route>
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
                     }
                   />
                 </Routes>

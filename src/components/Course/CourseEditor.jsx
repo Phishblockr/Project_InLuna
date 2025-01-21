@@ -19,6 +19,7 @@ const CourseEditor = () => {
 
     const [course, setCourse] = useState(null);
     const [categoryOptions, setCategoryOptions] = useState([]);
+    const [emailGroups, setEmailGroups] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchCourses = async () => {
@@ -62,6 +63,25 @@ const CourseEditor = () => {
             setCategoryOptions(data);
         } catch (error) {
             console.error("Error fetching options:", error);
+        }
+    };
+
+    const fetchEmailGropus = async () => {
+        setLoading(true); // Start loading
+        try {
+            const response = await fetch(`${apiUrl}/emailTemplate/getGroups`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }); // Backend endpoint
+            const data = await response.json();
+            setEmailGroups(data);
+        } catch (error) {
+            console.error("Error fetching options:", error);
+        } finally {
+            setLoading(false); // Stop loading
         }
     };
 
@@ -131,6 +151,7 @@ const CourseEditor = () => {
         setLoading(true); // Start loading
         fetchCourses()
         fetchCategory();
+        fetchEmailGropus();
         setLoading(false); // Stop loading
     }, [])
 
@@ -140,7 +161,7 @@ const CourseEditor = () => {
 
     console.log(course.name)
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
             {loading && <LoadingOverlay loading={loading} />}
             <div>
                 <h1 className="pt-3 pl-5 text-2xl font-medium">Add Course</h1>
@@ -261,6 +282,11 @@ const CourseEditor = () => {
                                                     onChange={(e) => updateLecture(index, "assignEmail", e.target.value)}
                                                 >
                                                     <option value="null">--Select Email Group--</option>
+                                                    {emailGroups.map((emailGroup, index) => (
+                                                        <option key={index} value={emailGroup}>
+                                                            {emailGroup}
+                                                        </option>
+                                                    ))}
                                                 </select>
                                                 <span className="text-gray-700">If you don't want to include or send training email after completion of video just leave field as it is.</span>
                                                 <span className="text-gray-700">When you select email groups emails will be randomly assigned (with in given group) to the user after user completes the video.</span>

@@ -158,7 +158,7 @@ const EmailCreator = () => {
     }, [])
 
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100vh-65px)] flex flex-col justify-between relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
              {loading && <LoadingOverlay loading={loading} />}
             <h1 className="pt-3 pl-5 text-2xl font-medium">Email Template Editor</h1>
 
