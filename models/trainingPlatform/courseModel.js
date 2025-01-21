@@ -18,18 +18,8 @@ const VideoSchema = new mongoose.Schema({
         type: String,
         default: "No description provided"
     },
-    resources: [{
-        url: {
-            type: String,
-            required: false,
-        },
-        text: {
-            type: String,
-            required: false,
-        }
-    }],
     assignEmail: {
-        type: Boolean,
+        type: String,
         required: true,
     }
 })
@@ -48,6 +38,10 @@ const courseSchema = new mongoose.Schema({
     description: {
         type: String,
         default: "No description provided"
+    },
+    isDraft: {
+        type: Boolean,
+        default: true
     },
     reviews: [
         {
