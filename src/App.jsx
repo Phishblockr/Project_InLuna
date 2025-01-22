@@ -39,25 +39,8 @@ import Campaign from "./components/Campaign/Campaign.jsx";
 import SetupPassword from "./components/Users/SetupPassword.jsx";
 import CreateTemplate from "./components/Campaign/CreateTemplate.jsx";
 import CreateBlog from "./components/Campaign/CreateBlog.jsx";
+import Layout from "./layout/Layout.jsx";
 
-const MainLayout = ({ children }) => {
-  const location = useLocation();
-  const isLoginPage = location.pathname === "/login";
-  const isLogoutPage = location.pathname === "/logout";
-  const isForgotDetailsPage = location.pathname === "/forgotDetails"
-  const isResetPasswordPage = location.pathname.startsWith("/resetPassword");
-  const isSetupPasswordPage = location.pathname.startsWith("/setupPassword")
-
-  const showSidebarAndNavbar = !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage && !isSetupPasswordPage;
-
-  return (
-    <>
-      {showSidebarAndNavbar && <Sidebar />}
-      {showSidebarAndNavbar && <Navbar />}
-      {children}
-    </>
-  );
-};
 function App() {
   const theme = useSelector((state) => state.theme);
 
@@ -66,19 +49,19 @@ function App() {
       <Toaster richColors />
       <div className={`${theme}`}>
         <div className="w-full h-full min-h-[100svh] bg-[#F7F4F4] dark:bg-[#001733] flex justify-center">
-          <div className="w-full h-full max-w-screen-2xl">
+          <div className="w-full h-full">
             <Router>
               <AuthProvider>
-                <MainLayout>
-                  <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/logout" element={<Logout />} />
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/logout" element={<Logout />} />
 
-                    <Route path="/forgotDetails" element={<ForgotDetails />} />
-                    <Route path="/resetPassword/:token" element={<PasswordReset />} />
+                  <Route path="/forgotDetails" element={<ForgotDetails />} />
+                  <Route path="/resetPassword/:token" element={<PasswordReset />} />
 
-                    <Route path="/setupPassword/:token" element={<SetupPassword/>} />
+                  <Route path="/setupPassword/:token" element={<SetupPassword />} />
 
+                  <Route element={<Layout />}>
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<Overview />} />
@@ -114,9 +97,9 @@ function App() {
                       <Route path="/report" element={<ReportBug />} />
                       <Route path="/faq" element={<Faqs />} />
                     </Route>
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </MainLayout>
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
               </AuthProvider>
             </Router>
           </div>

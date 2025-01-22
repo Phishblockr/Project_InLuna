@@ -15,7 +15,7 @@ const Settings = () => {
 
 
     return (
-        <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] h-[90svh] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
+        <div className="z-1 h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
             <div className="z-1 relative w-full font-medium bg-white rounded-xl shadow-xl p-3 h-full dark:bg-[#002451]">
                 <div>
                     <h1 className="mb-10 pt-3 pl-5 text-2xl font-medium dark:text-[#F4F4F4]">
