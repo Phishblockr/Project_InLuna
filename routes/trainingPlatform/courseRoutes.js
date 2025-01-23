@@ -1,7 +1,7 @@
 import express from "express";
 import superDashboardMiddleware from "../../middlewares/superDashboardMiddleware.js"
 import authenticateToken from "../../middlewares/authenticateToken.js";
-import { deleteCourse, demoValue, getAllCourses, getCourseById, getCourseCategories } from "../../controllers/trainingPlatform/courseController.js";
+import { deleteCourse, demoValue, getAllCourses, getCourseById, getCourseCategories, getCourseDetails } from "../../controllers/trainingPlatform/courseController.js";
 
 const router = express.Router();
 
@@ -17,6 +17,9 @@ router.delete("/delete/:id", superDashboardMiddleware, deleteCourse);
 
 // Get category for dynamic select
 router.get("/getCategories", authenticateToken, getCourseCategories);
+
+// Get course id and name for assigning process
+router.get("/options", authenticateToken, getCourseDetails)
 
 
 export default router;

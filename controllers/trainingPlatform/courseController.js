@@ -163,3 +163,20 @@ export const getCourseCategories = asyncHandler(async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 })
+
+// fetch title and id of the course of assigning
+export const getCourseDetails = asyncHandler(async (req, res) => {
+    try {
+        const courses = await Course.find({}, "_id name")
+
+        // Format the response for react-select
+        const options = courses.map(course => ({
+            value: course._id,
+            label: course.name,
+        }));
+        res.status(200).json({ options });
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+})
