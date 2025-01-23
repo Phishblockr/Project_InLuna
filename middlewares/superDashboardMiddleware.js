@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dashboardAdminMiddleware = (req, res, next) => {
+const superDashboardMiddleware = (req, res, next) => {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
 
@@ -18,10 +18,10 @@ const dashboardAdminMiddleware = (req, res, next) => {
         if (req.user.userType == process.env.SUPERADM) {
             next();
         } else {
-            return res.status(403).json({ error: "Access denied. Admins only." });
+            return res.status(403).json({ error: "Access denied. SuperAdmins only." });
         }
     } catch (error) {
         res.status(400).json({ error: "Invalid token." });
     }
 }
-export default dashboardAdminMiddleware;
+export default superDashboardMiddleware;
