@@ -1,10 +1,8 @@
 import React from "react";
-import ReactDOM from "react-dom/client";
 import {
   BrowserRouter as Router,
   Route,
   Routes,
-  useLocation,
 } from "react-router-dom";
 import ProtectedRoute from "./utils/ProtectedRoute.jsx";
 import { AuthProvider } from "./utils/AuthProvider.jsx";
@@ -13,8 +11,6 @@ import UrlLists from "./components/Urls/UrlLists.jsx";
 import Requests from "./components/Requests.jsx";
 import Feedbacks from "./components/Services/Feedbacks.jsx";
 import Logs from "./components/Logs.jsx";
-import Sidebar from "./components/Navigation/Sidebar.jsx";
-import Navbar from "./components/Navigation/Navbar.jsx";
 import AddUser from "./components/Users/AddUser.jsx";
 import AddUrl from "./components/Urls/AddUrl.jsx";
 import UrlDetails from "./components/Urls/UrlDetails.jsx";
@@ -37,9 +33,11 @@ import ForgotDetails from "./components/ForgotDetails/ForgotDetails.jsx";
 import AddCampaign from "./components/Campaign/AddCampaign.jsx";
 import Campaign from "./components/Campaign/Campaign.jsx";
 import SetupPassword from "./components/Users/SetupPassword.jsx";
-import CreateTemplate from "./components/Campaign/CreateTemplate.jsx";
-import CreateBlog from "./components/Campaign/CreateBlog.jsx";
+// import CreateTemplate from "./components/Campaign/CreateTemplate.jsx";
+// import CreateBlog from "./components/Campaign/CreateBlog.jsx";
 import Layout from "./layout/Layout.jsx";
+import Training from "./components/Training/Training.jsx";
+import IndividualTraining from "./components/Training/IndividualTraining.jsx";
 
 function App() {
   const theme = useSelector((state) => state.theme);
@@ -87,8 +85,8 @@ function App() {
                       />
                       <Route path="/campaign" element={<Campaign />} />
                       <Route path="/campaign/add" element={<AddCampaign />} />
-                      <Route path="/campaign/manageTemplate" element={<CreateTemplate />} />
-                      <Route path="/campaign/manageBlog" element={<CreateBlog />} />
+                      {/* <Route path="/campaign/manageTemplate" element={<CreateTemplate />} /> */}
+                      {/* <Route path="/campaign/manageBlog" element={<CreateBlog />} /> */}
                       <Route path="/requests" element={<Requests />} />
                       <Route path="/feedback" element={<Feedbacks />} />
                       <Route path="/logs" element={<Logs />} />
@@ -96,6 +94,10 @@ function App() {
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/report" element={<ReportBug />} />
                       <Route path="/faq" element={<Faqs />} />
+
+                      {/* Training Routes */}
+                      <Route path="/training" element={<Training />} />
+                      <Route path="/training/individualTraining/:id" element={<IndividualTraining />} />
                     </Route>
                   </Route>
                   <Route path="*" element={<NotFound />} />

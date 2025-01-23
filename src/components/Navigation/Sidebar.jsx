@@ -7,6 +7,7 @@ import {
     RiFeedbackLine,
     RiGitRepositoryLine,
     RiBookLine,
+    RiPresentationFill,
 } from "react-icons/ri";
 import { CgInsights } from "react-icons/cg";
 import { NavLink } from "react-router-dom";
@@ -52,12 +53,19 @@ const links = [
         title: "Logs",
         url: "/logs",
     },
+    // {
+    //     id: 7,
+    //     icon: <RiBookLine className={iconStyle} />,
+    //     title: "Campaign",
+    //     url: "/campaign",
+    // },
     {
-        id: 7,
-        icon: <RiBookLine className={iconStyle} />,
-        title: "Campaign",
-        url: "/campaign",
-    },
+        id: 8,
+        icon: <RiPresentationFill className={iconStyle}/>,
+        title: "Training",
+        url: "/training",
+
+    }
 ];
 
 const Sidebar = () => {

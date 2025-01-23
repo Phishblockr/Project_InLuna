@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { RiLoopLeftLine, RiDeleteBinLine } from "react-icons/ri";
+import { RiLoopLeftLine, RiDeleteBinLine, RiPresentationFill } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { delUser, getUser, startListeningToSocket, updateUserStatus } from "../../features/Users/usersSlice";
@@ -15,10 +15,10 @@ import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { useAuth } from "../../utils/AuthProvider";
 
 
-const statusActive =
-    "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
-const statusInactive =
-    "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
+// const statusActive =
+//     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
+// const statusInactive =
+//     "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
 const UserDetails = () => {
     const apiUrl = import.meta.env.VITE_API_URL
@@ -46,10 +46,10 @@ const UserDetails = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedSeries, setSelectedSeries] = useState('all');
     const [barGraphData, setBarGraphData] = useState({ labels: [], totalVisits: [], blacklistedVisits: [], phishingVisits: [] });
-    const [currentWeek, setCurrentWeek] = useState({
-        start: startOfWeek(new Date(), { weekStartsOn: 1 }),
-        end: endOfWeek(new Date(), { weekStartsOn: 1 }),
-    });
+    // const [currentWeek, setCurrentWeek] = useState({
+    //     start: startOfWeek(new Date(), { weekStartsOn: 1 }),
+    //     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+    // });
     const [heartbeatStatus, setHeartbeatStatus] = useState({ "status": "not initialized" });
     const [isVisible, setIsVisible] = useState(false);
 
@@ -443,6 +443,12 @@ const UserDetails = () => {
                             <span className="flex flex-row items-center gap-x-2  justify-center">
                                 <RiDeleteBinLine className="w-6 h-6" /> Remove User
                             </span>
+                        </button>
+                        <button
+                        className="flex flex-row items-center gap-x-2  justify-center bg-gray-200 hover:bg-gray-300 text-black p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
+                        onClick={() => navigate(`/training/individualTraining/${user._id}`)}
+                        >
+                        <RiPresentationFill className="w-6 h-6" /> Assign Training
                         </button>
                     </div>
                 </div>
