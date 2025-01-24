@@ -150,9 +150,30 @@ export default function Requests() {
         }
     };
 
-    const truncateUrl = (url, maxLength = 120) => {
-        return url.length > maxLength ? `${url.substring(0, maxLength)}...` : url;
+    const truncateUrl = (url, offset = 0) => {
+        // Calculate the base truncation length based on screen width
+        const screenWidth = window.innerWidth;
+        console.log(screenWidth)
+        let baseLength;
+        if (screenWidth > 1900){
+            baseLength = 150;
+        }else if (screenWidth > 1500) {
+            baseLength = 120;
+        }else if (screenWidth > 1200) {
+            baseLength = 100;
+        } else if (screenWidth > 768) {
+            baseLength = 80;
+        } else {
+            baseLength = 50;
+        }
+    
+        // Apply offset for further customization
+        const truncateLength = Math.max(baseLength + offset, 10); // Ensure minimum length of 10
+    
+        // Perform truncation
+        return url.length > truncateLength ? `${url.substring(0, truncateLength)}...` : url;
     };
+    
 
     function getVisiblePages(totalPages, currentPage) {
         const maxVisibleAround = 6;
