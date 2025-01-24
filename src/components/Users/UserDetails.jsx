@@ -26,7 +26,8 @@ const UserDetails = () => {
     const token = getToken();
     const { id } = useParams();
 
-    const targetSectionRef = useRef(null);
+    const heartbeatSectionRef = useRef(null);
+    const courseSectionRef = useRef(null);
 
     const [activityCounts, setActivityCounts] = useState({
         "phishingClicks": 0,
@@ -51,7 +52,10 @@ const UserDetails = () => {
     //     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
     // });
     const [heartbeatStatus, setHeartbeatStatus] = useState({ "status": "not initialized" });
-    const [isVisible, setIsVisible] = useState(false);
+    const [isHeartbeatSectionVisible, setIsHeartbeatSectionVisible] = useState(false);
+    const [isCourseSectionVisible, setIsCourseSectionVisible] = useState(false)
+
+    const [courseData, setCourseData] = useState([])
 
     const theme = useSelector((state) => state.theme);
 
@@ -86,19 +90,25 @@ const UserDetails = () => {
 
 
     useEffect(() => {
-        dispatch(getUser({id, token}))
+        dispatch(getUser({ id, token }))
         fetchActivityCounts(id, selectedDate);
         fetchHeartBeatStatus(id);
+        getAssignedCourses(id)
         dispatch(startListeningToSocket());
     }, [id, selectedDate])
 
     useEffect(() => {
         setTimeout(() => {
-            if (isVisible && targetSectionRef.current) {
-                targetSectionRef.current.scrollIntoView({ behavior: "smooth" });
+            if (isHeartbeatSectionVisible && heartbeatSectionRef.current) {
+                heartbeatSectionRef.current.scrollIntoView({ behavior: "smooth" });
             }
         }, 200);
-    }, [isVisible]);
+        setTimeout(() => {
+            if (isCourseSectionVisible && courseSectionRef.current){
+                courseSectionRef.current.scrollIntoView({behavior: "smooth"})
+            }
+        }, 200);
+    }, [isHeartbeatSectionVisible, isCourseSectionVisible]);
 
 
     const navigate = useNavigate();
@@ -106,7 +116,7 @@ const UserDetails = () => {
 
     const handleRemUser = async (id, name) => {
         try {
-            await dispatch(delUser({id, token})).unwrap();
+            await dispatch(delUser({ id, token })).unwrap();
             navigate("/users");
             toast.success(`User deleted!`);
         } catch (e) {
@@ -204,9 +214,64 @@ const UserDetails = () => {
         }
     };
 
-    const scrollToSection = () => {
-        setIsVisible(!isVisible)
+    const getAssignedCourses = async (id) => {
+        try {
+            const response = await fetch(`${apiUrl}/userCourse/getAssigned/${id}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
+    
+            const data = await response.json();
+    
+            if (response.ok) {
+                setCourseData(data)
+                return data; // Use this to display the assigned courses in your UI
+            } else {
+                console.error('Error fetching assigned courses:', data.message);
+                toast.error(data.message || 'Error fetching assigned courses');
+            }
+        } catch (error) {
+            console.error('Error:', error.message);
+            toast.error('Failed to fetch assigned courses. Please try again.');
+        }
     };
+
+    const removeCourseAssignment = async (userId, courseId) => {
+        try {
+            const response = await fetch(`${apiUrl}/userCourse/deleteAssignment`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId, courseId }),
+            });
+    
+            const data = await response.json();
+    
+            if (response.ok) {
+                toast.success('Course assignment removed successfully');
+            } else {
+                console.error('Error removing course assignment:', data.message);
+                toast.error(data.message || 'Error removing course assignment');
+            }
+        } catch (error) {
+            console.error('Error:', error.message);
+            toast.error('Failed to remove course assignment. Please try again.');
+        }
+    };
+
+    const scrollToHeartbeatSection = () => {
+        setIsHeartbeatSectionVisible(!isHeartbeatSectionVisible);
+    };
+
+    const scrollToCourseSection = () => {
+        setIsCourseSectionVisible(!isCourseSectionVisible);
+    }
 
     if (!user) {
         return <div>User not found</div>;
@@ -292,6 +357,8 @@ const UserDetails = () => {
                 handleRemUser(selectedUser._id);
             } else if (operationType === "updateStatus") {
                 handleUpdateStatus(selectedUser._id, selectedUser.name)
+            } else if (operationType === "unassignCourse"){
+                removeCourseAssignment(selectedUser[0], selectedUser[1])
             }
             setIsPasswordModalOpen(false);
         }
@@ -410,10 +477,10 @@ const UserDetails = () => {
                                 </span>
                                 <span
                                     className={`px-2 py-1 rounded-full text-sm font-medium capitalize ${user.status === "active"
-                                            ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
-                                            : user.status === "not initialized"
-                                                ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
-                                                : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
+                                        ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
+                                        : user.status === "not initialized"
+                                            ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                                            : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                                         }`}
                                 >
                                     {user.status}
@@ -424,7 +491,7 @@ const UserDetails = () => {
                     <div className="flex flex-col gap-5">
                         <button className={`${heartbeatStatus.status === "active" ? "text-red-600" : "text-gray-600"} p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors flex items-center justify-center gap-2`}
                             title={`Extension status: ${heartbeatStatus.status}\nClick to view History`}
-                            onClick={scrollToSection}
+                            onClick={scrollToHeartbeatSection}
                         >
                             <div className={`h-5 w-5 rounded-full ${heartbeatStatus.status === "active" ? "bg-red-600 animation-pulse" : "bg-gray-600"}`}></div>
                         </button>
@@ -445,10 +512,10 @@ const UserDetails = () => {
                             </span>
                         </button>
                         <button
-                        className="flex flex-row items-center gap-x-2  justify-center bg-gray-200 hover:bg-gray-300 text-black p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
-                        onClick={() => navigate(`/training/individualTraining/${user._id}`)}
+                            className="flex flex-row items-center gap-x-2  justify-center bg-gray-200 hover:bg-gray-300 text-black p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
+                            onClick={scrollToCourseSection}
                         >
-                        <RiPresentationFill className="w-6 h-6" /> Assign Training
+                            <RiPresentationFill className="w-6 h-6" /> View Training
                         </button>
                     </div>
                 </div>
@@ -518,9 +585,9 @@ const UserDetails = () => {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className={`rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5 overflow-hidden transition-all duration-500 ease-in-out ${isVisible ? " mt-5 max-h-screen opacity-100" : "max-h-0 opacity-0"
+                <div className={`rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5 overflow-hidden transition-all duration-500 ease-in-out ${isHeartbeatSectionVisible ? " mt-5 max-h-screen opacity-100" : "max-h-0 opacity-0"
                     }`}
-                    ref={targetSectionRef}
+                    ref={heartbeatSectionRef}
                 >
                     <div className="flex flex-row gap-2 items-center  mb-5">
                         <h2 className="text-lg font-semibold">Downtime History</h2>
@@ -565,6 +632,53 @@ const UserDetails = () => {
                         </table>
                     ) : (
                         <p className="text-center text-gray-500 dark:text-gray-300">No downtime history available.</p>
+                    )}
+                </div>
+
+                <div className={`rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5 overflow-hidden transition-all duration-500 ease-in-out ${isCourseSectionVisible ? " mt-5 max-h-screen opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                    ref={courseSectionRef}
+                >
+                    <div className="flex flex-row gap-2 items-center  mb-5">
+                        <h2 className="text-lg font-semibold">Courses assigned to the user</h2>
+                        <button 
+                        className="p-2 bg-gray-200 rounded-lg"
+                        onClick={() => navigate(`/training/individualTraining/${user._id}`)}
+                        >Assign New Course</button>
+                    </div>
+                    {dataLoading ? ( // Display loading message while data is being fetched
+                        <p className="text-center text-gray-500 dark:text-gray-300">Fetching data...</p>
+                    ) : courseData ? ( // Render table if downtime data exists
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b">
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Course name</th>
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Assigned By</th>
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Completion</th>
+                                    <th className="p-3 font-medium text-gray-700 dark:text-gray-300">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {courseData.map((data, index) => (
+                                    <tr key={index} className="border-b hover:bg-gray-100 dark:hover:bg-[#182A46]">
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">
+                                            {data.courseId.name}
+                                        </td>
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">
+                                            {data.assignedBy.name}
+                                        </td>
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">{data.progress} %</td>
+                                        <td className="p-3 text-gray-600 dark:text-gray-400"><button
+                                        className="p-2 bg-gray-200 rounded-lg"
+                                        // onClick={() => removeCourseAssignment(data.userId, data.courseId)}
+                                        onClick={() => handlePasswordModalOpen([data.userId, data.courseId._id], "unassignCourse")}
+                                        >Unassign</button></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p className="text-center text-gray-500 dark:text-gray-300">No courses assigned to the user.</p>
                     )}
                 </div>
             </div>
