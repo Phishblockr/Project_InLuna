@@ -38,6 +38,10 @@ const userCourseSchema = new mongoose.Schema({
             default: 0,
         },
     },],
+    progress: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const UserCourse = mongoose.model("UserCourse", userCourseSchema);

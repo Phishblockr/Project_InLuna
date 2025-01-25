@@ -47,7 +47,8 @@ export const assignCourse = asyncHandler(async (req, res) => {
 })
 
 export const getCoursesForUser = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
+    const { id } = req.params;
+    let userId = id
     try {
         const assignments = await UserCourse.find({ userId })
             .populate("courseId", "name category description")
@@ -63,6 +64,50 @@ export const getCoursesForUser = asyncHandler(async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
+
+export const updateCourseProgress = async (req, res) => {
+    const { userId, courseId, videoId, watchedDuration } = req.body;
+
+    try {
+        // Find the user's course assignment
+        const assignment = await UserCourse.findOne({ userId, courseId }).populate('courseId');
+        if (!assignment) {
+            return res.status(404).json({ message: "Course assignment not found" });
+        }
+
+        // Find the course details to get the total videos
+        const totalVideos = assignment.courseId.videos.length;
+
+        // Check if progress for the video exists
+        const videoProgress = assignment.watchStatus.find(
+            (status) => status.videoId.toString() === videoId
+        );
+
+        if (videoProgress) {
+            // Update existing progress
+            videoProgress.watchedDuration = watchedDuration;
+        } else {
+            // Add new progress entry
+            assignment.watchStatus.push({ videoId, watchedDuration });
+        }
+
+        // Calculate the number of videos marked as watched
+        const videosWatched = assignment.watchStatus.length;
+
+        // Update progress percentage
+        assignment.progress = Math.round((videosWatched / totalVideos) * 100);
+
+        await assignment.save();
+
+        res.status(200).json({
+            message: "Progress updated successfully",
+            assignment,
+        });
+    } catch (error) {
+        console.error("Error updating progress:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 export const removeCourseAssignment = asyncHandler(async (req, res) => {
     const { userId, courseId } = req.body;
