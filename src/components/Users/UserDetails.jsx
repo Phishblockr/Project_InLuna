@@ -13,12 +13,8 @@ import { handleVerifyPwd } from "../../utils/handleVerifyPwd";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { useAuth } from "../../utils/AuthProvider";
+import { fetchAssignedCourses, removeCourse } from "../../features/UserCourse/userCourseSlice";
 
-
-// const statusActive =
-//     "py-1 px-3 bg-green-200 text-green-900 border-2 border-green-900 rounded-lg dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400 dark:border-green-400";
-// const statusInactive =
-//     "py-1 px-3 bg-red-200 text-red-600 border-2 border-red-600 rounded-lg dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400 dark:border-red-400";
 
 const UserDetails = () => {
     const apiUrl = import.meta.env.VITE_API_URL
@@ -55,7 +51,8 @@ const UserDetails = () => {
     const [isHeartbeatSectionVisible, setIsHeartbeatSectionVisible] = useState(false);
     const [isCourseSectionVisible, setIsCourseSectionVisible] = useState(false)
 
-    const [courseData, setCourseData] = useState([])
+    const { courses, courseLoading, courseError } = useSelector((state) => state.userCourses);
+    console.log(courses)
 
     const theme = useSelector((state) => state.theme);
 
@@ -90,12 +87,29 @@ const UserDetails = () => {
 
 
     useEffect(() => {
-        dispatch(getUser({ id, token }))
-        fetchActivityCounts(id, selectedDate);
-        fetchHeartBeatStatus(id);
-        getAssignedCourses(id)
-        dispatch(startListeningToSocket());
-    }, [id, selectedDate])
+        const fetchData = async () => {
+            setDataLoading(true);
+            let loadingTimer = setTimeout(() => {
+                setShowLoading(true); // Show loading overlay after delay
+            }, 500);
+    
+            try {
+                dispatch(startListeningToSocket());
+                await dispatch(getUser({ id, token })).unwrap();
+                await fetchActivityCounts(id, selectedDate);
+                await fetchHeartBeatStatus(id);
+                await dispatch(fetchAssignedCourses({ token, id })).unwrap();
+            } catch (error) {
+                console.error("Error during data fetching:", error);
+            } finally {
+                clearTimeout(loadingTimer);
+                setShowLoading(false);
+                setDataLoading(false);
+            }
+        };
+    
+        fetchData();
+    }, [dispatch, id, selectedDate, token]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -182,7 +196,6 @@ const UserDetails = () => {
     const fetchHeartBeatStatus = async (userId) => {
         const apiUrl = import.meta.env.VITE_API_URL;
         const token = getToken();
-        // const token = JSON.parse(localStorage.getItem("user")).token;
         try {
             setDataLoading(true);
             const loadingTimer = setTimeout(() => {
@@ -213,57 +226,9 @@ const UserDetails = () => {
             setDataLoading(false);
         }
     };
-
-    const getAssignedCourses = async (id) => {
-        try {
-            const response = await fetch(`${apiUrl}/userCourse/getAssigned/${id}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-            });
-    
-            const data = await response.json();
-    
-            if (response.ok) {
-                setCourseData(data)
-                return data; // Use this to display the assigned courses in your UI
-            } else {
-                console.error('Error fetching assigned courses:', data.message);
-                toast.error(data.message || 'Error fetching assigned courses');
-            }
-        } catch (error) {
-            console.error('Error:', error.message);
-            toast.error('Failed to fetch assigned courses. Please try again.');
-        }
-    };
-
-    const removeCourseAssignment = async (userId, courseId) => {
-        try {
-            const response = await fetch(`${apiUrl}/userCourse/deleteAssignment`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ userId, courseId }),
-            });
-    
-            const data = await response.json();
-    
-            if (response.ok) {
-                toast.success('Course assignment removed successfully');
-            } else {
-                console.error('Error removing course assignment:', data.message);
-                toast.error(data.message || 'Error removing course assignment');
-            }
-        } catch (error) {
-            console.error('Error:', error.message);
-            toast.error('Failed to remove course assignment. Please try again.');
-        }
-    };
+    const handleRemoveCourseBtn = async (token, userId, courseId) => {
+       dispatch(removeCourse({token, userId, courseId}))
+    }
 
     const scrollToHeartbeatSection = () => {
         setIsHeartbeatSectionVisible(!isHeartbeatSectionVisible);
@@ -358,7 +323,7 @@ const UserDetails = () => {
             } else if (operationType === "updateStatus") {
                 handleUpdateStatus(selectedUser._id, selectedUser.name)
             } else if (operationType === "unassignCourse"){
-                removeCourseAssignment(selectedUser[0], selectedUser[1])
+                handleRemoveCourseBtn(token, selectedUser[0], selectedUser[1])
             }
             setIsPasswordModalOpen(false);
         }
@@ -648,7 +613,7 @@ const UserDetails = () => {
                     </div>
                     {dataLoading ? ( // Display loading message while data is being fetched
                         <p className="text-center text-gray-500 dark:text-gray-300">Fetching data...</p>
-                    ) : courseData ? ( // Render table if downtime data exists
+                    ) : courses ? ( // Render table if downtime data exists
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b">
@@ -659,19 +624,19 @@ const UserDetails = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {courseData.map((data, index) => (
+                                {courses.map((course, index) => (
                                     <tr key={index} className="border-b hover:bg-gray-100 dark:hover:bg-[#182A46]">
                                         <td className="p-3 text-gray-600 dark:text-gray-400">
-                                            {data.courseId.name}
+                                            {course.courseId.name || "Unknown Course"}
                                         </td>
                                         <td className="p-3 text-gray-600 dark:text-gray-400">
-                                            {data.assignedBy.name}
+                                            {course.assignedBy.name || "Unknown"}
                                         </td>
-                                        <td className="p-3 text-gray-600 dark:text-gray-400">{data.progress} %</td>
+                                        <td className="p-3 text-gray-600 dark:text-gray-400">{course.progress || 0} %</td>
                                         <td className="p-3 text-gray-600 dark:text-gray-400"><button
                                         className="p-2 bg-gray-200 rounded-lg"
-                                        // onClick={() => removeCourseAssignment(data.userId, data.courseId)}
-                                        onClick={() => handlePasswordModalOpen([data.userId, data.courseId._id], "unassignCourse")}
+                                        // onClick={() => removeCourseAssignment(course.userId, course.courseId)}
+                                        onClick={() => handlePasswordModalOpen([course.userId, course.courseId._id], "unassignCourse")}
                                         >Unassign</button></td>
                                     </tr>
                                 ))}

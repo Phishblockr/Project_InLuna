@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getUser } from '../../features/Users/usersSlice';
 import LoadingOverlay from '../../utils/LoadingOverlay';
 import Select from 'react-select'
+import { assignCourse, fetchCourseOptions } from '../../features/UserCourse/userCourseSlice';
 
 const IndividualTraining = () => {
     const { getToken } = useAuth();
@@ -14,77 +15,42 @@ const IndividualTraining = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { userDetails: user, loading, error } = useSelector(state => state.users);
+    const { courseOptions, optionsLoading, optionsError } = useSelector((state) => state.userCourses);
     const theme = useSelector((state) => state.theme);
-    const apiUrl = import.meta.env.VITE_API_URL
 
     const [dataLoading, setDataLoading] = useState(false);
     const [showLoading, setShowLoading] = useState(false);
 
-    const [courseOptions, setCourseOptions] = useState([]);
     const [selectedCourses, setSelectedCourses] = useState([]);
 
-
-    const fetchCourseOptions = async () => {
-        try {
-            const res = await fetch(`${apiUrl}/course/options`, {
-                method: "GET",
-                credentials: 'include',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                setCourseOptions(data.options); // Options are already formatted for react-select
-            } else {
-                console.error("Error fetching course options:", data.message);
-            }
-        } catch (error) {
-            console.error("Error fetching course options:", error.message);
-        }
-    };
-
-    const assignCourse = async (userId, courseId) => {
-        console.log(userId, courseId)
-        try {
-            const res = await fetch (`${apiUrl}/userCourse/assign`, {
-                method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ userId, courseId }),
-            });
-            const data = await res.json();
-
-            if (res.ok){
-                toast.success("Course assigned successfully")
-            } else {
-                console.log(data)
-                toast.error("Error assigning course: ",data.error)
-            }
-        } catch (error){
-            toast.error("Failed to assign course. Please try again, Error: ", error)
-        }
-    }
+    const [assignStatus, setAssignStatus] = useState(false);
 
     const assignCourseHandler = () => {
         const courseIds = selectedCourses.map(course => course.value);
-        courseIds.forEach(courseId => {
-            assignCourse(user._id, courseId)
-        })
+        for (const courseId of courseIds) {
+            let userId = user._id;
+            const result = dispatch(assignCourse({ token, userId, courseId }));
+
+            if (assignCourse.fulfilled.match(result)) {
+                toast.success(`Course ${courseId} assigned successfully`);
+                setAssignStatus(true)
+            } else if (assignCourse.rejected.match(result)) {
+                toast.error(`Error assigning course ${courseId}: ${result.payload}`);
+                setAssignStatus(false)
+                return;
+            }
+                navigate(`/users/userDetails/${user._id}`);
+
+        }
     }
 
     const handleMultiSelectChange = (selected) => {
         setSelectedCourses(selected);
     }
-    console.log(selectedCourses)
 
     useEffect(() => {
         dispatch(getUser({ id, token }));
-        fetchCourseOptions();
+        dispatch(fetchCourseOptions({ token }));
     }, [])
 
     if (!user) {
@@ -120,7 +86,7 @@ const IndividualTraining = () => {
                             disabled />
                     </div>
                     <button className="px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors"
-                    onClick={() => assignCourseHandler()}
+                        onClick={() => assignCourseHandler()}
                     >Assign</button>
                 </div>
             </div>
@@ -128,4 +94,4 @@ const IndividualTraining = () => {
     )
 }
 
-export default IndividualTraining
+export default IndividualTraining;

@@ -9,6 +9,7 @@ import themeSlice from './Theme/themeSlice';
 import userProfileSlice from './userProfile/userProfileSlice';
 import logsSlice from "./Logs/logsSlice";
 import campaignSlice from "./Campaign/Campaign";
+import userCourseReducer from "./UserCourse/userCourseSlice";
 
 const store = configureStore({
   reducer: {
@@ -21,6 +22,7 @@ const store = configureStore({
     theme: themeSlice,
     userProfile: userProfileSlice,
     logs: logsSlice,
+    userCourses: userCourseReducer,
     campaign: campaignSlice 
   },
 });
