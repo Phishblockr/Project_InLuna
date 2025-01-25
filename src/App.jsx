@@ -16,6 +16,7 @@ import Overview from "./components/Overview.jsx";
 import Logout from "./components/Auth/Logout.jsx";
 import EmailBox from "./components/EmailBox.jsx";
 import Training from "./components/Training.jsx";
+import CourseDetails from "./components/Course/CourseDetails.jsx";
 // import Login from "./components/Auth/Login.jsx";
 // import Users from "./components/Users/Users.jsx";
 // import UrlLists from "./components/Urls/UrlLists.jsx";
@@ -85,6 +86,7 @@ function App() {
                       <Route path="/" element={<Overview />} />
                       <Route path="/emailBox" element={<EmailBox />}/>
                       <Route  path="/training" element={<Training/>}/>
+                      <Route path="/courses/:courseName" element={<CourseDetails />} />
                       {/* <Route path="/users" element={<Users />} />
                       <Route path="/users/adduser" element={<AddUser />} />
                       <Route

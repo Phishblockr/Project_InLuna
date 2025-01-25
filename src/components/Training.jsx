@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { IoSearchOutline, IoEyeOutline } from "react-icons/io5";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useSelector } from "react-redux";
 import { useAuth } from "../utils/AuthProvider";
-
 
 const Training = () => {
   const { getToken } = useAuth();
@@ -27,13 +26,13 @@ const Training = () => {
     setSelectedStatus(e.target.value);
   };
 
-  const FetchAssignedCourses = async (token,id) => {
+  const FetchAssignedCourses = async (token, id) => {
     if (!token || !id) return; // Prevent the function from running with invalid inputs
     try {
       const res = await fetch(`${apiUrl}/userCourse/getAssigned/${id}`, {
         method: "GET",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
@@ -50,17 +49,18 @@ const Training = () => {
   };
 
   useEffect(() => {
-    FetchAssignedCourses(token,id);
-  }, [token,id]);
-
+    FetchAssignedCourses(token, id);
+  }, [token, id]);
 
   // Filter assignCourses based on search, category, and status
   const filteredCourses = assignCourses.filter((course) => {
     const matchesSearch =
-    course.courseId.name.toLowerCase().includes(searchTerm) || searchTerm === "";
+      course.courseId.name.toLowerCase().includes(searchTerm) ||
+      searchTerm === "";
 
     const matchesCategory =
-      selectedCategory === "All" || course.courseId.category === selectedCategory;
+      selectedCategory === "All" ||
+      course.courseId.category === selectedCategory;
 
     const matchesStatus =
       selectedStatus === "All" || course.status === selectedStatus;
@@ -130,20 +130,29 @@ const Training = () => {
                     course.id % 2 === 0 ? "bg-[#F7F4F4]" : "bg-white"
                   } hover:bg-gray-100 `}
                 >
-                  <NavLink className={`hover:text-[#0364BD]`} to={course.url}>
+                  <Link
+                    className={`hover:text-[#0364BD]`}
+                    to={`/courses/${course.courseId.name.replace(/\s+/g, "-")}`}
+                    state={{ courseId: course.courseId._id , userId: id}}
+                  >
                     <td className="px-4 py-2">{course.courseId.name}</td>
-                  </NavLink>
+                  </Link>
+                  <td className="px-4 py-2 text-center">{course.progress} %</td>
                   <td className="px-4 py-2 text-center">
-                    {course.progress} %
+                    {course.courseId.category}
                   </td>
-                  <td className="px-4 py-2 text-center">{course.courseId.category}</td>
                   <td className="px-4 py-2 text-center">
                     {course.interactive ? "✔️" : "❌"}
                   </td>
                   <td className="px-4 py-2 flex justify-center items-center">
-                    <NavLink to={`/courses/${course._id}`}>
+                    <Link
+                      to={`/courses/${course.courseId.name.replace(
+                        /\s+/g,
+                        "-"
+                      )}`}
+                    >
                       <IoEyeOutline className="cursor-pointer text-2xl font-semibold h-6 hover:text-[#0364BD]" />
-                    </NavLink>
+                    </Link>
                   </td>
                 </tr>
               ))}
