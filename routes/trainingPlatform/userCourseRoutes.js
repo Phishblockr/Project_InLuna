@@ -5,7 +5,7 @@ import dashboardAdminMiddleware from "../../middlewares/dashboardAdminMiddleware
 
 const router = express.Router();
 router.post("/assign", dashboardAdminMiddleware, assignCourse);
-router.get("/getAssigned/:id",authenticateToken ,getCoursesForUser);
+router.get("/getAssigned/:userId",authenticateToken ,getCoursesForUser);
 router.delete("/deleteAssignment",dashboardAdminMiddleware ,removeCourseAssignment);
 
 export default router;
