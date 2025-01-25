@@ -45,7 +45,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // CORS Configuration
 // Development only
-const allowedOrigins = ['http://localhost:5173', 'chrome-extension://','moz-extension://','http://localhost:5174'];
+const allowedOrigins = ['http://localhost:5173', 'chrome-extension://','moz-extension://','http://localhost:5174','http://localhost:5175'];
 
 app.use(
     cors({

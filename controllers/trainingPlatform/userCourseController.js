@@ -48,6 +48,7 @@ export const assignCourse = asyncHandler(async (req, res) => {
 
 export const getCoursesForUser = asyncHandler(async (req, res) => {
     const { userId } = req.params;
+    console.log(userId);
     try {
         const assignments = await UserCourse.find({ userId })
             .populate("courseId", "name category description")
@@ -57,6 +58,7 @@ export const getCoursesForUser = asyncHandler(async (req, res) => {
             return res.status(404).json({ message: "No courses assigned to this user" });
         }
 
+        console.log(assignments);  
         res.status(200).json(assignments);
     } catch (error) {
         console.error("Error fetching courses for user:", error);
