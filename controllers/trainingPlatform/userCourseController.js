@@ -57,7 +57,6 @@ export const getCoursesForUser = asyncHandler(async (req, res) => {
             return res.status(404).json({ message: "No courses assigned to this user" });
         }
 
-        console.log(assignments);  
         res.status(200).json(assignments);
     } catch (error) {
         console.error("Error fetching courses for user:", error);
