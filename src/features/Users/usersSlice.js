@@ -1,0 +1,313 @@
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import socket from "../../utils/socket";
+
+const initialState = {
+    users: [],
+    totalUsers: 0,
+    totalPages: 1,
+    currentPage: 1,
+    loading: false,
+    error: null,
+    userDetails: null,
+};
+
+const apiUrl = import.meta.env.VITE_API_URL
+
+export const getUsers = createAsyncThunk('users/get', async ({ page, limit, search, status, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+    try {
+        const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}&search=${search}&status=${status}`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!res.ok) throw new Error('Failed to fetch users');
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.message || 'An error occurred');
+    }
+});
+
+export const getUser = createAsyncThunk("User/get", async ({id, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+    try {
+        const res = await fetch(`${apiUrl}/user/fetch/${id}`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!res.ok) throw new Error('Failed to fetch user');
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.message || 'An error occurred');
+    }
+})
+
+export const addUser = createAsyncThunk('user/add', async ({user, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+
+    try {
+        const res = await fetch(`${apiUrl}/user/create`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(user),
+        });
+        if (!res.ok) throw new Error('Failed to add user');
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.message || 'An error occurred');
+    }
+});
+
+export const delUser = createAsyncThunk('user/del', async ({id, token}, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+
+    try {
+        const res = await fetch(`${apiUrl}/user/delete/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            return rejectWithValue(data.error || `Failed to delete ${id}`);
+        }
+        return id;
+    } catch (error) {
+        return rejectWithValue(error.message || 'An error occurred');
+    }
+});
+
+export const updateUserStatus = createAsyncThunk("users/updateStatus", async ({ id, status, token }, { rejectWithValue }) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+    try {
+        const response = await fetch(`${apiUrl}/user/updateStatus/${id}`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+        const data = await res.json();
+        if (!response.ok) {
+            return rejectWithValue(data.error || "Failed to update status")
+        }
+        return data;
+    } catch (error) {
+        return rejectWithValue(error.message)
+    }
+})
+
+export const uploadCsv = createAsyncThunk('users/uploadCsv', async ({formData, token}, { rejectWithValue }) => {
+    try {
+        // const token = JSON.parse(localStorage.getItem("user")).token;
+        const response = await fetch(`${apiUrl}/user/addUsersFromCsv`, {
+            method: "POST",
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData,
+        });
+        if (!response.ok) throw new Error('Failed to upload CSV');
+        return await response.json()
+    } catch (error) {
+        return rejectWithValue(error.message)
+    }
+})
+
+const fetchMoreUsersFromNextPage = async (page, limit, token) => {
+    // const token = JSON.parse(localStorage.getItem("user")).token;
+    const res = await fetch(`${apiUrl}/user/fetch-all?page=${page}&limit=${limit}`, {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+    if (res.ok) {
+        const data = await res.json();
+        return data.users;
+    }
+    return [];
+};
+
+
+const usersSlice = createSlice({
+    name: "users",
+    initialState,
+    reducers: {
+        updateStatusFromSocket(state, action) {
+            const updatedUser = action.payload;
+            // Update user status in userDetails if it matches
+            if (state.userDetails && state.userDetails._id === updatedUser._id) {
+                state.userDetails = updatedUser;
+                console.log(updatedUser._id, state.userDetails._id)
+            }
+        },
+        addUserSuccess(state, action) {
+            const existingUser = state.users.find(user => user._id === action.payload._id);
+            if (!existingUser) {
+                state.users.push(action.payload); // Add user only if it doesn't exist
+            }
+        },
+        updateUserSuccess(state, action) {
+            const index = state.users.findIndex(user => user._id === action.payload._id);
+            if (index !== -1) {
+                state.users[index] = action.payload;
+            }
+        },
+        deleteUserSuccess(state, action) {
+            state.users = state.users.filter(user => user._id !== action.payload);
+        },
+        addMultipleUsersSuccess(state, action) {
+            const newUsers = action.payload.users || [];
+
+            // Ensure newUsers is an array
+            if (!Array.isArray(newUsers)) {
+                console.error("Expected an array of new users, received: ", newUsers);
+                return;
+            }
+            const existingUserIds = state.users.map(user => user._id);
+            const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
+            state.users = [...state.users, ...filteredNewUsers];
+            state.totalUsers = action.payload.totalUsers || state.users.length;
+            state.totalPages = Math.ceil(state.totalUsers / action.payload.perPageRec);
+
+        }
+    },
+    extraReducers: builder => {
+        builder
+            .addCase(getUsers.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getUsers.fulfilled, (state, action) => {
+                state.loading = false;
+                state.users = action.payload.users;
+                state.totalPages = action.payload.totalPages;
+                state.currentPage = action.payload.currentPage;
+                state.totalUsers = action.payload.totalUsers;
+            })
+            .addCase(getUsers.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(getUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.userDetails = null
+            })
+            .addCase(getUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.userDetails = action.payload;
+            })
+            .addCase(getUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+                state.userDetails = null;
+            })
+            .addCase(addUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(addUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.users.push(action.payload);
+            })
+            .addCase(addUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(delUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(delUser.fulfilled, (state, action) => {
+                const {token} = action.meta.arg;
+                state.loading = false;
+                state.users = state.users.filter(user => user._id !== action.payload);
+                const totalPages = Math.ceil(state.totalUsers / state.perPageRec);
+
+                if (state.users.length < state.perPageRec && state.currentPage < totalPages) {
+                    fetchMoreUsersFromNextPage(state.currentPage + 1, state.perPageRec, token).then(newUsers => {
+                        state.users.push(...newUsers);
+                    });
+                }
+                state.totalUsers -= 1;
+                state.totalPages = Math.ceil(state.totalUsers / state.perPageRec);
+            })
+            .addCase(delUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(uploadCsv.fulfilled, (state, action) => {
+                state.loading = false;
+                const newUsers = action.payload.users || [];
+                const existingUserIds = state.users.map(user => user._id);
+
+                const filteredNewUsers = newUsers.filter(user => !existingUserIds.includes(user._id));
+                state.users = [...state.users, ...filteredNewUsers];
+                state.totalUsers = action.payload.totalUsers;
+                state.totalPages = Math.ceil(state.totalUsers / action.payload.perPageRec);
+            })
+            .addCase(uploadCsv.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(updateUserStatus.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateUserStatus.fulfilled, (state, action) => {
+                const updatedUser = action.payload;
+
+                // Update the status in the user details if it matches the updated user's ID
+                if (state.userDetails && state.userDetails._id === updatedUser._id) {
+                    state.userDetails.status = updatedUser.status;
+                }
+                state.loading = false;
+            })
+            .addCase(updateUserStatus.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
+    },
+});
+
+
+export const startListeningToSocket = (token) => (dispatch, getState) => {
+    socket.on("usersByCsvAdded", (data) => {
+        const perPageRec = getState().perPageRec;
+        dispatch(getUsers({ page: getState().currentPage, limit: perPageRec, search: "", status: "all", token }));
+    });
+
+    socket.on("userCreated", (data) => {
+        dispatch(addUserSuccess(data));
+    });
+
+    socket.on("userUpdated", (user) => {
+        dispatch(updateUserSuccess(user));
+    });
+
+    socket.on("userDeleted", (userId) => {
+        dispatch(deleteUserSuccess(userId));
+    });
+
+    socket.on("userStatusUpdated", (updatedUser) => {
+        dispatch(updateStatusFromSocket(updatedUser));
+    });
+}
+export const { deleteUserSuccess, updateStatusFromSocket, addUserSuccess, updateUserSuccess, addMultipleUsersSuccess } = usersSlice.actions;
+export default usersSlice.reducer;

@@ -15,6 +15,7 @@ import Navbar from "./components/Navigation/Navbar.jsx";
 import Overview from "./components/Overview.jsx";
 import Logout from "./components/Auth/Logout.jsx";
 import EmailBox from "./components/EmailBox.jsx";
+import Training from "./components/Training.jsx";
 // import Login from "./components/Auth/Login.jsx";
 // import Users from "./components/Users/Users.jsx";
 // import UrlLists from "./components/Urls/UrlLists.jsx";
@@ -83,6 +84,7 @@ function App() {
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<Overview />} />
                       <Route path="/emailBox" element={<EmailBox />}/>
+                      <Route  path="/training" element={<Training/>}/>
                       {/* <Route path="/users" element={<Users />} />
                       <Route path="/users/adduser" element={<AddUser />} />
                       <Route

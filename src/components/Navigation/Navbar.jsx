@@ -110,6 +110,7 @@ const Navbar = () => {
                 }
             });
             const data = await response.json();
+            
             dispatch(fetchUserSuccess(data))
             clearTimeout(loadingTimer);
             setShowLoading(false);
@@ -184,7 +185,7 @@ const Navbar = () => {
 
                     <div className="flex flex-col">
                         <span>{loading ? "loading..." : details?.name}</span>
-                        <span className="text-[10px]">Admin</span>
+                        <span className="text-[10px]">{details.role}</span>
                     </div>
                     <button
                         title="settings"
