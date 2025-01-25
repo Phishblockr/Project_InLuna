@@ -81,7 +81,7 @@ export const assignCourse = createAsyncThunk(
             }
 
             toast.success('Course assigned successfully');
-            return { userId, courseId };
+            return data.assignment;
         } catch (error) {
             toast.error(`Failed to assign course. Error: ${error.message}`);
             return rejectWithValue(error.message || 'Failed to assign course');
