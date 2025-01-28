@@ -24,6 +24,15 @@ const Login = () => {
     }
     };
 
+    const handleRememberMe = (rememberMe) => {
+        setRememberMe(rememberMe)
+        if(rememberMe){
+            console.log("orgId saved")
+            localStorage.setItem("orgId", orgId)
+        }
+        
+    }
+
     return (
         <div className="flex justify-center">
             <div className="flex flex-col w-[470px]">
@@ -74,7 +83,7 @@ const Login = () => {
                         </div>
                         <div className="mb-6">
                             <input
-                            onChange={(e) => setRememberMe(e.target.checked)}
+                            onChange={(e) => handleRememberMe(e.target.checked)}
                             type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} />
                             <label htmlFor="rememberMe"> Remember Me </label>
                         </div>
