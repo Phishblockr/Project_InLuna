@@ -4,43 +4,28 @@ import DOMPurify from "dompurify";
 import { toast } from "sonner";
 import { useAuth } from "../../utils/AuthProvider";
 import LoadingOverlay from "../../utils/LoadingOverlay";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchOptions, saveTemplate } from "../../features/Template/templateSlice";
 
 const EmailCreator = () => {
-    const apiUrl = import.meta.env.VITE_API_URL; // Replace with your API URL
-    
+    const apiUrl = import.meta.env.VITE_API_URL;
+
+    const dispatch = useDispatch();
+
+    const { groupOptions, loading, saveStatus, error } = useSelector((state) => state.template);
+
     const [title, setTitle] = useState("");
     const [htmlContent, setHtmlContent] = useState("");
     const [isPhishing, setIsPhishing] = useState(false);
-    
-    const [groupOptions, setGroupOptions] = useState([]);
+
     const [selectedOption, setSelectedOption] = useState("");
     const [otherValue, setOtherValue] = useState("");
-    
-    const [loading, setLoading] = useState(true); 
-    
+
+
     const editorRef = React.useRef(null);
 
     const { getToken } = useAuth();
     const token = getToken();
-
-    const fetchOptions = async () => {
-        setLoading(true); // Start loading
-        try {
-            const response = await fetch(`${apiUrl}/emailTemplate/getGroups`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            }); // Backend endpoint
-            const data = await response.json();
-            setGroupOptions(data);
-        } catch (error) {
-            console.error("Error fetching options:", error);
-        } finally {
-            setLoading(false); // Stop loading
-        }
-    };
 
     // Save a reference to the editor instance
     const handleEditorMount = (editor) => {
@@ -125,41 +110,29 @@ const EmailCreator = () => {
         setHtmlContent(sanitizedContent);
     };
 
-    // Save the template
-    const saveTemplate = async () => {
-        try {
+    const handleSave = () => {
+        const templateData = {
+            title,
+            htmlContent,
+            isPhishing,
+            selectedOption,
+            otherValue,
+        };
 
-            const finalGroup = selectedOption === "other" ? otherValue : selectedOption;
-
-            const res = await fetch(`${apiUrl}/emailTemplate/create`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title,
-                    htmlContent,
-                    isPhishing,
-                    group: finalGroup,
-                }),
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                toast.success("Template added successfully");
-            } else {
-                toast.error(data.message || "Error saving template");
-            }
-        } catch (error) {
-            toast.error(`Error saving template: ${error.message}`);
-        }
+        dispatch(saveTemplate({ token, templateData }));
     };
 
     useEffect(() => {
-        fetchOptions();
-    }, [])
+        dispatch(fetchOptions({ token }));
+    }, [dispatch]);
+
+    if (error) {
+        toast.error("Error: ", error)
+    }
 
     return (
         <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
-             {loading && <LoadingOverlay loading={loading} />}
+            {loading && <LoadingOverlay loading={loading} />}
             <h1 className="pt-3 pl-5 text-2xl font-medium">Email Template Editor</h1>
 
             {/* Title Input */}
@@ -274,7 +247,7 @@ const EmailCreator = () => {
             </div>
 
             {/* Save Button */}
-            <button onClick={saveTemplate} className="px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors">
+            <button onClick={handleSave} className="px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors">
                 Save Template
             </button>
         </div>
