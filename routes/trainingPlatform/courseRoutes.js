@@ -1,7 +1,7 @@
 import express from "express";
 import superDashboardMiddleware from "../../middlewares/superDashboardMiddleware.js"
 import authenticateToken from "../../middlewares/authenticateToken.js";
-import { deleteCourse, createCourse, getAllCourses, getCourseById, getCourseCategories, getCourseDetails, uploadCourseVideo, deleteCourseVideo, updateCourse, getSignedUrlController } from "../../controllers/trainingPlatform/courseController.js";
+import { deleteCourse, createCourse, getAllCourses, getCourseById, getCourseCategories, getCourseDetails, uploadCourseVideo, deleteCourseVideo, updateCourse, getSignedUrlController, getUserAssignedCourseDetails } from "../../controllers/trainingPlatform/courseController.js";
 import multer from "multer";
 
 const router = express.Router();
@@ -30,6 +30,8 @@ router.post("/uploadCourseVideo", superDashboardMiddleware, upload.single("file"
 router.delete("/deleteCourseVideo", superDashboardMiddleware, deleteCourseVideo)
 router.get("/getSignedUrl", superDashboardMiddleware, getSignedUrlController)
 
+// Fetch course details for a specific user
+router.get("/details/:courseId/:userId",authenticateToken, getUserAssignedCourseDetails)
 
 
 export default router;
