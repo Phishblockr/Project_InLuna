@@ -6,6 +6,7 @@ import ReactQuill from 'react-quill';
 import { RiArrowDownSFill } from "react-icons/ri";
 import DOMPurify from "dompurify";
 import LoadingOverlay from "../../utils/LoadingOverlay";
+import axios from "axios";
 
 const CourseEditor = () => {
     const { id } = useParams();
@@ -15,12 +16,21 @@ const CourseEditor = () => {
 
     const quillRef = useRef(null); // Ref for ReactQuill
 
-
-
-    const [course, setCourse] = useState(null);
+    const [course, setCourse] = useState({
+        name: "",
+        category: "",
+        description: "",
+        isDraft: true,
+        videos: [],
+    })
     const [categoryOptions, setCategoryOptions] = useState([]);
     const [emailGroups, setEmailGroups] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const [otherValue, setOtherValue] = useState("");
+
+    const [uploadingVideos, setUploadingVideos] = useState({});
+    const [uploadProgress, setUploadProgress] = useState({});
 
     const fetchCourses = async () => {
         try {
@@ -115,17 +125,11 @@ const CourseEditor = () => {
         });
     };
 
-    const deleteVideo = (index) => {
+    const deleteVideo = (index, videoUrl) => {
+        handleDeleteVideo(index, videoUrl);
         setCourse((prevCourse) => ({
             ...prevCourse,
             videos: prevCourse.videos.filter((_, i) => i !== index),
-        }));
-    };
-
-    const handleDraftChange = (value) => {
-        setCourse((prevCourse) => ({
-            ...prevCourse,
-            isDraft: value === "publish" ? false : true,
         }));
     };
 
@@ -144,8 +148,147 @@ const CourseEditor = () => {
 
     const handleVidDescInput = (index, value) => {
         const sanitizedContent = DOMPurify.sanitize(value);
-        updateLecture(index, "description", value)
+        updateLecture(index, "description", sanitizedContent)
     }
+
+    const handleVideoUpload = async (index, file, courseName, lectureTitle) => {
+        if (!courseName || !lectureTitle) {
+            toast.error("Please first enter Course Name and Lecture Title")
+            return
+        }
+        const sanitizedLectureTitle = lectureTitle.replace(/[^a-zA-Z0-9]/g, "-"); // Remove special characters
+        const sanitizedCourseName = courseName.replace(/[^a-zA-Z0-9]/g, "-"); // Remove special characters
+        const videoName = `${sanitizedCourseName}-Lecture-${index + 1}-${sanitizedLectureTitle}${file.name.substring(file.name.lastIndexOf("."))}`;
+        console.log(videoName)
+
+        if (!file) {
+            toast.error("Please select valid video file");
+            return
+        }
+
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = function () {
+            window.URL.revokeObjectURL(video.src);
+            const duration = Math.round(video.duration); // Duration in seconds
+            console.log("Extracted Duration:", duration);
+
+            updateLecture(index, "duration", duration);
+        };
+
+        video.src = URL.createObjectURL(file);
+
+        const formData = new FormData();
+        formData.append("file", file, videoName);
+
+        setUploadingVideos((prev) => ({ ...prev, [index]: true })); // Show progress bar
+
+        try {
+            const res = await axios.post(`${apiUrl}/course/uploadCourseVideo`, formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                },
+                onUploadProgress: (progressEvent) => {
+                    const percentComplete = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+                    setUploadProgress((prev) => ({ ...prev, [index]: percentComplete }));
+                }
+            });
+
+            if (res.data.success) {
+                updateLecture(index, "url", res.data.message);
+            } else {
+                toast.error("Video upload failed: ", res.data.error);
+            }
+        } catch (error) {
+            toast.error("Error uploading video: ", error);
+        } finally {
+            setUploadingVideos((prev) => ({ ...prev, [index]: false })); // Hide progress bar
+        }
+    };
+
+    const handleDeleteVideo = async (index, videoUrl) => {
+        try {
+            const res = await fetch(`${apiUrl}/course/deleteCourseVideo`, {
+                method: "DELETE",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ videoUrl })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                updateLecture(index, "url", "");
+                // deleteVideo(index);
+            } else {
+                toast.error("Failed to delete video: ", data.error);
+            }
+        } catch (error) {
+            toast.error("Error deleting video: ", error)
+        }
+    }
+
+    const handleSaveCourse = async (isDraft) => {
+        if (!course.name || (!course.category && !otherValue)) {
+            toast.error("Course Name and Category are required!");
+            return;
+        }
+
+        const finalCategory = course.category === "other" ? otherValue : course.category;
+
+        const courseData = {
+            ...course,
+            category: finalCategory,
+            isDraft,
+        };
+
+        try {
+            const res = await fetch(`${apiUrl}/course/update/${id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(courseData)
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success(isDraft ? "Draft saved successfully" : "Course updated successfully!");
+            } else {
+                toast.error(`Unable to update course: ${data.error}`);
+            }
+        } catch (error) {
+            console.error("Unable to update course - Internal error: ", error);
+        }
+    };
+
+    const handleGetSignedUrl = async (fileName) => {
+        try {
+            const res = await fetch(`${apiUrl}/course/getSignedUrl?fileName=${encodeURIComponent(fileName)}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await res.json();
+            if (data.url) {
+                window.open(data.url, "_blank"); // Open video in new tab
+            } else {
+                toast.error("Unable to fetch video URL.");
+            }
+        } catch (error) {
+            console.error("Error fetching signed URL:", error);
+            toast.error("Error fetching video.");
+        }
+    };
+
+
 
     useEffect(() => {
         setLoading(true); // Start loading
@@ -204,7 +347,7 @@ const CourseEditor = () => {
                                 id="otherField"
                                 type="text"
                                 className="w-full p-2 mb-4 border border-gray-300 rounded"
-                                value={course.category}
+                                value={otherValue}
                                 onChange={(e) => handleInputChange("category", e.target.value)}
                                 placeholder="Enter custom value"
                             />
@@ -246,19 +389,44 @@ const CourseEditor = () => {
                                                 <label htmlFor="videoFile" className="block text-lg font-medium mb-2">
                                                     Upload Video:
                                                 </label>
-                                                <input
-                                                    type="file"
-                                                    id="videoFile"
-                                                    className="p-2 border border-gray-300 rounded"
-                                                    onChange={(e) =>
-                                                        updateLecture(
-                                                            index,
-                                                            "url",
-                                                            URL.createObjectURL(e.target.files[0])
-                                                        )
-                                                    }
-
-                                                />
+                                                {video.url ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span
+                                                            className="text-blue-600 underline cursor-pointer"
+                                                            onClick={() => handleGetSignedUrl(video.url.split("/").pop())} // Extract file name
+                                                        >
+                                                            {video.url.split("/").pop()}
+                                                        </span>
+                                                        <span className="text-gray-500">
+                                                            ({video.duration ? `${Math.floor(video.duration / 60)}m ${Math.round(video.duration % 60)}s` : "Calculating..."})
+                                                        </span>
+                                                        <button
+                                                            className="text-red-600 border px-3 py-1 rounded"
+                                                            onClick={() => handleDeleteVideo(index, video.url)}
+                                                        >
+                                                            x
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <input
+                                                            type="file"
+                                                            id={`videoFile-${index}`}
+                                                            className="p-2 border border-gray-300 rounded"
+                                                            onChange={(e) => handleVideoUpload(index, e.target.files[0], course.name, video.title)}
+                                                            disabled={uploadingVideos[index]}
+                                                        />
+                                                        {/* Progress Bar*/}
+                                                        {uploadingVideos[index] && (
+                                                            <div className="relative w-full bg-gray-200 rounded h-4">
+                                                                <div className="absolute top-0 left-0, h-4 bg-blue-500"
+                                                                    style={{ width: `${uploadProgress[index] || 0}%` }}
+                                                                >
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                         <div>
@@ -278,6 +446,7 @@ const CourseEditor = () => {
                                                 <select
                                                     name="emailGroup"
                                                     id="emailGroup"
+                                                    value={video.assignEmail}
                                                     className="bg-white w-full p-2 border border-gray-300 rounded mb-4"
                                                     onChange={(e) => updateLecture(index, "assignEmail", e.target.value)}
                                                 >
@@ -293,7 +462,7 @@ const CourseEditor = () => {
                                             </div>
                                         </div>
                                         <button className="my-2 text-red-700 bg-gray-200 border-2 border-gray-300 rounded w-[200px] mb-2"
-                                        onClick={() => deleteVideo(index)}
+                                            onClick={() => deleteVideo(index, video.url)}
                                         >Delete Lecture</button>
                                     </div>
                                 )}
@@ -301,17 +470,20 @@ const CourseEditor = () => {
                         ))}
                         <button
                             className="my-2 bg-gray-200 border-2 border-gray-300 rounded w-[200px] mb-2"
-                        onClick={addLecture}
+                            onClick={addLecture}
                         >+ Lecture</button>
                     </div>
                 </div>
             </div>
+            <span>Notice: If this course has already been assigned, saving it as a draft will temporarily restrict user access until it is published again.</span>
             <div className="flex gap-2">
                 <button
                     className="my-2 text-white bg-[#0364BD] border-2 hover:bg-[#003A70] border-[#0364BD] transition-colors rounded w-[200px] mb-2"
-                >Publish</button>
+                    onClick={() => handleSaveCourse(false)}
+                >Update / Publish</button>
                 <button
                     className="my-2 bg-gray-200 border-2 border-gray-300 rounded w-[200px] mb-2"
+                    onClick={() => handleSaveCourse(true)}
                 >Save Draft</button>
             </div>
         </div>

@@ -221,7 +221,7 @@ const Course = () => {
                                     <th className="py-3 text-left">Title</th>
                                     <th className="py-3 text-left">Course Duration</th>
                                     <th className="py-3 text-left">Category</th>
-                                    <th className="py-3 text-left">Interactive</th>
+                                    <th className="py-3 text-left">Status</th>
                                     <th className="py-3 text-left">Actions</th>
                                 </tr>
                             </thead>
@@ -240,13 +240,13 @@ const Course = () => {
                                             </Link>
                                         </td>
                                         <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            Duration
+                                            {course.totalDuration}
                                         </td>
                                         <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
                                             {course.category}
                                         </td>
                                         <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            Interactive
+                                            {course.isDraft? "Draft": "Published"}
                                         </td>
                                         <td>
                                             <button
