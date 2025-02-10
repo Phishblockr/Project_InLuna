@@ -3,7 +3,6 @@ import superDashboardMiddleware from "../../middlewares/superDashboardMiddleware
 import authenticateToken from "../../middlewares/authenticateToken.js";
 import { deleteCourse, createCourse, getAllCourses, getCourseById, getCourseCategories, getCourseDetails, uploadCourseVideo, deleteCourseVideo, updateCourse, getSignedUrlController, getUserAssignedCourseDetails } from "../../controllers/trainingPlatform/courseController.js";
 import multer from "multer";
-import { deleteCourse, demoValue, getAllCourses, getCourseById, getCourseCategories, getCourseDetails } from "../../controllers/trainingPlatform/courseController.js";
 
 const router = express.Router();
 
