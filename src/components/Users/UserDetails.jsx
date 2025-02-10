@@ -27,10 +27,10 @@ const UserDetails = () => {
 
     const [activityCounts, setActivityCounts] = useState({
         "phishingClicks": 0,
-        "blacklistedClicks": 0,
+        "malwareHostedVisits": 0,
         "whitelistRequests": 0,
         "visitsToWhitelistUrls": 0,
-        "percentageBlacklistedClicks": 0,
+        "percentageMalwareHostedVisits": 0,
         "percentagePhishingClicks": 0,
         "percentageVisitToWhitelistUrls": 0,
         "percentageWhitelistReq": 0
@@ -42,7 +42,7 @@ const UserDetails = () => {
     const [operationType, setOperationType] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedSeries, setSelectedSeries] = useState('all');
-    const [barGraphData, setBarGraphData] = useState({ labels: [], totalVisits: [], blacklistedVisits: [], phishingVisits: [] });
+    const [barGraphData, setBarGraphData] = useState({ labels: [], totalVisits: [], malwareHostedVisits: [], phishingVisits: [] });
     // const [currentWeek, setCurrentWeek] = useState({
     //     start: startOfWeek(new Date(), { weekStartsOn: 1 }),
     //     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
@@ -165,6 +165,9 @@ const UserDetails = () => {
             }
 
             const data = await response.json();
+            console.log("📊 Full API Response:", data); // ✅ Debugging API response
+            console.log("🟢 Malware Hosted Visits:", data.malwareHostedVisits);
+            console.log("📅 Bar Graph Data (Before Mapping):", data.barGraphData);
 
             const allDatesInMonth = generateAllDatesInMonth(year, month - 1);
             const mergedBarGraphData = allDatesInMonth.map(date => {
@@ -172,15 +175,18 @@ const UserDetails = () => {
                 return {
                     label: date,
                     totalVisits: index !== -1 ? data.barGraphData.totalVisits[index] : 0,
-                    blacklistedVisits: index !== -1 ? data.barGraphData.blacklistedVisits[index] : 0,
+                    malwareHostedVisits: index !== -1 ? data.barGraphData.malwareHostedVisits[index] : 0, 
                     phishingVisits: index !== -1 ? data.barGraphData.phishingVisits[index] : 0,
                 };
             });
 
+            console.log("🛠️ Mapped Bar Graph Data (Before SetState):", mergedBarGraphData);
+
+            // ✅ Ensure Malware Hosted Data is properly updated
             setBarGraphData({
                 labels: mergedBarGraphData.map(item => item.label),
                 totalVisits: mergedBarGraphData.map(item => item.totalVisits),
-                blacklistedVisits: mergedBarGraphData.map(item => item.blacklistedVisits),
+                malwareHostedVisits: mergedBarGraphData.map(item => item.malwareHostedVisits),
                 phishingVisits: mergedBarGraphData.map(item => item.phishingVisits),
             });
 
@@ -266,9 +272,9 @@ const UserDetails = () => {
         },
         {
             id: 4,
-            title: "Blacklisted Links Visited.",
-            count: activityCounts.blacklistedClicks,
-            lastMonth: activityCounts.percentageBlacklistedClicks,
+            title: "Malware Hosted Visited.",
+            count: activityCounts.malwareHostedVisits,
+            lastMonth: activityCounts.percentageMalwareHostedVisits,
             logo: "bi bi-shield-shaded",
         },
     ];
@@ -340,10 +346,12 @@ const UserDetails = () => {
 
     const chartData = barGraphData.labels.map((label, index) => ({
         name: label,
-        detection: barGraphData.totalVisits[index],
-        phishing: barGraphData.phishingVisits[index],
-        blacklisted: barGraphData.blacklistedVisits[index]
-    }));
+        detection: barGraphData.totalVisits[index] || 0,
+        phishing: barGraphData.phishingVisits[index] || 0,
+        malwareHostedVisits: barGraphData.malwareHostedVisits[index] || 0 // ✅ Fix Mapping Here
+    }));    
+    
+    console.log("📊 Final Chart Data (Before Rendering):", chartData);
 
     return (
         <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
@@ -511,7 +519,7 @@ const UserDetails = () => {
                             <option value="all">All</option>
                             <option value="totalVisits">Detection</option>
                             <option value="phishingVisits">Phishing Visits</option>
-                            <option value="blacklistedVisits">Blacklisted Visits</option>
+                            <option value="blacklistedVisits">Malware Hosted Visits</option>
                         </select>
                     </div>
                     <h2 className="text-center dark:text-[#F4F4F4]">Monthly URL Access</h2>
@@ -543,8 +551,8 @@ const UserDetails = () => {
                                 <Bar dataKey="phishing" fill="#8884d8" radius={[10, 10, 0, 0]} />
                             ) : null}
 
-                            {selectedSeries === 'all' || selectedSeries === 'blacklistedVisits' ? (
-                                <Bar dataKey="blacklisted" fill="#ff4d4f" radius={[10, 10, 0, 0]} />
+                            {selectedSeries === 'all' || selectedSeries === 'malwareHostedVisits' ? (
+                                <Bar dataKey="malwareHostedVisits" fill="#ff4d4f" radius={[10, 10, 0, 0]} /> // ✅ Now correctly included
                             ) : null}
 
                         </BarChart>
