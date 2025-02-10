@@ -89,16 +89,12 @@ export const loginAdmin = asyncHandler(async (req, res) => {
         sameSite: 'strict',
     };
 
-    console.log(req.body);
-
     if (rememberMe) {
         cookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
     }
 
     try {
         const user = await User.findOne({ orgId, username });
-
-        console.log(user);
 
         if (!user) {
             return res.status(404).json({ error: 'Invalid Credentials' });
@@ -122,10 +118,8 @@ export const loginAdmin = asyncHandler(async (req, res) => {
             res.cookie('refreshToken', encryptedRefreshToken, cookieOptions);
 
             if (user.userType === process.env.ADMIN) {
-                console.log("Admin Logged in");
                 res.status(200).json({ token, redirectUrl: process.env.FRONT_END_URL });
             } else if (user.userType === process.env.USER) {
-                console.log("User Logged in");
                 res.status(200).json({ token, redirectUrl: process.env.TRAINING_FRONTEND_URL });
             } else {
                 res.status(403).json({ error: 'Unauthorized role' });

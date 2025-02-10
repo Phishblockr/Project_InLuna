@@ -1,0 +1,53 @@
+import mongoose from "mongoose";
+
+const urlhausSchema = new mongoose.Schema(
+    {
+        id:{
+            type: String,
+            required: true,
+            unique:true,
+        },
+        blacklists:{
+            spamhaus_dbl:String,
+            surbl:String,
+        },
+        url:{
+            type:String,
+            required:true,
+        },
+        visitedBy: {
+              type: [
+                {
+                  userId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "user",
+                  },
+                  visits: [
+                    {
+                      timestamp: {
+                        type: Date,
+                        default: Date.now,
+                      },
+                    },
+                  ],
+                  totalVisits: {
+                    type: Number,
+                    default: 0,
+                  },
+                },
+              ],
+              default: [],
+            },
+        urlhaus_reference:String,
+        host:String,
+        date_added:String,
+        threat:String,
+        reporter:String,
+        larted:String,
+        tag:[String]
+    },
+    {timestamps:true}
+);
+
+const UrlhausData = mongoose.model("UrlhausData", urlhausSchema);
+export default UrlhausData;

@@ -16,9 +16,9 @@ import overviewRoutes from "./routes/overviewRoutes.js";
 import logsRoute from "./routes/logsRoute.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
 import phishtankRoutes from "./routes/phishtankRoutes.js";
+import urlhausRoutes from "./routes/urlhausRoutes.js"
 import templateRoutes from "./routes/templateRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
-
 import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js";
 import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js";
@@ -30,6 +30,7 @@ import heartBeatRoutes from "./routes/heartBeatRoutes.js";
 import cookieParser from 'cookie-parser';
 
 import fetchAndSavePhishtankData from './cronJobs/phishtankJob.js';
+import fetchAndSaveUrlhausData from './cronJobs/urlhausService.js';
 
 // Training Platform
 import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
@@ -143,6 +144,9 @@ app.use('/api/campaign', dashboardAdminMiddleware, campaignRoutes);
 // Phishtank Routes
 app.use('/api/phishtank', phishtankRoutes);
 
+// Urlhaus (abuse) Routes
+app.use("/api/urlhaus", urlhausRoutes);
+
 // Template Route
 // app.use('/api/template', dashboardAdminMiddleware, templateRoutes);
 
@@ -158,6 +162,7 @@ app.use("/api/userCourse", userCourseRoutes)
 
 // Start cron job
 // fetchAndSavePhishtankData();
+// fetchAndSaveUrlhausData();
 
 // Error handling middleware
 app.use(errorHandler);

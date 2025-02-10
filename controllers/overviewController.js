@@ -4,6 +4,7 @@ import User from "../models/userModel.js";
 import HeartBeat from "../models/heartBeatModel.js";
 import asyncHandler from '../middlewares/asyncHandler.js';
 import mongoose from 'mongoose';
+import UrlhausData from "../models/urlhausModel.js";
 
 const calculatePercentage = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -23,7 +24,6 @@ export const fetchOrgMetrics = async (req, res) => {
         const endOfMonth = new Date(year, month, 0);
 
         const previousMonth = month == 1 ? 12 : month - 1;
-        const previousYear = month == 1 ? year - 1 : year;
         const startOfPreviousMonth = new Date(previousYear, previousMonth - 1, 1);
         const endOfPreviousMonth = new Date(previousYear, previousMonth, 0);
 
@@ -348,6 +348,7 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
         const startOfPreviousMonth = new Date(previousYear, previousMonth - 1, 1);
         const endOfPreviousMonth = new Date(previousYear, previousMonth, 0);
 
+        // Fetch Phishing Clicks Count
         const phishingClicksCount = await Url.aggregate([
             { $match: { "visitedBy.userId": userObjectId, isPhishing: true, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
             { $unwind: "$visitedBy" },
@@ -356,20 +357,23 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
             { $project: { _id: 0, total: 1 } }
         ]);
 
-        const blacklistedClicksCount = await Url.aggregate([
-            { $match: { "visitedBy.userId": userObjectId, status: "blacklisted", createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+        // Fetch Malware Hosted Visits 
+        const malwareHostedVisits = await UrlhausData.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
             { $unwind: "$visitedBy" },
             { $match: { "visitedBy.userId": userObjectId } },
             { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
             { $project: { _id: 0, total: 1 } }
         ]);
 
+        // Fetch Whitelist Requests Count
         const whitelistReqsCount = await WhitelistReq.countDocuments({
             userId: userObjectId,
             status: { $in: ["pending", "approved"] },
             createdAt: { $gte: startOfMonth, $lt: endOfMonth }
         });
 
+        // Fetch Visits to Whitelist URLs
         const approvedWhitelistReq = await WhitelistReq.find({
             userId: userObjectId,
             status: { $in: ["approved", "pending"] },
@@ -386,6 +390,9 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
             { $project: { _id: 0, total: 1 } }
         ]);
 
+        // Previous Month's Data for Percentage Calculation
+
+        // Fetch Previous Month's Phishing Clicks Count
         const previousPhishingClicksCount = await Url.aggregate([
             { $match: { "visitedBy.userId": userObjectId, isPhishing: true, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
             { $unwind: "$visitedBy" },
@@ -394,20 +401,23 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
             { $project: { _id: 0, total: 1 } }
         ]);
 
-        const previousBlacklistedClicksCount = await Url.aggregate([
-            { $match: { "visitedBy.userId": userObjectId, status: "blacklisted", createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
+        // Fetch Previous Month's Malware Hosted Visits (NEW)
+        const previousMalwareHostedVisits = await UrlhausData.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
             { $unwind: "$visitedBy" },
             { $match: { "visitedBy.userId": userObjectId } },
             { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
             { $project: { _id: 0, total: 1 } }
         ]);
 
+        // Fetch Previous Month's Whitelist Requests
         const previousWhitelistReqsCount = await WhitelistReq.countDocuments({
             userId: userObjectId,
             status: { $in: ["pending", "approved"] },
             createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
         });
 
+        // Fetch Previous Month's Visits to Whitelist URLs
         const previousApprovedWhitelistReq = await WhitelistReq.find({
             userId: userObjectId,
             status: { $in: ["pending", "approved"] },
@@ -424,7 +434,7 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
             { $project: { _id: 0, total: 1 } }
         ]);
 
-        // Bar Graph Data (grouped by day)
+        // Bar Graph Data (grouped by day) - Now includes Malware Hosted Visits
         const visitsByDay = await Url.aggregate([
             { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
             { $unwind: "$visitedBy" },
@@ -432,11 +442,6 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
                 $group: {
                     _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
                     totalVisits: { $sum: "$visitedBy.totalVisits" },
-                    blacklistedVisits: {
-                        $sum: {
-                            $cond: [{ $eq: ["$status", "blacklisted"] }, "$visitedBy.totalVisits", 0]
-                        }
-                    },
                     phishingVisits: {
                         $sum: {
                             $cond: [{ $eq: ["$isPhishing", true] }, "$visitedBy.totalVisits", 0]
@@ -447,21 +452,44 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
             { $sort: { _id: 1 } }
         ]);
 
+        // Fetch Malware Hosted Visits (by day) from `UrlhausData`
+        const malwareHostedVisitsByDay = await UrlhausData.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
+                    malwareHostedVisits: { $sum: "$visitedBy.totalVisits" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Merge Malware Hosted Data into visitsByDay
+        const malwareMap = new Map(malwareHostedVisitsByDay.map(item => [item._id, item.malwareHostedVisits]));
+
+        visitsByDay.forEach(item => {
+            item.malwareHostedVisits = malwareMap.get(item._id) || 0;
+        });
+
         // Format bar graph data
         const barGraphData = {
             labels: visitsByDay.map(item => item._id),
             totalVisits: visitsByDay.map(item => item.totalVisits),
-            blacklistedVisits: visitsByDay.map(item => item.blacklistedVisits),
+            malwareHostedVisits: visitsByDay.map(item => item.malwareHostedVisits),
             phishingVisits: visitsByDay.map(item => item.phishingVisits)
         };
 
         res.json({
             phishingClicks: phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
-            blacklistedClicks: blacklistedClicksCount.length > 0 ? blacklistedClicksCount[0].total : 0,
+            malwareHostedVisits: malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0, // ✅ Updated Field
             whitelistRequests: whitelistReqsCount,
             visitsToWhitelistUrls: visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
             percentagePhishingClicks: calculatePercentage(phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0, previousPhishingClicksCount.length > 0 ? previousPhishingClicksCount[0].total : 0),
-            percentageBlacklistedClicks: calculatePercentage(blacklistedClicksCount.length > 0 ? blacklistedClicksCount[0].total : 0, previousBlacklistedClicksCount.length > 0 ? previousBlacklistedClicksCount[0].total : 0),
+            percentageMalwareHostedVisits: calculatePercentage( // ✅ Updated Field
+                malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
+                previousMalwareHostedVisits.length > 0 ? previousMalwareHostedVisits[0].total : 0
+            ),
             percentageWhitelistReq: calculatePercentage(whitelistReqsCount || 0, previousWhitelistReqsCount || 0),
             percentageVisitToWhitelistUrls: calculatePercentage(visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0, previousVisitsToWhitelistUrls.length > 0 ? previousVisitsToWhitelistUrls[0].total : 0,),
             barGraphData

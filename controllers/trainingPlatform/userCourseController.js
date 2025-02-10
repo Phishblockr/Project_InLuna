@@ -124,3 +124,93 @@ export const removeCourseAssignment = asyncHandler(async (req, res) => {
 })
 
 //TODO: For User side (Training Platform) Create endpoints below this line
+
+
+// Fetch course details for a specific user
+export const getUserAssignedCourseDetails = async (req, res) => {
+    const { courseId, userId } = req.params;
+  
+    try {
+      // Check if the course is assigned to the user
+      const userCourse = await UserCourse.findOne({ courseId, userId }).populate(
+        "courseId"
+      );
+      
+      if (!userCourse) {
+        return res
+          .status(404)
+          .json({ message: "Course not assigned to this user" });
+      }
+  
+      const courseDetails = {
+        courseId: userCourse.courseId._id,
+        name: userCourse.courseId.name,
+        description: userCourse.courseId.description,
+        videos: userCourse.courseId.videos, // Assuming course has a videos field
+        progress: userCourse.progress, // User-specific progress
+        category: userCourse.courseId.category,
+      };
+  
+      res.status(200).json(courseDetails);
+    } catch (error) {
+      console.error("Error fetching course details:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+  
+
+// Update video progress
+export const updateVideoProgress = async (req, res) => {
+    const {userId, courseId, videoId, watchedDuration} = req.body;
+
+    try {
+        const userCourse = await UserCourse.findOne({userId, courseId})
+        console.log(userCourse);
+
+        if(!userCourse){
+            return res.status(404).json({success:false, message:"Course not found for the User."})
+        }
+
+        //find the video progress inside the watchStatus array
+        const videoIndex = userCourse.watchStatus.findIndex((v)=>v.videoId.toString()===videoId);
+        console.log(videoIndex);
+
+        if(videoIndex>=0){
+            //update the watched duration if the new duration is greater
+            if(watchedDuration>userCourse.watchStatus[videoId].watchedDuration){
+                userCourse.watchStatus[videoIndex].watchedDuration = watchedDuration;
+            }   
+        }else {
+            //Add new video entry 
+            userCourse.watchStatus.push({videoId,watchedDuration});
+        }
+
+        // check if all the videos are watched and update the course progress
+        const totalVideos = userCourse.watchStatus.length;
+        const fullyWatchedVideos = userCourse.watchStatus.filter((v)=> v.watchedDuration >= 90).length; // assuming 90% watched is completed
+
+        userCourse.progress = (fullyWatchedVideos/totalVideos) * 100;
+        userCourse.status = userCourse.progress === 100 ? "completed" : "inprogress";
+
+        await userCourse.save();
+        res.json({success:true,message:"Video progress updated", progress:userCourse.progress});
+    } catch (error) {
+        res.status(500).json({success: false, message:error.message})
+    }
+}
+
+// Get User Course Progress
+export const getUserCourseProgress = async (req, res)=>{
+    try {
+        const userCourse = await UserCourse.findOne({userId:req.params.userId,courseId:req.params.courseId});
+
+        if(!userCourse){
+            return res.status(404),json({success:false, message:"course not found"});
+        }
+
+        res.json({success:true,progress:userCourse.progress,watchStatus:userCourse.watchStatus});
+
+    } catch (error) {
+        res.status(500).json({success:false,message:error.message})
+    }
+}

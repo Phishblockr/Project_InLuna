@@ -205,35 +205,3 @@ export const getCourseDetails = asyncHandler(async (req, res) => {
   }
 });
 
-// Fetch course details for a specific user
-
-export const getUserAssignedCourseDetails = async (req, res) => {
-  const { courseId, userId } = req.params;
-
-  try {
-    // Check if the course is assigned to the user
-    const userCourse = await UserCourse.findOne({ courseId, userId }).populate(
-      "courseId"
-    );
-    
-    if (!userCourse) {
-      return res
-        .status(404)
-        .json({ message: "Course not assigned to this user" });
-    }
-
-    const courseDetails = {
-      courseId: userCourse.courseId._id,
-      name: userCourse.courseId.name,
-      description: userCourse.courseId.description,
-      videos: userCourse.courseId.videos, // Assuming course has a videos field
-      progress: userCourse.progress, // User-specific progress
-      category: userCourse.courseId.category,
-    };
-
-    res.status(200).json(courseDetails);
-  } catch (error) {
-    console.error("Error fetching course details:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
