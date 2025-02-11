@@ -88,7 +88,10 @@ export const saveUrlhausData = async (req, res) => {
 
 export const logMalwareVisit = async(req,res)=>{
     try {
-        const { userId, url } = req.body;
+        const userId = req.user.userId;
+        // const orgId = req.user.orgId;
+
+        const { url } = req.body;
 
         if (!userId || !url) {
             return res.status(400).json({ message: "User ID and URL are required." });
