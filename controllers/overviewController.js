@@ -22,7 +22,7 @@ export const fetchOrgMetrics = async (req, res) => {
     try {
         const startOfMonth = new Date(year, month - 1, 1);
         const endOfMonth = new Date(year, month, 0);
-
+        const previousYear = month == 1 ? year - 1 : year;
         const previousMonth = month == 1 ? 12 : month - 1;
         const startOfPreviousMonth = new Date(previousYear, previousMonth - 1, 1);
         const endOfPreviousMonth = new Date(previousYear, previousMonth, 0);
