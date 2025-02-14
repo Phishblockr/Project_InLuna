@@ -17,41 +17,22 @@ import Logout from "./components/Auth/Logout.jsx";
 import EmailBox from "./components/EmailBox.jsx";
 import Training from "./components/Training.jsx";
 import CourseDetails from "./components/Course/CourseDetails.jsx";
-// import Login from "./components/Auth/Login.jsx";
-// import Users from "./components/Users/Users.jsx";
-// import UrlLists from "./components/Urls/UrlLists.jsx";
-// import Requests from "./components/Requests.jsx";
-// import Feedbacks from "./components/Services/Feedbacks.jsx";
-// import Logs from "./components/Logs.jsx";
-// import AddUser from "./components/Users/AddUser.jsx";
-// import AddUrl from "./components/Urls/AddUrl.jsx";
-// import UrlDetails from "./components/Urls/UrlDetails.jsx";
-// import UserDetails from "./components/Users/UserDetails.jsx";
-// import Insights from "./components/Employee/Insights.jsx";
-// import AddEmp from "./components/Employee/AddEmp.jsx";
-// import EmpInsights from "./components/Employee/EmpInsights.jsx";
-// import AdminSettings from "./components/Settings/AdminSettings.jsx";
-// import Settings from "./components/Settings/Settings.jsx";
-// import NotFound from "./components/NotFound.jsx";
-// import ReportBug from "./components/Services/ReportBug.jsx";
-// import Faqs from "./components/Services/Faqs.jsx";
-// import PasswordReset from "./components/ForgotDetails/PasswordReset.jsx";
-// import ForgotDetails from "./components/ForgotDetails/ForgotDetails.jsx";
-// import AddCampaign from "./components/Campaign/AddCampaign.jsx";
-// import Campaign from "./components/Campaign/Campaign.jsx";
-// import SetupPassword from "./components/Users/SetupPassword.jsx";
-// import CreateTemplate from "./components/Campaign/CreateTemplate.jsx";
-// import CreateBlog from "./components/Campaign/CreateBlog.jsx";
+import CourseOverview from "./components/Course/CourseOverview.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
   const isLogoutPage = location.pathname === "/logout";
-  const isForgotDetailsPage = location.pathname === "/forgotDetails"
+  const isForgotDetailsPage = location.pathname === "/forgotDetails";
   const isResetPasswordPage = location.pathname.startsWith("/resetPassword");
-  const isSetupPasswordPage = location.pathname.startsWith("/setupPassword")
+  const isSetupPasswordPage = location.pathname.startsWith("/setupPassword");
 
-  const showSidebarAndNavbar = !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage && !isSetupPasswordPage;
+  const showSidebarAndNavbar =
+    !isLoginPage &&
+    !isLogoutPage &&
+    !isResetPasswordPage &&
+    !isForgotDetailsPage &&
+    !isSetupPasswordPage;
 
   return (
     <>
@@ -84,39 +65,16 @@ function App() {
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<Overview />} />
-                      <Route path="/emailBox" element={<EmailBox />}/>
-                      <Route  path="/training" element={<Training/>}/>
-                      <Route path="/courses/:courseName" element={<CourseDetails />} />
-                      {/* <Route path="/users" element={<Users />} />
-                      <Route path="/users/adduser" element={<AddUser />} />
+                      <Route path="/emailBox" element={<EmailBox />} />
+                      <Route path="/training" element={<Training />} />
                       <Route
-                        path="/users/userDetails/:id"
-                        element={<UserDetails />} 
-                      /> */}
-                      {/*
-                      <Route path="/insights" element={<Insights />} />
-                      <Route path="/insights/addemp" element={<AddEmp />} />
-                      <Route
-                        path="/insights/empinsight/:id"
-                        element={<EmpInsights />}
-                      />*/}
-                      {/* <Route path="/urllists" element={<UrlLists />} />
-                      <Route path="/urllists/addurl" element={<AddUrl />} />
-                      <Route
-                        path="/urllists/urldetails/:id"
-                        element={<UrlDetails />}
+                        path="/training/courses/:courseName"
+                        element={<CourseOverview />}
                       />
-                      <Route path="/campaign" element={<Campaign />} />
-                      <Route path="/campaign/add" element={<AddCampaign />} />
-                      <Route path="/campaign/manageTemplate" element={<CreateTemplate />} />
-                      <Route path="/campaign/manageBlog" element={<CreateBlog />} />
-                      <Route path="/requests" element={<Requests />} />
-                      <Route path="/feedback" element={<Feedbacks />} />
-                      <Route path="/logs" element={<Logs />} />
-                      <Route path="/profileSettings" element={<AdminSettings />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/report" element={<ReportBug />} />
-                      <Route path="/faq" element={<Faqs />} /> */}
+                      <Route
+                        path="/training/course/:courseName/learn/lecture/:videoId"
+                        element={<CourseDetails />}
+                      />
                     </Route>
                     {/* <Route path="*" element={<NotFound />} /> */}
                   </Routes>

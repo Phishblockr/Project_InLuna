@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IoSearchOutline, IoEyeOutline } from "react-icons/io5";
-import { NavLink, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useSelector } from "react-redux";
 import { useAuth } from "../utils/AuthProvider";
@@ -15,6 +15,7 @@ const Training = () => {
   const { details } = useSelector((state) => state.userProfile);
   const id = details?._id;
   const [assignCourses, setAssignCourses] = useState([]);
+  const [courseLinks, setCourseLinks] = useState({}); // Store course links dynamically
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value.toLowerCase());
@@ -43,6 +44,48 @@ const Training = () => {
           status: course.progress === 100 ? "Completed" : "Not Completed",
         }))
       );
+
+      // Determine the correct video ID for each course
+      const updatedCourseLinks = {};
+      for (const course of data) {
+        const courseId = course.courseId._id;
+        const courseName = course.courseId.name.replace(/\s+/g, "-");
+
+        // Step 1: Check progress API
+        const progressRes = await fetch(
+          `${apiUrl}/userCourse/progress/${courseId}/${id}`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const progressData = await progressRes.json();
+        let selectedVideoId = null;
+
+        if (progressData.success && progressData.watchStatus.length > 0) {
+          selectedVideoId =
+            progressData.watchStatus[progressData.watchStatus.length - 1]; // Get last watched video
+        } else {
+          // Step 2: Fetch first video from course details
+          const detailsRes = await fetch(
+            `${apiUrl}/userCourse/details/${courseId}/${id}`,
+            {
+              method: "GET",
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const detailsData = await detailsRes.json();
+          selectedVideoId = detailsData.videos[0]._id; // First video
+        }
+
+        // Store the generated link
+        // Store the generated link as an object with videoId
+        updatedCourseLinks[courseId] = {
+          url: `/training/course/${courseName}/learn/lecture/${selectedVideoId}`,
+          videoId: selectedVideoId, // Store video ID for passing in state
+        };
+      }
+      setCourseLinks(updatedCourseLinks);
     } catch (error) {
       toast.error("Error Fetching courses: ", error.message);
     }
@@ -130,13 +173,20 @@ const Training = () => {
                     course.id % 2 === 0 ? "bg-[#F7F4F4]" : "bg-white"
                   } hover:bg-gray-100 `}
                 >
-                  <Link
-                    className={`hover:text-[#0364BD]`}
-                    to={`/courses/${course.courseId.name.replace(/\s+/g, "-")}`}
-                    state={{ courseId: course.courseId._id , userId: id}}
-                  >
-                    <td className="px-4 py-2">{course.courseId.name}</td>
-                  </Link>
+                  <td className="px-4 py-2 hover:text-[#0364BD]">
+                    {courseLinks[course.courseId._id] && (
+                      <Link
+                        to={courseLinks[course.courseId._id].url}
+                        state={{
+                          courseId: course.courseId._id,
+                          userId: id,
+                          videoId: courseLinks[course.courseId._id].videoId, // Pass videoId dynamically
+                        }}
+                      >
+                        {course.courseId.name}
+                      </Link>
+                    )}
+                  </td>
                   <td className="px-4 py-2 text-center">{course.progress} %</td>
                   <td className="px-4 py-2 text-center">
                     {course.courseId.category}
@@ -145,14 +195,18 @@ const Training = () => {
                     {course.interactive ? "✔️" : "❌"}
                   </td>
                   <td className="px-4 py-2 flex justify-center items-center">
-                    <Link
-                      to={`/courses/${course.courseId.name.replace(
-                        /\s+/g,
-                        "-"
-                      )}`}
-                    >
-                      <IoEyeOutline className="cursor-pointer text-2xl font-semibold h-6 hover:text-[#0364BD]" />
-                    </Link>
+                    {courseLinks[course.courseId._id] && (
+                      <Link
+                        to={courseLinks[course.courseId._id].url}
+                        state={{
+                          courseId: course.courseId._id,
+                          userId: id,
+                          videoId: courseLinks[course.courseId._id].videoId,
+                        }}
+                      >
+                        <IoEyeOutline className="cursor-pointer text-2xl hover:text-blue-500" />
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 body {
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+.vjs-custom{
+  background-color: #D9D9D9;
 }

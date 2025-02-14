@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { IoEyeOutline } from "react-icons/io5";
 import sampleVideo from "../assets/flower.webm";
 import { useAuth } from "../utils/AuthProvider";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
+import VideoPlayer from "./VideoPlayer/VideoPlayer";
 
 const courses = [
   {
@@ -43,6 +44,8 @@ const Overview = () => {
   const { details } = useSelector((state) => state.userProfile);
   const id = details?._id;
   const [assignCourses, setAssignCourses] = useState([]);
+  const playerRef = useRef(null);
+  const videoLink = "/src/assets/Video2.mp4";
 
   const FetchAssignedCourses = async (token, id) => {
     if (!token || !id) return; // Prevent the function from running with invalid inputs
@@ -74,15 +77,13 @@ const Overview = () => {
     return null;
   }
 
+  
+
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div className="flex gap-x-5 py-5 px-5">
-        <div className="h-[270px] w-[750px] bg-[#e6e6e6] rounded-lg overflow-hidden">
-          <a>
-            <video controls className="h-[270px] w-[750px]">
-              <source src={sampleVideo} type="video/webm" />
-            </video>
-          </a>
+        <div className="h-auto w-[750px] max-w-4xl mx-auto bg-gray-200 rounded-xl overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1710384933211-ccd12606d21e?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"></img>
         </div>
         <div className="flex flex-col justify-between w-full py-4">
           <div className="">
