@@ -28,7 +28,7 @@ router.get("/options", authenticateToken, getCourseDetails)
 // AWS
 router.post("/uploadCourseVideo", superDashboardMiddleware, upload.single("file"), uploadCourseVideo)
 router.delete("/deleteCourseVideo", superDashboardMiddleware, deleteCourseVideo)
-router.get("/getSignedUrl", superDashboardMiddleware, getSignedUrlController)
+router.get("/getSignedUrl", authenticateToken, getSignedUrlController)
 
 
 

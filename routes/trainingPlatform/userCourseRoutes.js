@@ -15,7 +15,7 @@ router.get("/details/:courseId/:userId",authenticateToken, getUserAssignedCourse
 router.post("/progress",authenticateToken,updateVideoProgress);
 
 // get user Course progress
-router.get("/progress/:userId/:videoId", authenticateToken, getUserCourseProgress);
+router.get("/progress/:courseId/:userId", authenticateToken, getUserCourseProgress);
 
 
 export default router;
