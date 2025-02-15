@@ -6,16 +6,16 @@ const ForgotDetails = () => {
     const [email, setEmail] = useState("");
     const [isPasswordReset, setIsPasswordReset] = useState(false);
     const [isUsernameReminder, setIsUsernameReminder] = useState(false);
-    const [isOrgIdRem, setIsOrgIdRem] = useState(false);
+    const [orgId, setOrgId] = useState("");
 
     const handleSendEmail = async (event) => {
         event.preventDefault();
 
         const formData = {
+            orgId,
             email,
             isPasswordReset,
             isUsernameReminder,
-            isOrgIdRem,
             reqMadeFrom: "dashboard"
         };
         try {
@@ -49,6 +49,18 @@ const ForgotDetails = () => {
 
                         <h2 className="text-2xl font-bold mb-6 text-center">Forgot Details</h2>
                         <div className="mb-4">
+                            <label htmlFor="email">Organisation Id:</label>
+                            <input
+                                type="orgId"
+                                name="orgId"
+                                id="orgId"
+                                value={orgId}
+                                onChange={(e) => setOrgId(e.target.value)}
+                                required
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                            />
+                        </div>
+                        <div className="mb-4">
                             <label htmlFor="email">E-mail:</label>
                             <input
                                 type="email"
@@ -79,15 +91,6 @@ const ForgotDetails = () => {
                                     onChange={(e) => setIsUsernameReminder(e.target.checked)}
                                 />
                                 <label htmlFor="username">Request Username Reminder </label>
-                            </div>
-                            <div className='flex flex-row gap-2'>
-                                <input type="checkbox"
-                                    name="orgIdRem"
-                                    id="orgIdRem"
-                                    checked={isOrgIdRem}
-                                    onChange={(e) => setIsOrgIdRem(e.target.checked)}
-                                />
-                                <label htmlFor="orgIdRem">Request Organization Reminder </label>
                             </div>
                         </div>
                         <input className="w-full bg-[#0364BD] text-[#f4f4f4] py-2 rounded-md hover:bg-[#003A70] transition-colors font-medium" type="submit" value="Send E-mail" />

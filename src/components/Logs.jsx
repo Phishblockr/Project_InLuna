@@ -143,6 +143,7 @@ const Logs = () => {
 
     const { getToken } = useAuth();
     const token = getToken();
+    console.log("token",token)
     const perPageRec = useSelector((state) => state.perPageRec)
     const logsData = useSelector((state) => state.logs.logs);
     const totalPages = useSelector((state) => state.logs.totalPages);
@@ -229,7 +230,8 @@ const Logs = () => {
     }, [dispatch, perPageRec, currentPage]);
 
     const handleDownload = () => {
-        dispatch(downloadLogsCsv(token));
+
+        dispatch(downloadLogsCsv({token}));
     };
 
     function getVisiblePages(totalPages, currentPage) {

@@ -166,6 +166,7 @@ const Overview = () => {
         }
       });
       const data = await response.json();
+      console.log(data)
 
       setHeatmapData(
         Object.entries(data.heatmapData).map(([category, values]) => ({

@@ -8,11 +8,13 @@ const PasswordReset = () => {
     const { token } = useParams();
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [orgId, setOrgId] = useState("");
 
     const handlePasswordReset = async (event) => {
         event.preventDefault();
 
         const formData = {
+            orgId,
             newPassword,
             confirmPassword
         };
@@ -29,7 +31,7 @@ const PasswordReset = () => {
             if (!response.ok) {
                 const data = await response.json();
                 toast.error(data.message || 'Unable to reset password.');
-                return 
+                return
             }
             toast.success("Password Reset Successful! You can now close this window.");
         } catch (err) {
@@ -49,6 +51,18 @@ const PasswordReset = () => {
                     <form onSubmit={handlePasswordReset}>
 
                         <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
+                        <div className="mb-4">
+                            <label htmlFor="email">Organisation Id:</label>
+                            <input
+                                type="orgId"
+                                name="orgId"
+                                id="orgId"
+                                value={orgId}
+                                onChange={(e) => setOrgId(e.target.value)}
+                                required
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+                            />
+                        </div>
                         <div className="mb-4">
                             <label htmlFor="newPassword">New Password:</label>
                             <input
