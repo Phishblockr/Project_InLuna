@@ -156,7 +156,7 @@ export const getUserAssignedCourseDetails = async (req, res) => {
       console.error("Error fetching course details:", error);
       res.status(500).json({ message: "Internal server error" });
     }
-  };
+};
   
 
 // Update video progress
@@ -165,7 +165,6 @@ export const updateVideoProgress = async (req, res) => {
 
     try {
         const userCourse = await UserCourse.findOne({userId, courseId})
-        console.log(userCourse);
 
         if(!userCourse){
             return res.status(404).json({success:false, message:"Course not found for the User."})
@@ -173,7 +172,6 @@ export const updateVideoProgress = async (req, res) => {
 
         //find the video progress inside the watchStatus array
         const videoIndex = userCourse.watchStatus.findIndex((v)=>v.videoId.toString()===videoId);
-        console.log(videoIndex);
 
         if(videoIndex>=0){
             //update the watched duration if the new duration is greater
@@ -205,7 +203,7 @@ export const getUserCourseProgress = async (req, res)=>{
         const userCourse = await UserCourse.findOne({userId:req.params.userId,courseId:req.params.courseId});
 
         if(!userCourse){
-            return res.status(404),json({success:false, message:"course not found"});
+            return res.status(404).json({success:false, message:"course not found"});
         }
 
         res.json({success:true,progress:userCourse.progress,watchStatus:userCourse.watchStatus});

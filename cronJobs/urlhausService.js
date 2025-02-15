@@ -49,7 +49,7 @@ const fetchAndSaveUrlhausData = async () => {
 };
 
 // Schedule the job to run every midnight
-cron.schedule('0 0 * * *', () => {
+cron.schedule('0 1 * * *', () => {
     console.log('Running scheduled URLhaus job...');
     fetchAndSaveUrlhausData();
 });
