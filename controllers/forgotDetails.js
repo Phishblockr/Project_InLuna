@@ -1,9 +1,13 @@
 import sgMail from "@sendgrid/mail";
-import User from "../models/userModel.js"
+import UserSchema from "../models/userModel.js"
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
-import AdminLogs from "../models/adminlogsModel.js";
+import AdminLogsSchema from "../models/adminlogsModel.js";
+import asyncHandler from "../middlewares/asyncHandler.js";
+import { getTenantModel } from "../admindb.js";
+import { getTenantDB } from "../tenantdb.js";
+import mongoose from "mongoose";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -78,64 +82,88 @@ const sendEmail = async (to, subject, content, user) => {
 };
 
 
-export const handleForgotDetails = async (req, res) => {
-    const { email, isPasswordReset, isUsernameReminder, isOrgIdRem, reqMadeFrom } = req.body;
+export const handleForgotDetails = asyncHandler(async (req, res) => {
+    const { email, orgId, isPasswordReset, isUsernameReminder, reqMadeFrom } = req.body;
 
-    if (!isPasswordReset && !isUsernameReminder && !isOrgIdRem) {
-        return res.status(404).json({ message: "Invalid option" });
+    if (!orgId) {
+        return res.status(400).json({ message: "Organization ID is required." });
+    }
+
+    if (!isPasswordReset && !isUsernameReminder) {
+        return res.status(400).json({ message: "Invalid request option. Select at least one." });
     }
 
     try {
-        // Find user by email
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: "Email not found" });
+        // ✅ Get the tenant-specific database
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to connect to tenant database." });
         }
-        const userId = user._id;
-        const orgId = user.orgId;
 
+        // ✅ Get the correct User model for the tenant
+        if (!tenantDb.models.User) {
+            tenantDb.model("User", UserSchema);
+        }
+        const User = tenantDb.models.User;
+
+        // ✅ Fetch user from tenant database
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found in the provided organization." });
+        }
+
+        const userId = user._id;
         let emailContent = '';
         let responseMessage = [];
 
-        // Generate username reminder if requested
+        // ✅ Generate username reminder if requested
         if (isUsernameReminder) {
             emailContent += generateUsernameReminder(user, userId, orgId, reqMadeFrom);
             responseMessage.push(`Requested Username reminder.`);
         }
 
-        // Generate password reset link if requested
+        // ✅ Generate password reset link if requested
         if (isPasswordReset) {
             emailContent += await generatePasswordResetLink(user, userId, orgId, reqMadeFrom);
             responseMessage.push(`Requested Password reset link.`);
         }
 
-        if (isOrgIdRem) {
-            emailContent += generateOrgIdReminder(user, userId, orgId, reqMadeFrom);
-            responseMessage.push(`Requested Organization id reminder.`);
-        }
-
-        // Send the combined email
+        // ✅ Send email
         await sendEmail(email, "InLuna Dashboard - Forgot Details Assistance", emailContent, user);
 
+        // ✅ Log only for admin users
         if (user.userType === process.env.ADMIN) {
-            // Add Log entry
+            // ✅ Get AdminLogs model for the tenant
+            if (!tenantDb.models.AdminLogs) {
+                tenantDb.model("AdminLogs", new mongoose.Schema(AdminLogsSchema));
+            }
+            const AdminLogs = tenantDb.models.AdminLogs;
+
+            // ✅ Add Log entry in tenant DB
             await AdminLogs.create({
                 userId,
                 operationType: "account recovery",
                 operationsPerformed: `${responseMessage.join(" ")} for ${reqMadeFrom}`,
                 orgId,
-            })
+            });
         }
 
         res.status(200).json({ message: responseMessage.join(" ") });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("❌ Error in handleForgotDetails:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-};
+});
 
-export const resetPassword = async (req, res) => {
+
+export const resetPassword = asyncHandler(async (req, res) => {
     const { token } = req.params;
-    const { newPassword, confirmPassword } = req.body;
+    const { orgId, newPassword, confirmPassword } = req.body; // ✅ Take orgId from user input
+
+    if (!orgId) {
+        return res.status(400).json({ message: "Organization ID is required." });
+    }
 
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
 
@@ -144,37 +172,55 @@ export const resetPassword = async (req, res) => {
     }
 
     if (!passwordRegex.test(newPassword)) {
-        return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
+        return res.status(400).json({
+            message: "Password must be at least 6 characters long and contain both letters and numbers."
+        });
     }
 
     try {
-        const user = await User.findOne({
-            resetPasswordExpires: { $gt: Date.now() },
-        });
+        // ✅ Get the tenant-specific database
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to connect to tenant database." });
+        }
+
+        // ✅ Get the correct User model for this tenant
+        if (!tenantDb.models.User) {
+            tenantDb.model("User", UserSchema);
+        }
+        const User = tenantDb.models.User;
+
+        // ✅ Find the user in this tenant DB
+        const user = await User.findOne({ resetPasswordExpires: { $gt: Date.now() } });
 
         if (!user || !(await bcrypt.compare(token, user.resetPasswordToken))) {
-            return res.status(400).json({ message: 'Invalid or expired token' });
+            return res.status(400).json({ message: "Invalid or expired token" });
         }
 
         const userId = user._id;
-        const orgId = user.orgId;
 
+        // ✅ Hash new password and update user
         user.password = await bcrypt.hash(newPassword, 10);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
-
         await user.save();
 
-        // Add Log entry
+        // ✅ Store logs in the correct tenant DB
+        if (!tenantDb.models.AdminLogs) {
+            tenantDb.model("AdminLogs", new mongoose.Schema(AdminLogsSchema));
+        }
+        const AdminLogs = tenantDb.models.AdminLogs;
+
         await AdminLogs.create({
             userId,
             operationType: "account recovery",
-            operationsPerformed: `Password reset successful`,
+            operationsPerformed: "Password reset successful",
             orgId,
-        })
+        });
 
-        res.status(200).json({ message: 'Password reset successful' });
+        res.status(200).json({ message: "Password reset successful" });
     } catch (error) {
-        res.status(500).json({ message: 'Error resetting password' });
+        console.error("❌ Error resetting password:", error);
+        res.status(500).json({ message: "Error resetting password" });
     }
-}
+});

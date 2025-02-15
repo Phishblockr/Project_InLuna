@@ -3,7 +3,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import {Server} from "socket.io"
-import dotenv from 'dotenv';
 import winston from 'winston';
 
 import authenticationRoutes from "./routes/authenticationRoutes.js";
@@ -37,8 +36,14 @@ import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.j
 import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
 import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js"
 
+import tenantRoutes from "./routes/tenantRoutes.js"
+import superAdminRoutes from "./routes/superAdminRoutes.js"
 
+import dotenv from "dotenv";
 dotenv.config();
+
+import "./utils/tokenEncryption.js";
+
 
 const app = express();
 // Increase the size limit for JSON and URL-encoded bodies
@@ -46,7 +51,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // CORS Configuration
 // Development only
-const allowedOrigins = ['http://localhost:5173', 'chrome-extension://','moz-extension://','http://localhost:5174','http://localhost:5175'];
+const allowedOrigins = ['http://localhost:5173', 'chrome-extension://','moz-extension://','http://localhost:5174','http://localhost:5175','http://localhost:5000'];
 
 app.use(
     cors({
@@ -159,6 +164,10 @@ app.use("/api/emailTemplate", emailTemplateRoutes)
 app.use("/api/course", courseRoutes)
 
 app.use("/api/userCourse", userCourseRoutes)
+
+app.use("/api/tenant", tenantRoutes)
+
+app.use("/api/superadmin", superAdminRoutes)
 
 // Start cron job
 // fetchAndSavePhishtankData();

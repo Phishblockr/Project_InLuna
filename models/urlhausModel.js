@@ -48,6 +48,4 @@ const urlhausSchema = new mongoose.Schema(
     },
     {timestamps:true}
 );
-
-const UrlhausData = mongoose.model("UrlhausData", urlhausSchema);
-export default UrlhausData;
+export default urlhausSchema;

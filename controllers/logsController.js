@@ -8,6 +8,9 @@ import { fileURLToPath } from 'url';
 import Url from '../models/urlModel.js';
 import User from '../models/userModel.js';
 import WhitelistReq from '../models/RequestModel.js';
+import asyncHandler from '../middlewares/asyncHandler.js';
+import getAdminLogsModel from '../models/adminlogsModel.js';
+import { getTenantDB } from '../tenantdb.js';
 
 
 
@@ -16,28 +19,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-export const getAllLogs = async (req, res) => {
+export const getAllLogs = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const search = req.query.search || ""
+    const search = req.query.search || "";
     const operationType = req.query.operationType || "all";
-    const dateRangeFilter = req.query.dateRangeFilter || "all"
-
+    const dateRangeFilter = req.query.dateRangeFilter || "all";
     const orgId = req.user.orgId;
 
-    const searchFilter = search ? {
-        $or: [
-            { operationsPerformed: { $regex: search, $options: "i" } },
-            { "userDetails.name": { $regex: search, $options: "i" } }
-        ]
-    } : {};
-
-    const operationTypeFilter = operationType == "all" ? {} : { operationType };
-    const dateFilter = getDateRange(dateRangeFilter);
     try {
+        // ✅ Get the correct tenant database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Get the correct AdminLogs model for this tenant
+        const AdminLogs = getAdminLogsModel(tenantDb);
+        if (!AdminLogs) {
+            return res.status(500).json({ message: "Failed to initialize AdminLogs model." });
+        }
+
+        // ✅ Fetch logs from the tenant database
         const logs = await AdminLogs.aggregate([
-            { $match: { orgId, ...operationTypeFilter, ...dateFilter } },
+            { $match: { orgId, ...getDateRange(dateRangeFilter), ...(operationType !== "all" ? { operationType } : {}) } },
             {
                 $lookup: {
                     from: "users",
@@ -47,70 +53,60 @@ export const getAllLogs = async (req, res) => {
                 }
             },
             { $unwind: "$userDetails" },
-            { $match: searchFilter },
-            {
-                $project: {
-                    _id: 1,
-                    operationType: 1,
-                    operationsPerformed: 1,
-                    createdAt: 1,
-                    entityId: 1,
-                    entityType: 1,
-                    entityDetails: 1,
-                    "userDetails._id": 1,
-                    "userDetails.name": 1,
-                    "userDetails.email": 1,
-                    "userDetails.department": 1,
-                    "userDetails.img": 1
-                }
-            },
+            { $match: search ? {
+                $or: [
+                    { operationsPerformed: { $regex: search, $options: "i" } },
+                    { "userDetails.name": { $regex: search, $options: "i" } }
+                ]
+            } : {} },
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }
         ]);
 
-        const logsWithDetails = await Promise.all(logs.map(async (log) => {
-            const entityDetails = log.entityDetails || await getEntityDetails(log.entityType, log.entityId);
-            return {
-                ...log,
-                entityDetails,
-            };
-        }));
+        // ✅ Count total logs
+        const totalLogs = await AdminLogs.countDocuments({ orgId });
 
-        const totalLogsAggregation = await AdminLogs.aggregate([
-            { $match: { orgId, ...operationTypeFilter, ...dateFilter } },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "userId",
-                    foreignField: "_id",
-                    as: "userDetails",
-                }
-            },
-            { $unwind: "$userDetails" },
-            { $match: searchFilter },
-            { $count: "totalCount" },
-        ]);
-        const totalLogs = totalLogsAggregation[0]?.totalCount || 0;
+        // Fetch entity details for each log entry
+        const logsWithDetails = await Promise.all(
+            logs.map(async (log) => ({
+                ...log,
+                entityDetails: log.entityDetails || await getEntityDetails(log.entityType, log.entityId)
+            }))
+        );
 
         res.json({
             data: logsWithDetails,
             currentPage: page,
             totalPages: Math.ceil(totalLogs / limit),
             totalLogs
-        })
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("❌ Error fetching Tenant logs:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-};
+});
 
-export const exportLogsToCsv = async (req, res) => {
+
+export const exportLogsToCsv = asyncHandler(async (req, res) => {
     try {
         const orgId = req.user.orgId;
+
+        // ✅ Get the correct tenant database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Get the correct AdminLogs model for this tenant
+        const AdminLogs = getAdminLogsModel(tenantDb);
+        if (!AdminLogs) {
+            return res.status(500).json({ message: "Failed to initialize AdminLogs model." });
+        }
+
+        // ✅ Fetch logs for the organization from the tenant database
         const logs = await AdminLogs.aggregate([
-            {
-                $match: { orgId }
-            },
+            { $match: { orgId } },
             {
                 $lookup: {
                     from: "users",
@@ -119,9 +115,7 @@ export const exportLogsToCsv = async (req, res) => {
                     as: "userDetails"
                 }
             },
-            {
-                $unwind: "$userDetails"
-            },
+            { $unwind: "$userDetails" },
             {
                 $project: {
                     _id: 1,
@@ -133,49 +127,52 @@ export const exportLogsToCsv = async (req, res) => {
                     entityDetails: 1,
                     "userDetails.name": 1,
                     "userDetails.email": 1,
-                    "userDetails.department": 1,
+                    "userDetails.department": 1
                 }
             },
-            {
-                $sort: { createdAt: -1 }
-            }
+            { $sort: { createdAt: -1 } }
         ]);
-        if (!logs || logs.length === 0) {
-            return res.status(404).json({ message: 'No logs found for the organization' });
+
+        if (!logs.length) {
+            return res.status(404).json({ message: "No logs found for the organization" });
         }
+
+        // ✅ CSV Fields
         const fields = [
-            { label: 'Log ID', value: '_id' },
-            { label: 'Operation Type', value: (row) => row.operationType || 'NA' },
-            { label: 'Operations Performed', value: (row) => row.operationsPerformed || 'NA' },
-            { label: 'Created At', value: (row) => row.createdAt || 'NA' },
-            { label: 'Entity ID', value: (row) => row.entityId || 'NA' },
-            { label: 'Entity Type', value: (row) => row.entityType || 'NA' },
-            { label: 'Entity Details', value: (row) => row.entityDetails ? JSON.stringify(row.entityDetails) : 'NA' }, // Convert object to string or 'NA'
-            { label: 'User Name', value: (row) => row.userDetails.name || 'NA' },
-            { label: 'User Email', value: (row) => row.userDetails.email || 'NA' },
-            { label: 'User Department', value: (row) => row.userDetails.department || 'NA' }
+            { label: "Log ID", value: "_id" },
+            { label: "Operation Type", value: "operationType" },
+            { label: "Operations Performed", value: "operationsPerformed" },
+            { label: "Created At", value: "createdAt" },
+            { label: "Entity ID", value: "entityId" },
+            { label: "Entity Type", value: "entityType" },
+            { label: "Entity Details", value: (row) => JSON.stringify(row.entityDetails) || "NA" },
+            { label: "User Name", value: "userDetails.name" },
+            { label: "User Email", value: "userDetails.email" },
+            { label: "User Department", value: "userDetails.department" }
         ];
 
         const json2csvParser = new Parser({ fields });
         const csv = json2csvParser.parse(logs);
 
-        const filePath = path.join(__dirname, '..', 'exports', `logs_${orgId}_${Date.now()}.csv`);
+        // ✅ Save file temporarily
+        const filePath = path.join(__dirname, "..", "exports", `logs_${orgId}_${Date.now()}.csv`);
         fs.writeFileSync(filePath, csv);
 
-        res.download(filePath, `logs_${Date.now()}.csv`, (err) => {
+        res.download(filePath, `logs_${orgId}_${Date.now()}.csv`, (err) => {
             if (err) {
-                console.error('Error downloading the CSV file:', err);
-                return res.status(500).json({ message: 'Error downloading the CSV file' });
+                console.error("❌ Error downloading the CSV file:", err);
+                return res.status(500).json({ message: "Error downloading the CSV file" });
             }
 
-            // Optionally, delete the file after download
-            fs.unlinkSync(filePath);
+            // ✅ Delete file after download
+            setTimeout(() => fs.unlinkSync(filePath), 5000);
         });
+
     } catch (error) {
-        console.error('Error exporting logs to CSV:', error);
-        res.status(500).json({ message: 'Error exporting logs to CSV', error: error.message });
+        console.error("❌ Error exporting logs to CSV:", error);
+        res.status(500).json({ message: "Error exporting logs to CSV", error: error.message });
     }
-};
+});
 
 const getDateRange = (filter) => {
     const today = new Date();
@@ -202,44 +199,70 @@ const getDateRange = (filter) => {
     }
 };
 
-const getEntityDetails = async (entityType, entityId) => {
+const getEntityDetails = async (entityType, entityId, orgId) => {
+    if (!orgId) {
+        console.error("❌ Missing orgId in getEntityDetails function");
+        return {};
+    }
+
     let entityDetails = {};
 
-    switch (entityType) {
-        case "user":
-            const user = await User.findById(entityId);
-            if (user) {
-                entityDetails = {
-                    identifier: user.email,
-                    status: user.status,      
-                    extraInfo: `Department: ${user.department}`,        
-                };
-            }
-            break;
+    try {
+        // ✅ Get the tenant database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            console.error(`❌ Failed to get tenant database for orgId: ${orgId}`);
+            return {};
+        }
 
-        case "url":
-            const url = await Url.findById(entityId);
-            if (url) {
-                entityDetails = {
-                    identifier: url.url,     
-                    status: url.status,      
-                    extraInfo: `Category: ${url.category.join(", ")}`,
-                };
-            }
-            break;
+        // ✅ Register models dynamically in the tenant DB
+        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
+        const Url = tenantDb.models.Url || tenantDb.model("Url", UrlSchema);
+        const WhitelistReq = tenantDb.models.WhitelistReq || tenantDb.model("WhitelistReq", WhitelistReqSchema);
 
-        case "whitelistReq":
-            const whitelistReq = await WhitelistReq.findById(entityId);
-            if (whitelistReq) {
-                entityDetails = {
-                    identifier: whitelistReq.url,
-                    status: whitelistReq.status,    
-                    extraInfo: `Reason: ${whitelistReq.reason}`, 
-                    from: whitelistReq.userId,      
-                };
-            }
-            break;
+        // ✅ Fetch entity details dynamically
+        switch (entityType) {
+            case "user":
+                const user = await User.findById(entityId);
+                if (user) {
+                    entityDetails = {
+                        identifier: user.email,
+                        status: user.status,
+                        extraInfo: `Department: ${user.department}`,
+                    };
+                }
+                break;
+
+            case "url":
+                const url = await Url.findById(entityId);
+                if (url) {
+                    entityDetails = {
+                        identifier: url.url,
+                        status: url.status,
+                        extraInfo: `Category: ${url.category.join(", ")}`,
+                    };
+                }
+                break;
+
+            case "whitelistReq":
+                const whitelistReq = await WhitelistReq.findById(entityId);
+                if (whitelistReq) {
+                    entityDetails = {
+                        identifier: whitelistReq.url,
+                        status: whitelistReq.status,
+                        extraInfo: `Reason: ${whitelistReq.reason}`,
+                        from: whitelistReq.userId,
+                    };
+                }
+                break;
+
+            default:
+                console.warn(`⚠️ Unknown entity type: ${entityType}`);
+        }
+    } catch (error) {
+        console.error(`❌ Error fetching entity details for ${entityType} (${entityId}):`, error);
     }
 
     return entityDetails;
 };
+

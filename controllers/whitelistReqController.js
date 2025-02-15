@@ -1,11 +1,14 @@
 import asyncHandler from '../middlewares/asyncHandler.js';
-import Url from '../models/urlModel.js';
-import Request from '../models/RequestModel.js';
+import UrlSchema from '../models/urlModel.js';
+import RequestSchema from '../models/RequestModel.js';
 import mongoose from 'mongoose';
-import domainReputation from '../models/domainReputationModel.js';
+import DomainReputationSchema from '../models/domainReputationModel.js';
 
 // for adminLog
-import AdminLogs from "../models/adminlogsModel.js";
+import AdminLogsSchema from "../models/adminlogsModel.js";
+import UserSchema from '../models/userModel.js';
+import { getTenantDB } from '../tenantdb.js';
+import getAdminLogsModel from '../models/adminlogsModel.js';
 
 //Virus Total domain reputation and url scan
 const VIRUSTOTAL_API_KEY = process.env.VIRUSTOTAL_API_KEY;
@@ -40,75 +43,108 @@ async function checkDomainReputation(domain) {
 }
 
 
-export const addRequestExt = async (req, res) => {
+export const addRequestExt = asyncHandler(async (req, res) => {
     try {
         const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
         const orgId = req.user.orgId;
-        const { url, reason , reqOption } = req.body;
+        const { url, reason, reqOption } = req.body;
 
-        // Extract domain from URL
+        if (!orgId) {
+            return res.status(400).json({ message: "Organization ID is required." });
+        }
+
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Register models dynamically in tenant DB if not already registered
+        if (!tenantDb.models.Url) tenantDb.model("Url", UrlSchema);
+        if (!tenantDb.models.Request) tenantDb.model("Request", RequestSchema);
+        if (!tenantDb.models.User) tenantDb.model("User", UserSchema);
+        if (!tenantDb.models.DomainReputation) tenantDb.model("DomainReputation", DomainReputationSchema);
+
+        // ✅ Get models
+        const Url = tenantDb.models.Url;
+        const Request = tenantDb.models.Request;
+        const DomainReputation = tenantDb.models.DomainReputation;
+
+        // ✅ Extract domain from URL
         const domain = new URL(url).hostname;
 
-        let existingReputation = await domainReputation.findOne({urlDomain:domain});
-        if(!existingReputation){
-            
-            // Check domain reputation using VirusTotal
+        // ✅ Check if domain reputation exists
+        let existingReputation = await DomainReputation.findOne({ urlDomain: domain });
+
+        if (!existingReputation) {
+            // ✅ Check domain reputation using VirusTotal
             const reputationResult = await checkDomainReputation(domain);
-            const newDomainReputation = new domainReputation({
+            const newDomainReputation = new DomainReputation({
                 urlDomain: domain,
-                reputationDetails: reputationResult.stats, 
+                reputationDetails: reputationResult.stats,
                 reputationScore: reputationResult.reputation,
-            })
+            });
             existingReputation = await newDomainReputation.save();
-            
         }
 
+        // ✅ Check if URL exists in the database
         let existingUrl = await Url.findOne({ url, orgId });
+
         if (!existingUrl) {
-            const newUrl = new Url ({
-                url: `${req.body.url}`,
-                orgId: req.user.orgId,
+            const newUrl = new Url({
+                url: url,
+                orgId: orgId,
                 isVerified: false,
                 isPhishing: false,
-                reputationDetails:existingReputation.reputationDetails,
-                reputationScore:existingReputation.reputationScore,
-            })
+                reputationDetails: existingReputation.reputationDetails,
+                reputationScore: existingReputation.reputationScore,
+            });
+
             existingUrl = await newUrl.save();
             return res.status(404).json({
-                message: "The URL you entered is not currently in our database. Please try again or contact support for assistance."
+                message: "The URL you entered is not currently in our database. Please try again or contact support for assistance.",
             });
         }
-        
+
+        // ✅ Check if a request for this URL already exists
         const existingRequest = await Request.findOne({
             userId,
             url,
             orgId,
-            status: { $ne: "approved" }
-        })
+            status: { $ne: "approved" }, // Ensure it's not already approved
+        });
 
         if (existingRequest) {
-            return res.status(400).json({ message: `You have already submitted a ${existingRequest.reqOption} request for this URL, pending approval.` });
+            return res.status(400).json({
+                message: `You have already submitted a ${existingRequest.reqOption} request for this URL, pending approval.`,
+            });
         }
-        
+
+        // ✅ Create new request
         const newRequest = new Request({
             userId,
             url,
             reason,
             orgId,
             reqOption,
-            reputationDetails: existingReputation.reputationDetails, // Save reputation stats
-            reputationScore: existingReputation.reputationScore, // Save reputation score
+            reputationDetails: existingReputation.reputationDetails, // Store reputation stats
+            reputationScore: existingReputation.reputationScore, // Store reputation score
         });
+
         await newRequest.save();
+
+        // ✅ Update URL with request ID
         existingUrl.RequestIds = existingUrl.RequestIds || [];
         existingUrl.RequestIds.push(newRequest._id);
         await existingUrl.save();
 
+        // ✅ Emit WebSocket event for real-time update
         const io = req.app.get("socketio");
-        io.emit("newReqAdded", newRequest);
-        //res.status(201).send(newRequest);
+        if (io) {
+            io.emit("newReqAdded", newRequest);
+        }
 
-        // Respond with the new request and reputation details
+        // ✅ Respond with success message and request details
         res.status(201).json({
             message: "Request submitted successfully",
             request: newRequest,
@@ -117,32 +153,55 @@ export const addRequestExt = async (req, res) => {
                 reputationScore: existingReputation.reputationScore,
             },
         });
+
     } catch (error) {
-        //res.status(400).send(error.message);
+        console.error("❌ Error in addRequestExt:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
     }
-};
+});
 
 export const fetchReqs = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
-    const search = req.query.search || ""
-    const status = req.query.status || "all";
-
-    const orgId = req.user.orgId;
-    const searchFilter = search ? {
-        $or: [
-            { url: { $regex: search, $options: "i" } },
-            { reason: { $regex: search, $options: "i" } },
-            { "userDetails.name": { $regex: search, $options: "i" } },
-            { "userDetails.email": { $regex: search, $options: "i" } },
-        ]
-    } : {};
-
-    const statusFilter = status == "all" ? {} : { status };
-
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || "";
+        const status = req.query.status || "all";
+
+        const orgId = req.user.orgId;
+
+        if (!orgId) {
+            return res.status(400).json({ message: "Organization ID is required." });
+        }
+
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Register models dynamically in tenant DB if not already registered
+        if (!tenantDb.models.Request) tenantDb.model("Request", RequestSchema);
+        if (!tenantDb.models.User) tenantDb.model("User", UserSchema);
+
+        // ✅ Get models
+        const Request = tenantDb.models.Request;
+        const User = tenantDb.models.User;
+
+        // ✅ Build search filter
+        const searchFilter = search ? {
+            $or: [
+                { url: { $regex: search, $options: "i" } },
+                { reason: { $regex: search, $options: "i" } },
+                { "userDetails.name": { $regex: search, $options: "i" } },
+                { "userDetails.email": { $regex: search, $options: "i" } },
+            ],
+        } : {};
+
+        // ✅ Build status filter
+        const statusFilter = status === "all" ? {} : { status };
+
+        // ✅ Aggregate Requests with User Details
         const Requests = await Request.aggregate([
             { $match: { orgId, ...statusFilter } },
             {
@@ -150,8 +209,8 @@ export const fetchReqs = asyncHandler(async (req, res) => {
                     from: "users",
                     localField: "userId",
                     foreignField: "_id",
-                    as: "userDetails"
-                }
+                    as: "userDetails",
+                },
             },
             { $unwind: "$userDetails" },
             { $match: searchFilter },
@@ -160,20 +219,21 @@ export const fetchReqs = asyncHandler(async (req, res) => {
                     _id: 1,
                     url: 1,
                     reason: 1,
-                    reqOption:1,
+                    reqOption: 1,
                     status: 1,
                     createdAt: 1,
                     "userDetails.name": 1,
                     "userDetails.email": 1,
                     reputationDetails: 1, // Include VirusTotal reputation details
                     reputationScore: 1, // Include VirusTotal reputation score
-                }
+                },
             },
             { $sort: { createdAt: -1 } },
             { $skip: skip },
-            { $limit: limit }
+            { $limit: limit },
         ]);
 
+        // ✅ Count total requests for pagination
         const totalReqsAggregation = await Request.aggregate([
             { $match: { orgId, ...statusFilter } },
             {
@@ -191,59 +251,84 @@ export const fetchReqs = asyncHandler(async (req, res) => {
 
         const totalReqs = totalReqsAggregation[0]?.totalCount || 0;
 
-        res.json({
+        // ✅ Send response
+        res.status(200).json({
             data: Requests,
             currentPage: page,
             totalPages: Math.ceil(totalReqs / limit),
-            totalReqs
+            totalReqs,
         });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("❌ Error in fetchReqs:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-})
+});
 
 export const approveRequest = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
-
         const userId = req.user.userId;
         const orgId = req.user.orgId;
 
-        const RequestData = await Request.findById(id);
-        if (!RequestData) {
+        if (!orgId) {
+            return res.status(400).json({ message: "Organization ID is required." });
+        }
+
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Register models dynamically in tenant DB
+        if (!tenantDb.models.Request) tenantDb.model("Request", RequestSchema);
+        if (!tenantDb.models.Url) tenantDb.model("Url", UrlSchema);
+        if (!tenantDb.models.User) tenantDb.model("User", UserSchema);
+
+        // ✅ Get models
+        const Request = tenantDb.models.Request;
+        const Url = tenantDb.models.Url;
+        const User = tenantDb.models.User;
+        const AdminLogs = getAdminLogsModel(tenantDb); // ✅ Fetch tenant-specific AdminLogs model
+
+        // ✅ Find the request in the tenant database
+        const requestData = await Request.findById(id);
+        if (!requestData) {
             return res.status(404).json({ message: "Request not found" });
         }
-        const RequestOption = RequestData.reqOption;
-        let ReqOpt = "";
-        let isPhished = true;
-        if(RequestOption==="blacklist"){
-            ReqOpt = "blacklisted";
-            isPhished;
-        }else if(RequestOption==="whitelist"){
-            ReqOpt = "whitelisted";
-            isPhished= false;
+
+        // ✅ Determine request type (whitelist/blacklist)
+        let reqStatus, isPhished;
+        if (requestData.reqOption === "blacklist") {
+            reqStatus = "blacklisted";
+            isPhished = true;
+        } else if (requestData.reqOption === "whitelist") {
+            reqStatus = "whitelisted";
+            isPhished = false;
+        } else {
+            return res.status(400).json({ message: "Invalid request option" });
         }
 
-
-        // Update all Requests associated with the same URL and orgId to approved
-
+        // ✅ Update all related requests for the same URL & orgId
         await Request.updateMany(
-            { url: RequestData.url, orgId: RequestData.orgId }, { status: "approved", reqOption: RequestOption }
-        )
-        let url = await Url.findOne({ url: RequestData.url, orgId: RequestData.orgId });
-        
+            { url: requestData.url, orgId },
+            { status: "approved", reqOption: requestData.reqOption }
+        );
 
+        // ✅ Find or update URL entry in the tenant database
+        let url = await Url.findOne({ url: requestData.url, orgId });
         if (!url) {
             return res.status(404).json({ message: "URL not found in the database" });
         } else {
-            // If the URL exists, update it with the request ID
             url.isUserAdded = true;
             url.isVerified = true;
             url.isPhishing = isPhished;
-            url.status = ReqOpt,
-                await url.save();
+            url.status = reqStatus;
+            await url.save();
         }
 
+        // ✅ Fetch updated request details (with user info)
         const updatedRequestData = await Request.aggregate([
             { $match: { _id: new mongoose.Types.ObjectId(id) } },
             {
@@ -273,45 +358,91 @@ export const approveRequest = asyncHandler(async (req, res) => {
             return res.status(404).json({ message: "Updated request not found" });
         }
 
+        // ✅ Emit WebSocket event for frontend updates
         const io = req.app.get("socketio");
-        io.emit("reqUpdated", updatedRequestData[0]); // Emit the full updated object with user details
+        io.emit("reqUpdated", updatedRequestData[0]);
 
-        // Add Log entry
+        // ✅ Log the approval in AdminLogs
         await AdminLogs.create({
             userId,
             operationType: "approved",
             operationsPerformed: `Request Approved: ${id}`,
             orgId,
             entityId: id,
-            entityType: "whitelistReq"
-        })
+            entityType: "whitelistReq",
+            entityDetails: {
+                identifier: requestData.url,
+                status: reqStatus,
+                user: requestData.userId.toString(),
+                extraInfo: `Reason: ${requestData.reason}`
+            }
+        });
 
-        res.json({ message: "Request approved and URL updated", updatedRequestData: updatedRequestData[0] });
+        // ✅ Send success response
+        res.status(200).json({
+            message: "Request approved and URL updated",
+            updatedRequestData: updatedRequestData[0]
+        });
+
     } catch (error) {
+        console.error("❌ Error in approveRequest:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
-        console.error(error)
     }
 });
+
 
 export const deleteRequest = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.userId;
         const orgId = req.user.orgId;
-        const data = await Request.findById(id);
-        if (!data) {
+
+        if (!orgId) {
+            return res.status(400).json({ message: "Organization ID is required." });
+        }
+
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Register models dynamically in tenant DB
+        if (!tenantDb.models.Request) tenantDb.model("Request", RequestSchema);
+        if (!tenantDb.models.Url) tenantDb.model("Url", UrlSchema);
+
+        // ✅ Get models for the specific tenant
+        const Request = tenantDb.models.Request;
+        const Url = tenantDb.models.Url;
+        const AdminLogs = getAdminLogsModel(tenantDb); // ✅ Get tenant-specific AdminLogs model
+
+        // ✅ Find the request in the tenant's database
+        const requestData = await Request.findById(id);
+        if (!requestData) {
             return res.status(404).json({ message: "Request not found" });
         }
-        const {url} = data;
+
+        const { url } = requestData;
+
+        // ✅ Find the associated URL entry in the tenant database
         const existingUrl = await Url.findOne({ url, orgId });
-        existingUrl.RequestIds = existingUrl.RequestIds.filter(
-            (requestId) => requestId.toString() !== id
-        );
-        await existingUrl.save();
+
+        if (existingUrl) {
+            // ✅ Remove request ID from URL document (if it exists)
+            existingUrl.RequestIds = existingUrl.RequestIds.filter(
+                (requestId) => requestId.toString() !== id
+            );
+            await existingUrl.save();
+        }
+
+        // ✅ Delete the request from the database
         await Request.findByIdAndDelete(id);
+
+        // ✅ Emit WebSocket event for real-time update
         const io = req.app.get("socketio");
         io.emit("reqDeleted", id);
 
+        // ✅ Log the deletion in AdminLogs
         await AdminLogs.create({
             userId,
             operationType: "delete",
@@ -319,11 +450,20 @@ export const deleteRequest = asyncHandler(async (req, res) => {
             orgId,
             entityId: id,
             entityType: "Request",
-            entityDetails: { from: data.userId, identifier: data.url, status: data.status, extraInfo: `Reason: ${data.reason}`  } 
-        })
+            entityDetails: {
+                from: requestData.userId,
+                identifier: requestData.url,
+                status: requestData.status,
+                extraInfo: `Reason: ${requestData.reason}`
+            }
+        });
 
-        res.status(200).json(id);
+        // ✅ Send success response
+        res.status(200).json({ message: "Request deleted successfully", requestId: id });
+
     } catch (error) {
-        res.status(400).send(error.message);
+        console.error("❌ Error deleting request:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-})
+});
+

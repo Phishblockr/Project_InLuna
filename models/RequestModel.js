@@ -4,7 +4,7 @@ const RequestSchema = new mongoose.Schema(
     {
         userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "user",
+            ref: "User", // ✅ Ensure "User" is the correct model name
             required: [true, "UserId cannot be empty"],
         },
         url: {
@@ -25,10 +25,10 @@ const RequestSchema = new mongoose.Schema(
             type: String,
             required: [true, "Organization ID cannot be empty"],
         },
-        reqOption:{
-            type : String,
+        reqOption: {
+            type: String,
             enum: ['whitelist', 'blacklist'],
-            required:true,
+            required: true,
         },
         reputationDetails: { 
             type: Object, 
@@ -44,6 +44,5 @@ const RequestSchema = new mongoose.Schema(
 
 RequestSchema.index({ orgId: 1, createdAt: 1 });
 
-const Request = mongoose.model("Request", RequestSchema);
-
-export default Request;
+// ✅ EXPORT ONLY THE SCHEMA
+export default RequestSchema;

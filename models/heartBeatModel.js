@@ -38,5 +38,4 @@ const heartbeatSchema = new Schema({
 
 heartbeatSchema.index({ userId: 1, orgId: 1 }, { unique: true });
 
-const HeartBeat = mongoose.model("HeartBeat", heartbeatSchema);
-export default HeartBeat;
+export default heartbeatSchema;

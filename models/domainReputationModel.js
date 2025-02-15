@@ -20,6 +20,6 @@ const domainReputationSchema = new mongoose.Schema(
 
 domainReputationSchema.index({createdAt: 1});
 
-const domainReputation = mongoose.model("DomainReputation", domainReputationSchema);
+// const domainReputation = mongoose.model("DomainReputation", domainReputationSchema);
 
-export default domainReputation;
+export default domainReputationSchema;

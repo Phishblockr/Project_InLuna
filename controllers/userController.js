@@ -1,5 +1,4 @@
-import User from '../models/userModel.js';
-import HeartBeat from '../models/heartBeatModel.js';
+import HeartBeatSchema from '../models/heartBeatModel.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import bcrypt from 'bcryptjs';
 import winston from 'winston';
@@ -12,6 +11,10 @@ import crypto from "crypto";
 
 // for adminLog
 import AdminLogs from "../models/adminlogsModel.js";
+import { getUserModel, getTenantDB } from '../tenantdb.js';
+import { getTenantModel } from '../admindb.js';
+import getAdminLogsModel from '../models/adminlogsModel.js';
+import UserSchema from '../models/userModel.js';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -28,91 +31,123 @@ const logger = winston.createLogger({
 
 // Get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
-    const search = req.query.search || "";
-    const status = req.query.status || "all";
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || "";
+        const status = req.query.status || "all";
 
-    const id = req.user.orgId;
+        const orgId = req.user.orgId; // Tenant ID from authenticated user
 
-    const searchFilter = search ? {
-        $or: [
-            { name: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } },
-            { department: { $regex: search, $options: 'i' } },
-            { role: { $regex: search, $options: 'i' } }
-        ]
-    } : {};
-
-    const statusFilter = status === "all" ? {} : {
-        status: { $regex: `^${status}$`, $options: "i" }
-    };
-
-    const queryFilter = { orgId: id, ...searchFilter, ...statusFilter };
-
-    const users = await User.find(queryFilter).select('-password').skip(skip).limit(limit);
-    const totalUsers = await User.countDocuments(queryFilter);
-
-    if (users.length === 0) {
-        return res.status(400).json({ error: "Users not found" });
-    }
-
-    const userIds = users.map((user) => user._id);
-    const heartBeats = await HeartBeat.find({userId: {$in: userIds}});
-
-    const INACTIVITY_THRESHOLD = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
-    const cutoffDate = new Date(Date.now() - INACTIVITY_THRESHOLD)
-
-    const usersWithHeartBeatStatus = users.map((user) => {
-        const heartBeat = heartBeats.find((hb) => hb.userId.toString() === user._id.toString());
-
-        let heartBeatStatus = "not initialized";
-        if (heartBeat){
-            const isInactive = heartBeat.timestamp < cutoffDate;
-            const hasDownTimeToday = heartBeat.downtime.some((dt) => {
-                const startOfToday = new Date();
-                startOfToday.setHours(0, 0, 0, 0);
-                const endOfToday = new Date();
-                endOfToday.setHours(23, 59, 59, 999);
-                return dt.newTimestamp >= startOfToday && dt.newTimestamp <= endOfToday;
-            });
-
-            if (hasDownTimeToday) {
-                heartBeatStatus = "downtime detected";
-            } else if (isInactive) {
-                heartBeatStatus = "inactive";
-            } else {
-                heartBeatStatus = "active"
-            }
+        if (!orgId) {
+            return res.status(400).json({ error: "Tenant ID is required" });
         }
-        return {
-            ...user.toObject(),
-            heartBeatStatus,
-        };
-    });
-    res.status(200).json({
-        users: usersWithHeartBeatStatus,
-        currentPage: page,
-        totalPages: Math.ceil(totalUsers / limit),
-        totalUsers,
-    });
+
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ error: "Failed to get tenant database" });
+        }
+
+        // ✅ Register User and HeartBeat models in tenant DB if not registered
+        if (!tenantDb.models.User) tenantDb.model("User", UserSchema);
+        if (!tenantDb.models.HeartBeat) tenantDb.model("HeartBeat", HeartBeatSchema);
+
+        // ✅ Get tenant models
+        const User = tenantDb.models.User;
+        const HeartBeat = tenantDb.models.HeartBeat;  // Now correctly retrieved
+
+        // ✅ Search filter
+        const searchFilter = search ? {
+            $or: [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { department: { $regex: search, $options: 'i' } },
+                { role: { $regex: search, $options: 'i' } }
+            ]
+        } : {};
+
+        // ✅ Status filter
+        const statusFilter = status === "all" ? {} : { status: { $regex: `^${status}$`, $options: "i" } };
+
+        const queryFilter = { orgId, ...searchFilter, ...statusFilter };
+
+        // ✅ Fetch users from the tenant's DB
+        const users = await User.find(queryFilter).select('-password').skip(skip).limit(limit);
+        const totalUsers = await User.countDocuments(queryFilter);
+
+        if (users.length === 0) {
+            return res.status(404).json({ error: "Users not found" });
+        }
+
+        const userIds = users.map((user) => user._id);
+
+        // ✅ Fetch heartbeats from the tenant DB
+        const heartBeats = await HeartBeat.find({ userId: { $in: userIds } });
+
+        const INACTIVITY_THRESHOLD = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+        const cutoffDate = new Date(Date.now() - INACTIVITY_THRESHOLD);
+
+        // ✅ Process heartbeats
+        const usersWithHeartBeatStatus = users.map((user) => {
+            const heartBeat = heartBeats.find((hb) => hb.userId.toString() === user._id.toString());
+
+            let heartBeatStatus = "not initialized";
+            if (heartBeat) {
+                const isInactive = heartBeat.timestamp < cutoffDate;
+                const hasDownTimeToday = heartBeat.downtime.some((dt) => {
+                    const startOfToday = new Date();
+                    startOfToday.setHours(0, 0, 0, 0);
+                    const endOfToday = new Date();
+                    endOfToday.setHours(23, 59, 59, 999);
+                    return dt.newTimestamp >= startOfToday && dt.newTimestamp <= endOfToday;
+                });
+
+                if (hasDownTimeToday) {
+                    heartBeatStatus = "downtime detected";
+                } else if (isInactive) {
+                    heartBeatStatus = "inactive";
+                } else {
+                    heartBeatStatus = "active";
+                }
+            }
+            return {
+                ...user.toObject(),
+                heartBeatStatus,
+            };
+        });
+
+        res.status(200).json({
+            users: usersWithHeartBeatStatus,
+            currentPage: page,
+            totalPages: Math.ceil(totalUsers / limit),
+            totalUsers,
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching users:", error);
+        res.status(500).json({ error: "Server error", message: error.message });
+    }
 });
 
+
+
 //send setup password mail
-const generatePasswordSetupLink = async (user)=>{
+const generatePasswordSetupLink = async (user, orgId) => {
     const setPassToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = await bcrypt.hash(setPassToken,10);
+    const hashedToken = await bcrypt.hash(setPassToken, 10);
 
     user.setupPasswordToken = hashedToken;
-    user.setupPasswordExpires = Date.now() + 86400000 ; // 24hour
+    user.setupPasswordExpires = Date.now() + 86400000; // 24 hours
     await user.save();
 
     const setPasswordLink = `${process.env.FRONT_END_URL}/setupPassword/${setPassToken}`;
 
-    return `<p>Click <a href="${setPasswordLink}">here</a> to reset your password.</p>`;
-}
+    return `<p>Click <a href="${setPasswordLink}">here</a> to set your password.</p>`;
+};
 
+// Send Email
 const sendEmail = async (to, subject, content, user) => {
     const msg = {
         to,
@@ -120,74 +155,57 @@ const sendEmail = async (to, subject, content, user) => {
         subject,
         html: `
         <body>
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;  font-size: 18px; color: #333; background-color: #eeeeee;">
-    <header style="padding: 26px; background-color: #0364BD; color: #f4f4f4; font-size: 24px; display: flex; align-items: center; gap: 26px; border-radius: 0px 0px 10px 10px; box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="47.5 47.5 105 105">
-            <circle cx="100" cy="100" r="50" fill="white" stroke="red" stroke-width="5"></circle>
-            <circle cx="100" cy="100" r="25" fill="black"></circle>
-        </svg>
-        <span style="font-weight: bold;">InLuna - Support</span>
-    </header>
-    <div style="padding: 10px; width: 100%;">
-        <p>Hi ${user.name}</p>
-        <p>We received your request for account assistance. Here are the details:</p>
-        <span>${content}</span>
-        <p>If you did not made this request, it's possible someone else is trying to access your InLuna account. <br> <strong>Please ignore this email if you did not request assistance.</strong></p>
-        <p>Sincerely yours,</p>
-        <p>The InLuna team</p>
-    </div>
-    <footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4; border-radius: 10px 10px 0px 0px;">
-        <p>If you need further assistance, please contact our support team at 
-            <a href="mailto:support@excellitude.com" style="color: #f4f4f4; text-decoration: none;">support@InLuna.com</a>.
-        </p>
-        <p style="margin-top: 10px;">Excellitude Pvt ltd. | 1234 Cybersecurity Lane, Suite 100 | Security City, SC 12345</p>
-        <p style="margin-top: 10px;">
-            <a href="https://InLuna.com/privacy-policy" style="color: #f4f4f4; text-decoration: none;">Privacy Policy</a> | 
-            <a href="https://InLuna.com/terms-of-service" style="color: #f4f4f4; text-decoration: none;">Terms of Service</a>
-        </p>
-    </footer>
-    </div>
-    
-    <style>
-        /* Ensures mobile style on both desktop and mobile */
-        @media screen and (max-width: 600px) {
-            div[style*="max-width: 600px;"] {
-                padding: 20px;
-                font-size: 16px;
-                text-align: center;
-            }
-        }
-    </style>
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; font-size: 18px; color: #333; background-color: #eeeeee;">
+                <header style="padding: 26px; background-color: #0364BD; color: #f4f4f4; font-size: 24px; display: flex; align-items: center; gap: 26px; border-radius: 0px 0px 10px 10px;">
+                    <span style="font-weight: bold;">InLuna - Support</span>
+                </header>
+                <div style="padding: 10px; width: 100%;">
+                    <p>Hi ${user.name},</p>
+                    <p>We received your request for account assistance. Here are the details:</p>
+                    <span>${content}</span>
+                    <p>If you did not make this request, please ignore this email.</p>
+                    <p>Sincerely,</p>
+                    <p>The InLuna Team</p>
+                </div>
+                <footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4;">
+                    <p>If you need further assistance, contact support at 
+                        <a href="mailto:support@InLuna.com" style="color: #f4f4f4; text-decoration: none;">support@InLuna.com</a>.
+                    </p>
+                </footer>
+            </div>
+        </body>
         `,
     };
     await sgMail.send(msg);
 };
 
+// **Set Up Password for User**
 export const setupPassword = async (req, res) => {
     const { token } = req.params;
-    const { newPassword, confirmPassword } = req.body;
+    const { newPassword, confirmPassword, orgId } = req.body;
 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-
-    if (newPassword !== confirmPassword) {
-        return res.status(400).json({ message: "Passwords do not match" });
+    if (!orgId) {
+        return res.status(400).json({ message: "Tenant ID is required." });
     }
 
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match." });
+    }
     if (!passwordRegex.test(newPassword)) {
         return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
     }
 
     try {
+        const User = await getUserModel(orgId); // Get tenant-specific User model
+
         const user = await User.findOne({
             setupPasswordExpires: { $gt: Date.now() },
         });
 
         if (!user || !(await bcrypt.compare(token, user.setupPasswordToken))) {
-            return res.status(400).json({ message: 'Invalid or expired token' });
+            return res.status(400).json({ message: "Invalid or expired token." });
         }
-
-        const userId = user._id;
-        const orgId = user.orgId;
 
         user.password = await bcrypt.hash(newPassword, 10);
         user.setupPasswordToken = undefined;
@@ -195,38 +213,59 @@ export const setupPassword = async (req, res) => {
 
         await user.save();
 
-        // Add Log entry
+        // Add log entry (assuming AdminLogs is shared)
         await AdminLogs.create({
-            userId,
+            userId: user._id,
             operationType: "password setup",
             operationsPerformed: `Password setup successful`,
-            orgId,
-        })
+            orgId:user.orgId,
+        });
 
-        res.status(200).json({ message: 'Password set successful' });
+        res.status(200).json({ message: "Password setup successful." });
     } catch (error) {
-        res.status(500).json({ message: 'Error setting password' });
-        console.log(error);
+        console.error(error);
+        res.status(500).json({ message: "Error setting password." });
     }
-}
+};
 
 
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const orgId = req.user.orgId;
+        const { orgId } = req.user;
         const { name, email, phone, role, department, gender, userType, img, status } = req.body;
 
-        let UserTypeCode
-
-        if (userType === "admin") {
-            UserTypeCode = process.env.ADMIN;
-        } else {
-            UserTypeCode = process.env.USER;
+        if (!orgId) {
+            return res.status(400).json({ error: "Organization ID is required." });
         }
 
+        // ✅ Get the admin database model (Organizations)
+        const TenantModel = await getTenantModel();
+
+        // Check if the organization exists in the admin DB
+        const existingOrganization = await TenantModel.findOne({ orgId });
+        if (!existingOrganization) {
+            return res.status(400).json({ message: "Organization not found. Please create the organization first." });
+        }
+
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId); // ✅ Ensure this returns the correct tenant DB
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Register the `User` model inside the tenant DB
+        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
+
+        // ✅ Get the tenant-specific `AdminLogs` model
+        const AdminLogs = getAdminLogsModel(tenantDb);
+
+        let UserTypeCode = userType === "admin" ? process.env.ADMIN : process.env.USER;
+
+        // Generate a unique username based on email or phone
         const username = generateUsername(email, phone);
+
+        // Create a new user instance for this tenant
         const newUser = new User({
             username,
             name,
@@ -240,55 +279,88 @@ export const createUser = asyncHandler(async (req, res) => {
             orgId,
             userType: UserTypeCode
         });
-        const addedUser = await newUser.save();
-        let emailContent = '';
-        emailContent += await generatePasswordSetupLink(addedUser);
-        await sendEmail(email, "InLuna Dashboard - Password Setup", emailContent, addedUser);
-        const io = req.app.get("socketio");
-        io.emit("userCreated", addedUser);
 
-        // Add Log entry
-        await AdminLogs.create({
-            userId,
-            operationType: "add",
-            operationsPerformed: `User created: ${name} with userType ${UserTypeCode}`,
-            orgId,
-            entityId: addedUser._id,
-            entityType: "user"
-        })
+        const addedUser = await newUser.save();
+
+        // Send password setup email
+        let emailContent = await generatePasswordSetupLink(addedUser, orgId);
+        await sendEmail(email, "InLuna Dashboard - Password Setup", emailContent, addedUser);
+
+        // Emit real-time event (if using WebSockets)
+        const io = req.app.get("socketio");
+        if (io) {
+            io.emit("userCreated", addedUser);
+        }
+
+        // ✅ Add Log Entry in the Correct Tenant Database
+        try {
+            await AdminLogs.create({
+                userId: req.user.userId,
+                operationType: "add",
+                operationsPerformed: `User created: ${name} with userType ${UserTypeCode}`,
+                orgId,
+                entityId: addedUser._id,
+                entityType: "user"
+            });
+            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+        } catch (logError) {
+            console.error("❌ Failed to create log in tenant DB:", logError.message);
+        }
 
         res.status(201).json(addedUser);
     } catch (error) {
-        console.log(error.message);
+        console.error("❌ Error creating user or log:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
+
+
 
 // Create a new admin
 export const createAdmin = asyncHandler(async (req, res) => {
     try {
         const { name, email, password, phone, role, department, img, orgId } = req.body;
 
+        if (!orgId) {
+            return res.status(400).json({ message: "Organization ID is required." });
+        }
+
+        // Get the admin database model (Organizations)
+        const TenantModel = await getTenantModel();
+
+        // Check if the organization exists in the admin DB
+        const existingOrganization = await TenantModel.findOne({ orgId });
+        console.log(existingOrganization)
+        if (!existingOrganization) {
+            return res.status(400).json({ message: "Organization not found. Please create the organization first." });
+        }
+
+        // Validate new password
         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
         }
 
+        // Get the tenant-specific User model
+        const User = await getUserModel(orgId);
+
+        // Check if the admin already exists
         const userExists = await User.findOne({
             $or: [{ email }, { phone }]
         });
 
         if (userExists) {
-            return res.status(400).json({ message: "User already exists" });
+            return res.status(400).json({ message: "Admin user already exists for this tenant." });
         }
 
-        const username = generateUsername(email, phone);
+        // Generate a unique username
+        const username = email.split("@")[0] + Math.floor(Math.random() * 1000);
 
+        // Hash password securely
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const UserTypeCode = process.env.ADMIN;
-
+        // Create the Admin user
         const newUser = new User({
             username,
             name,
@@ -299,223 +371,412 @@ export const createAdmin = asyncHandler(async (req, res) => {
             department,
             img,
             orgId,
-            userType: UserTypeCode,
+            userType: process.env.ADMIN,
         });
+
         await newUser.save();
-        res.status(201).json(newUser);
+
+        res.status(201).json({ message: "Admin user created successfully", user: newUser });
     } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ error: error.message });
+        console.error(error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
+
 
 
 // Get a single user by ID
 export const getUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const user = await User.findById(id).select('-password');
-    res.status(user ? 200 : 404).json(user ? user : { error: 'User not found' });
+    const { orgId } = req.user; // Extract orgId from authenticated user
+
+    if (!orgId) {
+        return res.status(400).json({ error: "Tenant ID is required." });
+    }
+
+    // Get the tenant-specific User model
+    const User = await getUserModel(orgId);
+
+    // Fetch user from the tenant database
+    const user = await User.findById(id).select("-password");
+
+    if (!user) {
+        return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user);
 });
 
 // Update a user
 export const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const { orgId, userId } = req.user; // Extract from authenticated user
 
-    const userId = req.user.userId;
-    const orgId = req.user.orgId;
+    if (!orgId) {
+        return res.status(400).json({ error: "Tenant ID is required." });
+    }
 
     const { username, name, email, phone, role, department } = req.body;
-    const updates = {
-        username,
-        name,
-        email,
-        phone,
-        role,
-        department,
-    };
-    const updatedUser = await User.findByIdAndUpdate(id, updates, {
-        new: true,
-        runValidators: true
-    }).select('-password');
-    if (updatedUser) {
-        const io = req.app.get('socketio');
-        io.emit('userUpdated', updatedUser);
+    const updates = { username, name, email, phone, role, department };
 
-        // Add Log entry
-        await AdminLogs.create({
-            userId,
-            operationType: "update",
-            operationsPerformed: `User updated: ${name} with userType ${UserTypeCode}`,
-            orgId,
-            entityId: id,
-            entityType: "user"
-        })
+    try {
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Get the correct User model for this tenant
+        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
+
+        // ✅ Get the correct AdminLogs model for this tenant
+        const AdminLogs = getAdminLogsModel(tenantDb);
+        if (!AdminLogs) {
+            console.error("❌ AdminLogs model is not available.");
+            return res.status(500).json({ message: "Failed to initialize logging model." });
+        }
+
+        // ✅ Update the user in the tenant database
+        const updatedUser = await User.findByIdAndUpdate(id, updates, {
+            new: true,
+            runValidators: true
+        }).select("-password");
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // ✅ Emit WebSocket Event if available
+        const io = req.app.get("socketio");
+        if (io) {
+            io.emit("userUpdated", updatedUser);
+        }
+
+        // ✅ Add Log Entry in the Correct Tenant Database
+        try {
+            await AdminLogs.create({
+                userId,
+                operationType: "update",
+                operationsPerformed: `User updated: ${updatedUser.name || "Unknown"}`,
+                orgId,
+                entityId: updatedUser._id,
+                entityType: "user"
+            });
+            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+        } catch (logError) {
+            console.error("❌ Failed to create log in tenant DB:", logError.message);
+        }
 
         res.status(200).json(updatedUser);
-    } else {
-        res.status(404).json({ error: 'User not found' });
+    } catch (error) {
+        console.error("❌ Error updating user:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
 // Update User Status
 export const updateUserStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const { orgId, userId } = req.user; // Extract from authenticated user
 
-    const userId = req.user.userId;
-    const orgId = req.user.orgId;
-
-    const user = await User.findById(id).select("-password");
-    if (!user) {
-        return res.status(404).json({ error: "User not found" });
+    if (!orgId) {
+        return res.status(400).json({ error: "Tenant ID is required." });
     }
 
-    user.status = user.status === "active" ? "inactive" : "active";
-    const updatedUser = await user.save();
+    try {
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
 
-    const io = req.app.get("socketio");
-    io.emit("userStatusUpdated", updatedUser);
+        // ✅ Get the correct User model for this tenant
+        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
 
-    // Add Log entry
-    await AdminLogs.create({
-        userId,
-        operationType: "update",
-        operationsPerformed: `User status updated: ${updatedUser.email} to ${updatedUser.status}`,
-        orgId,
-        entityId: id,
-        entityType: "user"
-    })
+        // ✅ Get the correct AdminLogs model for this tenant
+        const AdminLogs = getAdminLogsModel(tenantDb);
+        if (!AdminLogs) {
+            console.error("❌ AdminLogs model is not available.");
+            return res.status(500).json({ message: "Failed to initialize logging model." });
+        }
 
-    res.status(200).json(updatedUser);
-})
+        // ✅ Find the user in the tenant database
+        const user = await User.findById(id).select("-password");
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // ✅ Toggle user status
+        user.status = user.status === "active" ? "inactive" : "active";
+        const updatedUser = await user.save();
+
+        // ✅ Emit WebSocket Event if available
+        const io = req.app.get("socketio");
+        if (io) {
+            io.emit("userStatusUpdated", updatedUser);
+        }
+
+        // ✅ Add Log Entry in the Correct Tenant Database
+        try {
+            await AdminLogs.create({
+                userId,
+                operationType: "update",
+                operationsPerformed: `User status updated: ${updatedUser.email} to ${updatedUser.status}`,
+                orgId,
+                entityId: id,
+                entityType: "user"
+            });
+            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+        } catch (logError) {
+            console.error("❌ Failed to create log in tenant DB:", logError.message);
+        }
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error("❌ Error updating user status:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 // update admin
 export const updateAdminDetails = asyncHandler(async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const { orgId, userId } = req.user; // Extract from authenticated user
+
+        if (!orgId) {
+            return res.status(400).json({ message: "Tenant ID is required." });
+        }
+
         const { name, email, recoveryEmail, phone, role, department, img } = req.body;
-        const updateUser = await User.findByIdAndUpdate(
+
+        // Get the tenant-specific User model
+        const User = await getUserModel(orgId);
+
+        // Update the admin user details within the tenant DB
+        const updatedUser = await User.findByIdAndUpdate(
             userId,
             { name, email, recoveryEmail, phone, role, department, img },
             { new: true, runValidators: true }
         );
-        if (!updateUser) {
-            return res.status(404).json({ message: "User not found" })
-        }
-        res.json(updateUser);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
 
-})
+        if (!updatedUser) {
+            return res.status(404).json({ message: "Admin user not found" });
+        }
+
+        res.json(updatedUser);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
 
 // Update admin password
 export const updateAdminPwd = asyncHandler(async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const orgId = req.user.orgId;
+        const { orgId, userId } = req.user; // Extract from authenticated user
         const { oldPassword, newPassword, confirmPassword } = req.body;
 
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-
-        if (newPassword !== confirmPassword) {
-            return res.status(400).json({ message: "Passwords do not match" });
+        if (!orgId) {
+            return res.status(400).json({ message: "Organization ID is required." });
         }
 
+        // ✅ Validate new password
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: "Passwords do not match." });
+        }
         if (!passwordRegex.test(newPassword)) {
             return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
         }
 
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Get the correct User model for this tenant
+        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
+
+        // ✅ Get the correct AdminLogs model for this tenant
+        const AdminLogs = getAdminLogsModel(tenantDb);
+        if (!AdminLogs) {
+            console.error("❌ AdminLogs model is not available.");
+            return res.status(500).json({ message: "Failed to initialize logging model." });
+        }
+
+        // ✅ Find the admin user within the tenant DB
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        const isMatch = await bcrypt.compare(oldPassword, user.password)
-        if (!isMatch) {
-            return res.status(400).json({ message: "Old password is incorrect" });
+            return res.status(404).json({ message: "Admin user not found." });
         }
 
+        // ✅ Validate old password
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Old password is incorrect." });
+        }
+
+        // ✅ Hash and update new password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
-        await user.save()
+        await user.save();
 
-        // Add Log entry
-        await AdminLogs.create({
-            userId,
-            operationType: "update",
-            operationsPerformed: `Admin pwd updated: ${user.name}`,
-            orgId,
-            entityId: userId,
-            entityType: "user"
-        })
+        // ✅ Add Log Entry in the Correct Tenant Database
+        try {
+            await AdminLogs.create({
+                userId,
+                operationType: "update",
+                operationsPerformed: `Admin password updated: ${user.name || "Unknown"}`,
+                orgId,
+                entityId: userId,
+                entityType: "user"
+            });
+            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+        } catch (logError) {
+            console.error("❌ Failed to create log in tenant DB:", logError.message);
+        }
 
-        res.status(200).json({ message: "Password updated successfully" });
+        res.status(200).json({ message: "Password updated successfully." });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error("❌ Error updating password:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-})
+});
 
 // verify admin pwd
 export const verifyAdminPassword = asyncHandler(async (req, res) => {
     const { password } = req.body;
-    const userId = req.user.userId;
+    const { orgId, userId } = req.user; // Extract from authenticated user
 
+    if (!orgId) {
+        return res.status(400).json({ error: "Organization ID is required." });
+    }
+
+    // Get the tenant-specific User model
+    const User = await getUserModel(orgId);
+
+    // Find the admin user within the tenant DB
     const user = await User.findById(userId);
 
     if (!user) {
-        return res.status(404).json({ error: "User not found" });
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-        return res.status(401).json({ error: "Incorrect password" });
+        return res.status(404).json({ error: "Admin user not found." });
     }
 
-    res.status(200).json({ message: "Password verified" });
+    // Compare input password with stored hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+        return res.status(401).json({ error: "Incorrect password." });
+    }
+
+    res.status(200).json({ message: "Password verified." });
 });
 
 // Delete a user
 export const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const adminId = req.user.userId;
-    const orgId = req.user.orgId;
+    const { orgId, userId: adminId } = req.user; // Extract from authenticated user
 
-    const user = await User.findById(id).select('-password');
-    if (user) {
-        const userId = user._id.toString()
-        if (userId === adminId) {
-            res.status(403).json({ error: "You cannot delete your own account" })
-        } else {
-            await User.findByIdAndDelete(id);
-            const io = req.app.get('socketio');
-            io.emit('userDeleted', user._id);
+    if (!orgId) {
+        return res.status(400).json({ error: "Organization ID is required." });
+    }
 
-            // Add Log entry
+    try {
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Get the correct User model for this tenant
+        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
+
+        // ✅ Get the correct AdminLogs model for this tenant
+        const AdminLogs = getAdminLogsModel(tenantDb);
+        if (!AdminLogs) {
+            console.error("❌ AdminLogs model is not available.");
+            return res.status(500).json({ message: "Failed to initialize logging model." });
+        }
+
+        // ✅ Find the user in the tenant database
+        const user = await User.findById(id).select("-password");
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        // ✅ Prevent an admin from deleting their own account
+        if (user._id.toString() === adminId) {
+            return res.status(403).json({ error: "You cannot delete your own account." });
+        }
+
+        // ✅ Delete user
+        await User.findByIdAndDelete(id);
+
+        // ✅ Emit WebSocket Event if available
+        const io = req.app.get("socketio");
+        if (io) {
+            io.emit("userDeleted", user._id);
+        }
+
+        // ✅ Add Log Entry in the Correct Tenant Database
+        try {
             await AdminLogs.create({
                 userId: adminId,
                 operationType: "delete",
-                operationsPerformed: `user deleted Name: ${user.email}`,
-                orgId,
+                operationsPerformed: `User deleted: ${user.email}`,
+                orgId: orgId,
                 entityId: id,
                 entityType: "user",
-                entityDetails: { identifier: user.email, status: user.status, extraInfo: `Department: ${user.department}` }
-            })
-
-            res.status(200).json({ message: `User ${user.email} removed successfully` });
+                entityDetails: {
+                    identifier: user.email,
+                    status: user.status,
+                    extraInfo: `Department: ${user.department}`
+                }
+            });
+            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+        } catch (logError) {
+            console.error("❌ Failed to create log in tenant DB:", logError.message);
         }
-    } else {
-        res.status(404).json({ error: 'User not found' });
+
+        res.status(200).json({ message: `User ${user.email} removed successfully.` });
+    } catch (error) {
+        console.error("❌ Error deleting user:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
+// Users from csv
 export const addUsersFromCsv = asyncHandler(async (req, res) => {
-
     const filePath = req.file.path;
     const users = [];
     const errors = [];
-    const userId = req.user.userId;
-    const orgId = req.user.orgId;
+    const { orgId, userId } = req.user; // Extract from authenticated user
+
+    if (!orgId) {
+        return res.status(400).json({ message: "Organization ID is required." });
+    }
 
     try {
-        const existingEmails = new Set(await User.find({ orgId }).distinct("email"))
-        const existingPhones = new Set(await User.find({ orgId }).distinct("phone"))
+        // ✅ Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId);
+        if (!tenantDb) {
+            return res.status(500).json({ message: "Failed to get tenant database." });
+        }
+
+        // ✅ Get the correct User model for this tenant
+        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
+
+        // ✅ Get the correct AdminLogs model for this tenant
+        const AdminLogs = getAdminLogsModel(tenantDb);
+        if (!AdminLogs) {
+            console.error("❌ AdminLogs model is not available.");
+            return res.status(500).json({ message: "Failed to initialize logging model." });
+        }
+
+        // ✅ Fetch existing users' emails and phones in the tenant DB
+        const existingEmails = new Set(await User.find().distinct("email"));
+        const existingPhones = new Set(await User.find().distinct("phone"));
 
         const processedEmails = new Set();
         const processedPhones = new Set();
@@ -523,35 +784,42 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
         await new Promise((resolve, reject) => {
             fs.createReadStream(filePath)
                 .pipe(csvParser())
-                .on('data', (row) => {
+                .on("data", (row) => {
                     const { Name, Email, Phone, Gender, Role, Department } = row;
-                    const email = Email.toLowerCase();
-                    const phone = Phone;
+                    const email = Email?.toLowerCase().trim();
+                    const phone = Phone?.trim();
 
+                    // Skip empty rows
+                    if (!email || !phone || !Name || !Role || !Department) {
+                        errors.push({ row, error: "Missing required fields in CSV." });
+                        return;
+                    }
+
+                    // Check for duplicate emails or phones in the CSV file
                     if (processedEmails.has(email)) {
-                        errors.push({ row: row, error: `Duplicate email in CSV: ${email}` });
+                        errors.push({ row, error: `Duplicate email in CSV: ${email}` });
                         return;
                     }
-
                     if (processedPhones.has(phone)) {
-                        errors.push({ row: row, error: `Duplicate phone in CSV: ${phone}` });
+                        errors.push({ row, error: `Duplicate phone in CSV: ${phone}` });
                         return;
                     }
 
+                    // Check for existing emails or phones in the database
                     if (existingEmails.has(email)) {
-                        errors.push({ row: row, error: `Email already exists in DB: ${email}` });
+                        errors.push({ row, error: `Email already exists in DB: ${email}` });
                         return;
                     }
-
                     if (existingPhones.has(phone)) {
-                        errors.push({ row: row, error: `Phone number already exists in DB: ${phone}` });
+                        errors.push({ row, error: `Phone number already exists in DB: ${phone}` });
                         return;
                     }
 
-                    const name = Name;
-                    const gender = Gender.toLowerCase();
-                    const role = Role.toLowerCase();
-                    const department = Department.toLowerCase();
+                    // Process valid users
+                    const name = Name.trim();
+                    const gender = Gender ? Gender.toLowerCase().trim() : "other";
+                    const role = Role.toLowerCase().trim();
+                    const department = Department.toLowerCase().trim();
 
                     const username = generateUsername(email, phone);
                     users.push({ name, email, phone, gender, role, department, username, orgId });
@@ -559,65 +827,93 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
                     processedEmails.add(email);
                     processedPhones.add(phone);
                 })
-                .on('end', resolve)
-                .on('error', reject);
+                .on("end", resolve)
+                .on("error", reject);
         });
 
+        // ✅ Return errors if found in CSV
         if (errors.length > 0) {
-            res.status(400).json({
-                message: 'CSV contains errors',
+            return res.status(400).json({
+                message: "CSV contains errors",
                 errors: errors,
             });
-            return;
         }
 
+        // ✅ Insert users into the tenant database
         if (users.length > 0) {
             const insertedUsers = await User.insertMany(users);
-            const io = req.app.get('socketio');
-            io.emit("usersByCsvAdded", insertedUsers);
 
-            for(let i=0;i<insertedUsers.length;i++){
-                const user = insertedUsers[i];
-                let emailContent = '';
-                emailContent += await generatePasswordSetupLink(user);
-                await sendEmail(user.email, "InLuna Dashboard - Password Setup", emailContent, user);
+            // ✅ Emit WebSocket Event if available
+            const io = req.app.get("socketio");
+            if (io) {
+                io.emit("usersByCsvAdded", insertedUsers);
             }
 
-            // Add Log entry
-            await AdminLogs.create({
-                userId,
-                operationType: "add",
-                operationsPerformed: `users added via CSV`,
-                orgId,
-            })
+            // ✅ Send password setup emails
+            for (let user of insertedUsers) {
+                try {
+                    let emailContent = await generatePasswordSetupLink(user, orgId);
+                    await sendEmail(user.email, "InLuna Dashboard - Password Setup", emailContent, user);
+                } catch (emailError) {
+                    console.error(`❌ Failed to send email to ${user.email}:`, emailError.message);
+                }
+            }
 
-            res.status(200).json({ message: 'Users added successfully' });
+            // ✅ Add Log Entry in the Correct Tenant Database
+            try {
+                await AdminLogs.create({
+                    userId,
+                    operationType: "add",
+                    operationsPerformed: "Users added via CSV",
+                    orgId,
+                    entityId: insertedUsers.map((u) => u._id),
+                    entityType: "user",
+                });
+                console.log("✅ Log entry created successfully in tenant DB:", orgId);
+            } catch (logError) {
+                console.error("❌ Failed to create log in tenant DB:", logError.message);
+            }
+
+            res.status(200).json({ message: "Users added successfully." });
         } else {
-            res.status(400).json({ message: 'No valid data to add' });
+            res.status(400).json({ message: "No valid data to add." });
         }
-
     } catch (error) {
-        console.error('Error adding users from CSV:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error("❌ Error adding users from CSV:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     } finally {
+        // ✅ Remove the uploaded file
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
     }
 });
 
-export const fetchProfile = async (req, res) => {
+export const fetchProfile = asyncHandler(async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const { orgId, userId } = req.user; // Extract from authenticated user
 
-        const user = await User.findById(userId).select("img name username email recoveryEmail phone role department status")
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        if (!orgId) {
+            return res.status(400).json({ error: "Organization ID is required." });
         }
+
+        // Get the tenant-specific User model
+        const User = await getUserModel(orgId);
+
+        // Find the user profile within the tenant DB
+        const user = await User.findById(userId).select(
+            "img name username email recoveryEmail phone role department status"
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
         res.json(user);
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
-    };
-};
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+});
 
 
