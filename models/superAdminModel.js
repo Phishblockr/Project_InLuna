@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getDb } from "../admindb.js";
 
 const { Schema } = mongoose;
 
@@ -18,6 +19,14 @@ const superAdminSchema = new Schema({
 });
 
 // ✅ Store in "superadmins" collection inside admindb
-const SuperAdmin = mongoose.model("SuperAdmin", superAdminSchema, "superadmins");
+// const SuperAdmin = mongoose.model("SuperAdmin", superAdminSchema, "superadmins");
 
-export default SuperAdmin;
+// export default SuperAdmin;
+
+export const getSuperAdminModel = async () => {
+    const adminDb = await getDb();
+    return (
+        adminDb.models.SuperAdmin ||
+        adminDb.model("SuperAdmin", superAdminSchema)
+    );
+};

@@ -1,8 +1,8 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getSuperAdminModel } from "../superAdminDb.js";
 import { generateUsername } from "../utils/generateUsername.js";
+import { getSuperAdminModel } from "../models/superAdminModel.js";
 
 // Create Super Admin (Only first-time setup)
 export const createSuperAdmin = asyncHandler(async (req, res) => {
