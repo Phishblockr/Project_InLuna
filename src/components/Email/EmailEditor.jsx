@@ -28,6 +28,8 @@ const EmailCreator = () => {
 
     const editorRef = React.useRef(null);
 
+    const canEdit = true
+
     const fetchTemplate = async () => {
         try {
             const res = await fetch(`${apiUrl}/emailTemplate/get/${id}`, {
@@ -121,7 +123,7 @@ const EmailCreator = () => {
 
         if (selection && !selection.isEmpty()) {
             const range = editor.getModel().getValueInRange(selection);
-            const markedText = `<span style="color: red; font-weight: bold;" data-phishing="true">${range}</span>`;
+            const markedText = `<span data-phishing="true">${range}</span>`;
 
             // Replace the selected text with marked text
             editor.executeEdits(null, [
@@ -145,7 +147,7 @@ const EmailCreator = () => {
 
         if (selection && !selection.isEmpty()) {
             const range = editor.getModel().getValueInRange(selection);
-            const placeholderText = `<span style="color: blue; data-placeholder="name">${range}</span>`;
+            const placeholderText = `<span data-placeholder="name">${range}</span>`;
 
             // Replace the selected text with the placeholder
             editor.executeEdits(null, [
@@ -169,7 +171,7 @@ const EmailCreator = () => {
 
         if (selection && !selection.isEmpty()) {
             const range = editor.getModel().getValueInRange(selection);
-            const placeholderText = `<span style="color: blue; data-placeholder="email">${range}</span>`;
+            const placeholderText = `<span data-placeholder="email">${range}</span>`;
 
             // Replace the selected text with the placeholder
             editor.executeEdits(null, [
@@ -299,7 +301,22 @@ const EmailCreator = () => {
                     {/* Preview */}
                     <div className="flex-1 border border-gray-300 bg-white p-4">
                         <h3 className="mb-2 text-lg font-semibold">Preview:</h3>
+                        {/* Conditionally inject style rules for editors */}
+                        {canEdit && (
+                            <style>
+                                {`
+                                    #previewContainer span[data-phishing="true"] {
+                                        color: red !important;
+                                    }
+                                    #previewContainer span[data-placeholder="name"],
+                                    #previewContainer span[data-placeholder="email"] {
+                                        color: blue !important;
+                                    }
+                                `}
+                            </style>
+                        )}
                         <div
+                            id="previewContainer"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                             className="border border-gray-200 p-4 bg-gray-50 rounded"
                         />

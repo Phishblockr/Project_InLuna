@@ -13,7 +13,7 @@ import { useSelector } from 'react-redux';
 import Email from './components/Email/Email';
 import EmailCreator from './components/Email/EmailCreator';
 import EditEditor from './components/Email/EmailEditor';
-import CourseCreator from './components/Course/courseCreator';
+import CourseCreator from './components/Course/CourseCreator.jsx';
 import CourseEditor from './components/Course/CourseEditor';
 import Layout from "./layout/Layout"
 

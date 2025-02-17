@@ -103,7 +103,7 @@ const Navbar = () => {
             // const user = JSON.parse(localStorage.getItem("user"));
             // const token = user.token;
             const token = getToken();
-            const response = await fetch(`${apiUrl}/user/profile`, {
+            const response = await fetch(`${apiUrl}/superadmin/profile`, {
                 method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`,
