@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getDb } from "../../admindb.js";
 
 const VideoSchema = new mongoose.Schema({
     title: {
@@ -20,7 +21,6 @@ const VideoSchema = new mongoose.Schema({
     },
     assignEmail: {
         type: String,
-        required: true,
     }
 })
 
@@ -65,5 +65,10 @@ const courseSchema = new mongoose.Schema({
     { timestamps: true }
 );
 
-const Course = mongoose.model('Course', courseSchema);
-export default Course;
+// const Course = mongoose.model('Course', courseSchema);
+export default courseSchema;
+
+export const getCourseModel = async () => {
+    const adminDb = await getDb();
+    return adminDb.models.Course || adminDb.model("Course", courseSchema);
+};

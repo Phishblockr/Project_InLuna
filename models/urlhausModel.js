@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getTenantDB } from "../tenantdb.js";
 
 const urlhausSchema = new mongoose.Schema(
     {
@@ -49,3 +50,8 @@ const urlhausSchema = new mongoose.Schema(
     {timestamps:true}
 );
 export default urlhausSchema;
+
+export const getUrlhausModel = async (tenantId) => {
+  const tenantDb = await getTenantDB(tenantId);
+  return tenantDb.models.UrlhausData || tenantDb.model("UrlhausData", urlhausSchema);
+}

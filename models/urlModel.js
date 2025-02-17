@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getTenantDB } from "../tenantdb.js";
 
 const urlSchema = new mongoose.Schema(
   {
@@ -11,7 +12,7 @@ const urlSchema = new mongoose.Schema(
         {
           userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User", // ✅ Correct reference to User model
+            ref: "User",
           },
           visits: [
             {
@@ -72,8 +73,11 @@ const urlSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Indexing for faster queries
 urlSchema.index({ url: 1, orgId: 1, createdAt: 1 });
 
-// ✅ Export only the schema (not the model)
 export default urlSchema;
+
+export const getUrlModel = async (tenantId) => {
+  const tenantDb = await getTenantDB(tenantId);
+  return tenantDb.models.Url || tenantDb.model("Url", urlSchema);
+}

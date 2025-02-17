@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getTenantDB } from '../tenantdb.js';
 
 const RequestSchema = new mongoose.Schema(
     {
@@ -30,12 +31,12 @@ const RequestSchema = new mongoose.Schema(
             enum: ['whitelist', 'blacklist'],
             required: true,
         },
-        reputationDetails: { 
-            type: Object, 
+        reputationDetails: {
+            type: Object,
             default: null,
         }, // Store VirusTotal analysis stats
-        reputationScore: { 
-            type: Number, 
+        reputationScore: {
+            type: Number,
             default: 0,
         }, // Store VirusTotal reputation score
     },
@@ -44,5 +45,9 @@ const RequestSchema = new mongoose.Schema(
 
 RequestSchema.index({ orgId: 1, createdAt: 1 });
 
-// ✅ EXPORT ONLY THE SCHEMA
 export default RequestSchema;
+
+export const getRequestModel = async (tenantId) => {
+    const tenantDb = await getTenantDB(tenantId);
+    return tenantDb.models.Request || tenantDb.model("Request", RequestSchema);
+}

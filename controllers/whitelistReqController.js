@@ -2,10 +2,9 @@ import asyncHandler from '../middlewares/asyncHandler.js';
 import UrlSchema from '../models/urlModel.js';
 import RequestSchema from '../models/RequestModel.js';
 import mongoose from 'mongoose';
-import DomainReputationSchema from '../models/domainReputationModel.js';
+import { getdomainRepModel } from '../models/domainReputationModel.js';
 
 // for adminLog
-import AdminLogsSchema from "../models/adminlogsModel.js";
 import UserSchema from '../models/userModel.js';
 import { getTenantDB } from '../tenantdb.js';
 import getAdminLogsModel from '../models/adminlogsModel.js';
@@ -45,120 +44,123 @@ async function checkDomainReputation(domain) {
 
 export const addRequestExt = asyncHandler(async (req, res) => {
     try {
-        const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
-        const orgId = req.user.orgId;
-        const { url, reason, reqOption } = req.body;
-
-        if (!orgId) {
-            return res.status(400).json({ message: "Organization ID is required." });
-        }
-
-        // ✅ Get the tenant-specific database connection
-        const tenantDb = await getTenantDB(orgId);
-        if (!tenantDb) {
-            return res.status(500).json({ message: "Failed to get tenant database." });
-        }
-
-        // ✅ Register models dynamically in tenant DB if not already registered
-        if (!tenantDb.models.Url) tenantDb.model("Url", UrlSchema);
-        if (!tenantDb.models.Request) tenantDb.model("Request", RequestSchema);
-        if (!tenantDb.models.User) tenantDb.model("User", UserSchema);
-        if (!tenantDb.models.DomainReputation) tenantDb.model("DomainReputation", DomainReputationSchema);
-
-        // ✅ Get models
-        const Url = tenantDb.models.Url;
-        const Request = tenantDb.models.Request;
-        const DomainReputation = tenantDb.models.DomainReputation;
-
-        // ✅ Extract domain from URL
-        const domain = new URL(url).hostname;
-
-        // ✅ Check if domain reputation exists
-        let existingReputation = await DomainReputation.findOne({ urlDomain: domain });
-
-        if (!existingReputation) {
-            // ✅ Check domain reputation using VirusTotal
-            const reputationResult = await checkDomainReputation(domain);
-            const newDomainReputation = new DomainReputation({
-                urlDomain: domain,
-                reputationDetails: reputationResult.stats,
-                reputationScore: reputationResult.reputation,
-            });
-            existingReputation = await newDomainReputation.save();
-        }
-
-        // ✅ Check if URL exists in the database
-        let existingUrl = await Url.findOne({ url, orgId });
-
-        if (!existingUrl) {
-            const newUrl = new Url({
-                url: url,
-                orgId: orgId,
-                isVerified: false,
-                isPhishing: false,
-                reputationDetails: existingReputation.reputationDetails,
-                reputationScore: existingReputation.reputationScore,
-            });
-
-            existingUrl = await newUrl.save();
-            return res.status(404).json({
-                message: "The URL you entered is not currently in our database. Please try again or contact support for assistance.",
-            });
-        }
-
-        // ✅ Check if a request for this URL already exists
-        const existingRequest = await Request.findOne({
-            userId,
-            url,
-            orgId,
-            status: { $ne: "approved" }, // Ensure it's not already approved
+      const userId = mongoose.Types.ObjectId.createFromHexString(req.user.userId);
+      const orgId = req.user.orgId;
+      const { url, reason, reqOption } = req.body;
+  
+      if (!orgId) {
+        return res.status(400).json({ message: "Organization ID is required." });
+      }
+  
+      // ✅ Get the tenant-specific database connection for tenant models
+      const tenantDb = await getTenantDB(orgId);
+      if (!tenantDb) {
+        return res.status(500).json({ message: "Failed to get tenant database." });
+      }
+  
+      // ✅ Register tenant-specific models if not already registered
+      if (!tenantDb.models.Url) tenantDb.model("Url", UrlSchema);
+      if (!tenantDb.models.Request) tenantDb.model("Request", RequestSchema);
+      if (!tenantDb.models.User) tenantDb.model("User", UserSchema);
+  
+      // ✅ Get tenant-specific models
+      const Url = tenantDb.models.Url;
+      const Request = tenantDb.models.Request;
+      const User = tenantDb.models.User;
+  
+      // ✅ Retrieve the DomainReputation model from the common (admin) database
+      const DomainReputation = await getdomainRepModel();
+  
+      // ✅ Extract domain from URL
+      const domain = new URL(url).hostname;
+  
+      // ✅ Check if domain reputation exists in the adminDB
+      let existingReputation = await DomainReputation.findOne({ urlDomain: domain });
+  
+      if (!existingReputation) {
+        // ✅ Check domain reputation using an external service (e.g., VirusTotal)
+        const reputationResult = await checkDomainReputation(domain);
+        const newDomainReputation = new DomainReputation({
+          urlDomain: domain,
+          reputationDetails: reputationResult.stats,
+          reputationScore: reputationResult.reputation,
         });
-
-        if (existingRequest) {
-            return res.status(400).json({
-                message: `You have already submitted a ${existingRequest.reqOption} request for this URL, pending approval.`,
-            });
-        }
-
-        // ✅ Create new request
-        const newRequest = new Request({
-            userId,
-            url,
-            reason,
-            orgId,
-            reqOption,
-            reputationDetails: existingReputation.reputationDetails, // Store reputation stats
-            reputationScore: existingReputation.reputationScore, // Store reputation score
+        existingReputation = await newDomainReputation.save();
+      }
+  
+      // ✅ Check if URL exists in the tenant database
+      let existingUrl = await Url.findOne({ url, orgId });
+  
+      if (!existingUrl) {
+        const newUrl = new Url({
+          url: url,
+          orgId: orgId,
+          isVerified: false,
+          isPhishing: false,
+          reputationDetails: existingReputation.reputationDetails,
+          reputationScore: existingReputation.reputationScore,
         });
-
-        await newRequest.save();
-
-        // ✅ Update URL with request ID
-        existingUrl.RequestIds = existingUrl.RequestIds || [];
-        existingUrl.RequestIds.push(newRequest._id);
-        await existingUrl.save();
-
-        // ✅ Emit WebSocket event for real-time update
-        const io = req.app.get("socketio");
-        if (io) {
-            io.emit("newReqAdded", newRequest);
-        }
-
-        // ✅ Respond with success message and request details
-        res.status(201).json({
-            message: "Request submitted successfully",
-            request: newRequest,
-            reputation: {
-                stats: existingReputation.reputationDetails,
-                reputationScore: existingReputation.reputationScore,
-            },
+  
+        existingUrl = await newUrl.save();
+        return res.status(404).json({
+          message:
+            "The URL you entered is not currently in our database. Please try again or contact support for assistance.",
         });
-
+      }
+  
+      // ✅ Check if a request for this URL already exists (and is not already approved)
+      const existingRequest = await Request.findOne({
+        userId,
+        url,
+        orgId,
+        status: { $ne: "approved" },
+      });
+  
+      if (existingRequest) {
+        return res.status(400).json({
+          message: `You have already submitted a ${existingRequest.reqOption} request for this URL, pending approval.`,
+        });
+      }
+  
+      // ✅ Create a new request
+      const newRequest = new Request({
+        userId,
+        url,
+        reason,
+        orgId,
+        reqOption,
+        reputationDetails: existingReputation.reputationDetails,
+        reputationScore: existingReputation.reputationScore,
+      });
+  
+      await newRequest.save();
+  
+      // ✅ Update URL with the new request ID
+      existingUrl.RequestIds = existingUrl.RequestIds || [];
+      existingUrl.RequestIds.push(newRequest._id);
+      await existingUrl.save();
+  
+      // ✅ Emit WebSocket event for real-time updates (if applicable)
+      const io = req.app.get("socketio");
+      if (io) {
+        io.emit("newReqAdded", newRequest);
+      }
+  
+      // ✅ Respond with success and details
+      res.status(201).json({
+        message: "Request submitted successfully",
+        request: newRequest,
+        reputation: {
+          stats: existingReputation.reputationDetails,
+          reputationScore: existingReputation.reputationScore,
+        },
+      });
     } catch (error) {
-        console.error("❌ Error in addRequestExt:", error.message);
-        res.status(500).json({ message: "Server error", error: error.message });
+      console.error("❌ Error in addRequestExt:", error.message);
+      res.status(500).json({ message: "Server error", error: error.message });
     }
-});
+  });
+  
 
 export const fetchReqs = asyncHandler(async (req, res) => {
     try {

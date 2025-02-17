@@ -2,6 +2,7 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { getSuperAdminModel } from "../superAdminDb.js";
+import { generateUsername } from "../utils/generateUsername.js";
 
 // Create Super Admin (Only first-time setup)
 export const createSuperAdmin = asyncHandler(async (req, res) => {
@@ -23,9 +24,10 @@ export const createSuperAdmin = asyncHandler(async (req, res) => {
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
+        const phone = "1234"
+        const username = generateUsername(email, phone);
         // Create Super Admin
-        const newAdmin = new SuperAdmin({ name, email, password: hashedPassword });
+        const newAdmin = new SuperAdmin({ name, username, email, password: hashedPassword });
         await newAdmin.save();
 
         res.status(201).json({ message: "Super Admin created successfully." });
@@ -33,6 +35,93 @@ export const createSuperAdmin = asyncHandler(async (req, res) => {
         console.error("Error creating Super Admin:", error);
         res.status(500).json({ message: "Server error" });
     }
+});
+
+export const fetchProfileSuperAdmin = asyncHandler(async (req, res) => {
+    try {
+      const { userId } = req.user; // For super admin, we don't need orgId
+  
+      // Get the SuperAdmin model from adminDB
+      const SuperAdmin = await getSuperAdminModel();
+  
+      // Find the super admin by ID and select only relevant fields
+      const user = await SuperAdmin.findById(userId).select("name email role createdAt");
+  
+      if (!user) {
+        return res.status(404).json({ error: "Super Admin not found." });
+      }
+  
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching super admin profile:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+  
+
+// DEMO CODE NOT IN USE
+
+export const loginSuperAdm = asyncHandler(async (req, res) => {
+    const { username, password, rememberMe } = req.body;
+
+    if (!username || !password) {
+        res.status(400);
+        throw new Error("Username and password are required.");
+    }
+
+    // Configure secure cookie options
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+    };
+    if (rememberMe) {
+        cookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+    }
+
+    // Retrieve the SuperAdmin model from admindb
+    const SuperAdmin = await getSuperAdminModel();
+
+    // Find the super admin – adjust the query field if needed (e.g., using email)
+    const user = await SuperAdmin.findOne({ username });
+    if (!user) {
+        res.status(404);
+        throw new Error("Invalid credentials.");
+    }
+
+    // Validate the password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+        res.status(401);
+        throw new Error("Invalid credentials.");
+    }
+
+    // Generate JWT tokens
+    const payload = {
+        userId: user.id,
+        userType: "superadmin",
+    };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        algorithm: "HS256",
+        expiresIn: "1h",
+    });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, {
+        algorithm: "HS256",
+        expiresIn: rememberMe ? "7d" : "1d",
+    });
+
+    // Encrypt and store the refresh token
+    const encryptedRefreshToken = await encrypt(refreshToken);
+    user.refreshToken = encryptedRefreshToken;
+    await user.save();
+
+    // Set refresh token in a secure cookie
+    res.cookie("refreshToken", encryptedRefreshToken, cookieOptions);
+
+    res.status(200).json({
+        token,
+        message: "Super Admin logged in successfully.",
+    });
 });
 
 export const getAllSuperAdminLogs = asyncHandler(async (req, res) => {
@@ -56,12 +145,14 @@ export const getAllSuperAdminLogs = asyncHandler(async (req, res) => {
                 }
             },
             { $unwind: "$userDetails" },
-            { $match: search ? {
-                $or: [
-                    { operationsPerformed: { $regex: search, $options: "i" } },
-                    { "userDetails.name": { $regex: search, $options: "i" } }
-                ]
-            } : {} },
+            {
+                $match: search ? {
+                    $or: [
+                        { operationsPerformed: { $regex: search, $options: "i" } },
+                        { "userDetails.name": { $regex: search, $options: "i" } }
+                    ]
+                } : {}
+            },
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }

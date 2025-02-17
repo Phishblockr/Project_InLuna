@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { decrypt, encrypt } from '../utils/tokenEncryption.js';
 import {getUserModel} from "../tenantdb.js"
+import { getSuperAdminModel } from '../superAdminDb.js';
 
 dotenv.config();
 
@@ -217,7 +218,7 @@ export const loginSuperAdm = asyncHandler(async (req, res) => {
         // Generate JWT tokens
         const payload = {
             userId: user.id,
-            userType: "superadmin",
+            userType: process.env.SUPERADM,
         };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { algorithm: "HS256", expiresIn: "1h" });
         const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, {

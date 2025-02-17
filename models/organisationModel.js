@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getTenantDB } from "../tenantdb.js";
 
 const { Schema } = mongoose;
 
@@ -28,5 +29,9 @@ const organizationSchema = new Schema({
     }
 });
 
-// ✅ Export the schema, NOT the model
 export default organizationSchema;
+
+export const getOrgModel = async (tenantId) => {
+    const tenantDb = await getTenantDB(tenantId);
+    return tenantDb.models.Organization || tenantDb.model("Organization", organizationSchema);
+}

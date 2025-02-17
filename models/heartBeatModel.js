@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getTenantDB } from "../tenantdb.js";
 
 const { Schema } = mongoose;
 
@@ -39,3 +40,8 @@ const heartbeatSchema = new Schema({
 heartbeatSchema.index({ userId: 1, orgId: 1 }, { unique: true });
 
 export default heartbeatSchema;
+
+export const getHeartBeatModel = async (tenantId) => {
+    const tenantDb = await getTenantDB(tenantId);
+    return tenantDb.models.HeartBeat || tenantDb.model("HeartBeat", heartbeatSchema);
+}

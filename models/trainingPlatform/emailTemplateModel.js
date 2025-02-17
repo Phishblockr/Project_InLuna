@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getDb } from "../../admindb.js";
 
 const emailTemplateSchema = new mongoose.Schema({
     title: {
@@ -21,5 +22,10 @@ const emailTemplateSchema = new mongoose.Schema({
     { timestamps: true }
 );
 
-const emailTemplate =  mongoose.model("EmailTemplate", emailTemplateSchema);
-export default emailTemplate;
+// const emailTemplate =  mongoose.model("EmailTemplate", emailTemplateSchema);
+export default emailTemplateSchema;
+
+export const getEmailTemplateModel = async () => {
+    const adminDb = await getDb();
+    return adminDb.models.EmailTemplate || adminDb.model("EmailTemplate", emailTemplateSchema);
+};

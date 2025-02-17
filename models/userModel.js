@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getTenantDB } from '../tenantdb.js';
 
 const { Schema } = mongoose;
 
@@ -27,6 +28,10 @@ const userSchema = new Schema({
 });
 
 userSchema.index({ orgId: 1 });
-
-// ❌ Do NOT create a model here! Just export the schema.
 export default userSchema;
+
+export const getUserModel = async (tenantId) => {
+    const tenantDb = await getTenantDB(tenantId);
+    return tenantDb.models.User || tenantDb.model("User", userSchema);
+}
+
