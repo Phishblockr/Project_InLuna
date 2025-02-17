@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getDb } from '../admindb.js';
 
 const detailSchema = new mongoose.Schema({
     ip_address: { type: String, required: true },
@@ -21,6 +22,15 @@ const phishtankSchema = new mongoose.Schema({
     target: { type: String, default: 'Unknown' },
 }, { timestamps: true }); // Automatically add createdAt and updatedAt timestamps
 
-const PhishtankData = mongoose.model('phishtankData', phishtankSchema);
+// const PhishtankData = mongoose.model('phishtankData', phishtankSchema);
 
-export default PhishtankData;
+// export default PhishtankData;
+
+export const getPhishtankModel = async () => {
+    const adminDb = await getDb();
+    return (
+        adminDb.models.phishtankData ||
+        adminDb.model("phishtankData", phishtankSchema)
+    );
+};
+
