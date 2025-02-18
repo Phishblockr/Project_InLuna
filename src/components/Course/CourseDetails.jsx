@@ -10,15 +10,29 @@ const CourseDetails = () => {
   const token = getToken();
   const location = useLocation();
   const { courseId, userId, videoId } = location.state;
-  console.log("CourseId", courseId);
-  console.log("UserId", userId);
-  console.log("VideoId", videoId);
 
   const [courseDetails, setCourseDetails] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [videoLink, setVideoLink] = useState("");
+  const [videoType, setVideoType] = useState(""); // Store MIME type
   const [currentVideoId, setCurrentVideoId] = useState(videoId); // Track video ID separately
 
+  // Function to get MIME type from file extension
+  const getMimeType = (url) => {
+    if (!url) return "video/mp4"; // Default
+    const extension = url.split(".").pop().split("?")[0]; // Extract file extension
+    const mimeTypes = {
+      mp4: "video/mp4",
+      webm: "video/webm",
+      ogg: "video/ogg",
+      mov: "video/quicktime",
+      avi: "video/x-msvideo",
+      mkv: "video/x-matroska",
+    };
+    return mimeTypes[extension] || "video/mp4"; // Default to mp4 if unknown
+  };
+
+  // Fetch course details only once when the component mounts
   useEffect(() => {
     const fetchCourseDetails = async () => {
       if (!courseId) return;
@@ -34,10 +48,8 @@ const CourseDetails = () => {
           }
         );
         const data = await res.json();
-        console.log("Data Videos:", data.videos);
         setCourseDetails(data);
       } catch (error) {
-        console.log(error);
         toast.error("Error fetching course details");
       }
     };
@@ -45,20 +57,48 @@ const CourseDetails = () => {
     fetchCourseDetails();
   }, [courseId, userId, token]);
 
-  // Update selected video when videoId changes
+  // Fetch signed URL when videoId changes
   useEffect(() => {
+    const fetchSignedUrl = async (videoUrl) => {
+      if (!videoUrl) return;
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/course/getSignedUrl?url=${encodeURIComponent(videoUrl)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await res.json();
+        if (data.success) {
+          setVideoLink(data.url);
+          setVideoType(getMimeType(data.url)); // Extract MIME type
+        } else {
+          toast.error("Failed to fetch signed URL");
+        }
+      } catch (error) {
+        toast.error("Error fetching signed URL");
+      }
+    };
+
     if (courseDetails && videoId) {
       const video = courseDetails.videos.find((vid) => vid._id === videoId);
       if (video) {
         setSelectedVideo(video);
-        setVideoLink(video.url);
         setCurrentVideoId(videoId); // ✅ Immediately update current video ID
+        fetchSignedUrl(video.url); // Fetch signed URL for the video
       }
     }
   }, [videoId, courseDetails]);
 
-  if (!courseDetails || !selectedVideo) {
-    return <div>Loading...</div>;
+  
+
+  // 🔴 Fix: Prevent rendering VideoPlayer until videoLink is ready
+  if (!courseDetails || !selectedVideo || !videoLink) {
+    return <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4 overflow-hidden">Loading video...</div>;
   }
 
   return (
@@ -77,7 +117,7 @@ const CourseDetails = () => {
                   sources: [
                     {
                       src: videoLink, // ✅ Always the correct video URL
-                      type: "video/mp4",
+                      type: videoType,
                     },
                   ],
                 }}
@@ -86,9 +126,9 @@ const CourseDetails = () => {
           </div>
           {/* Video Details */}
           <h1 className="text-2xl font-bold">{selectedVideo.title}</h1>
-          <p className="mt-2">{selectedVideo.description}</p>
+          <div dangerouslySetInnerHTML={{ __html: selectedVideo.description }} />
           {/* Resources */}
-          {selectedVideo.resources.length > 0 && (
+          {selectedVideo.resources && selectedVideo.resources.length > 0 && (
             <div className="mt-4">
               <h3 className="text-lg font-semibold">Resources</h3>
               <ul className="list-disc list-inside mt-2">
