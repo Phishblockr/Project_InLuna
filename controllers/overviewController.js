@@ -361,179 +361,179 @@ export const fetchOrgMetrics = async (req, res) => {
 
 export const fetchUserMetrics = asyncHandler(async (req, res) => {
     try {
-      const { id, month, year } = req.params; // id of user to fetch metrics for
-      // Convert id to ObjectId (if it's in hex string format)
-      const userObjectId = mongoose.Types.ObjectId.createFromHexString(id);
-  
-      // Get the tenant (org) id from the authenticated request
-      const orgId = req.user.orgId;
-  
-      // Retrieve tenant-specific models using orgId
-      const Url = await getUrlModel(orgId);
-      const UrlhausData = await getUrlhausModel(orgId);
-      const WhitelistReq = await getRequestModel(orgId);
-  
-      // Calculate date ranges for the current and previous month
-      const startOfMonth = new Date(year, month - 1, 1);
-      const endOfMonth = new Date(year, month, 0);
-      const previousMonth = month == 1 ? 12 : month - 1;
-      const previousYear = month == 1 ? year - 1 : year;
-      const startOfPreviousMonth = new Date(previousYear, previousMonth - 1, 1);
-      const endOfPreviousMonth = new Date(previousYear, previousMonth, 0);
-  
-      // Fetch Phishing Clicks Count for current month
-      const phishingClicksCount = await Url.aggregate([
-        { $match: { "visitedBy.userId": userObjectId, isPhishing: true, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
-        { $unwind: "$visitedBy" },
-        { $match: { "visitedBy.userId": userObjectId } },
-        { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
-        { $project: { _id: 0, total: 1 } }
-      ]);
-  
-      // Fetch Malware Hosted Visits from UrlhausData for current month
-      const malwareHostedVisits = await UrlhausData.aggregate([
-        { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
-        { $unwind: "$visitedBy" },
-        { $match: { "visitedBy.userId": userObjectId } },
-        { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
-        { $project: { _id: 0, total: 1 } }
-      ]);
-  
-      // Fetch Whitelist Requests Count for current month
-      const whitelistReqsCount = await WhitelistReq.countDocuments({
-        userId: userObjectId,
-        status: { $in: ["pending", "approved"] },
-        createdAt: { $gte: startOfMonth, $lt: endOfMonth }
-      });
-  
-      // Fetch Visits to Whitelist URLs for current month
-      const approvedWhitelistReq = await WhitelistReq.find({
-        userId: userObjectId,
-        status: { $in: ["approved", "pending"] },
-        createdAt: { $gte: startOfMonth, $lt: endOfMonth }
-      }).select("_id");
-  
-      const whitelistReqsIds = approvedWhitelistReq.map(req => req._id);
-  
-      const visitsToWhitelistUrls = await Url.aggregate([
-        { $match: { whitelistReqIds: { $in: whitelistReqsIds }, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
-        { $unwind: "$visitedBy" },
-        { $match: { "visitedBy.userId": userObjectId } },
-        { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
-        { $project: { _id: 0, total: 1 } }
-      ]);
-  
-      // Previous Month's Data
-  
-      // Previous Month's Phishing Clicks Count
-      const previousPhishingClicksCount = await Url.aggregate([
-        { $match: { "visitedBy.userId": userObjectId, isPhishing: true, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
-        { $unwind: "$visitedBy" },
-        { $match: { "visitedBy.userId": userObjectId } },
-        { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
-        { $project: { _id: 0, total: 1 } }
-      ]);
-  
-      // Previous Month's Malware Hosted Visits
-      const previousMalwareHostedVisits = await UrlhausData.aggregate([
-        { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
-        { $unwind: "$visitedBy" },
-        { $match: { "visitedBy.userId": userObjectId } },
-        { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
-        { $project: { _id: 0, total: 1 } }
-      ]);
-  
-      // Previous Month's Whitelist Requests Count
-      const previousWhitelistReqsCount = await WhitelistReq.countDocuments({
-        userId: userObjectId,
-        status: { $in: ["pending", "approved"] },
-        createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
-      });
-  
-      // Previous Month's Visits to Whitelist URLs
-      const previousApprovedWhitelistReq = await WhitelistReq.find({
-        userId: userObjectId,
-        status: { $in: ["pending", "approved"] },
-        createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
-      }).select("_id");
-  
-      const previousWhitelistReqsIds = previousApprovedWhitelistReq.map(req => req._id);
-  
-      const previousVisitsToWhitelistUrls = await Url.aggregate([
-        { $match: { whitelistReqIds: { $in: previousWhitelistReqsIds }, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
-        { $unwind: "$visitedBy" },
-        { $match: { "visitedBy.userId": userObjectId } },
-        { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
-        { $project: { _id: 0, total: 1 } }
-      ]);
-  
-      // Bar Graph Data grouped by day (including Malware Hosted Visits)
-      const visitsByDay = await Url.aggregate([
-        { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
-        { $unwind: "$visitedBy" },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
-            totalVisits: { $sum: "$visitedBy.totalVisits" },
-            phishingVisits: {
-              $sum: { $cond: [{ $eq: ["$isPhishing", true] }, "$visitedBy.totalVisits", 0] }
-            }
-          }
-        },
-        { $sort: { _id: 1 } }
-      ]);
-  
-      // Malware Hosted Visits by Day from UrlhausData
-      const malwareHostedVisitsByDay = await UrlhausData.aggregate([
-        { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
-        { $unwind: "$visitedBy" },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
-            malwareHostedVisits: { $sum: "$visitedBy.totalVisits" }
-          }
-        },
-        { $sort: { _id: 1 } }
-      ]);
-  
-      // Merge Malware Hosted Data into visitsByDay
-      const malwareMap = new Map(malwareHostedVisitsByDay.map(item => [item._id, item.malwareHostedVisits]));
-      visitsByDay.forEach(item => {
-        item.malwareHostedVisits = malwareMap.get(item._id) || 0;
-      });
-  
-      const barGraphData = {
-        labels: visitsByDay.map(item => item._id),
-        totalVisits: visitsByDay.map(item => item.totalVisits),
-        malwareHostedVisits: visitsByDay.map(item => item.malwareHostedVisits),
-        phishingVisits: visitsByDay.map(item => item.phishingVisits)
-      };
-  
-      // Prepare the final response object with calculated percentages.
-      res.json({
-        phishingClicks: phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
-        malwareHostedVisits: malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
-        whitelistRequests: whitelistReqsCount,
-        visitsToWhitelistUrls: visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
-        percentagePhishingClicks: calculatePercentage(
-          phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
-          previousPhishingClicksCount.length > 0 ? previousPhishingClicksCount[0].total : 0
-        ),
-        percentageMalwareHostedVisits: calculatePercentage(
-          malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
-          previousMalwareHostedVisits.length > 0 ? previousMalwareHostedVisits[0].total : 0
-        ),
-        percentageWhitelistReq: calculatePercentage(whitelistReqsCount || 0, previousWhitelistReqsCount || 0),
-        percentageVisitToWhitelistUrls: calculatePercentage(
-          visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
-          previousVisitsToWhitelistUrls.length > 0 ? previousVisitsToWhitelistUrls[0].total : 0
-        ),
-        barGraphData
-      });
+        const { id, month, year } = req.params; // id of user to fetch metrics for
+        // Convert id to ObjectId (if it's in hex string format)
+        const userObjectId = mongoose.Types.ObjectId.createFromHexString(id);
+
+        // Get the tenant (org) id from the authenticated request
+        const orgId = req.user.orgId;
+
+        // Retrieve tenant-specific models using orgId
+        const Url = await getUrlModel(orgId);
+        const UrlhausData = await getUrlhausModel(orgId);
+        const WhitelistReq = await getRequestModel(orgId);
+
+        // Calculate date ranges for the current and previous month
+        const startOfMonth = new Date(year, month - 1, 1);
+        const endOfMonth = new Date(year, month, 0);
+        const previousMonth = month == 1 ? 12 : month - 1;
+        const previousYear = month == 1 ? year - 1 : year;
+        const startOfPreviousMonth = new Date(previousYear, previousMonth - 1, 1);
+        const endOfPreviousMonth = new Date(previousYear, previousMonth, 0);
+
+        // Fetch Phishing Clicks Count for current month
+        const phishingClicksCount = await Url.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, isPhishing: true, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        // Fetch Malware Hosted Visits from UrlhausData for current month
+        const malwareHostedVisits = await UrlhausData.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        // Fetch Whitelist Requests Count for current month
+        const whitelistReqsCount = await WhitelistReq.countDocuments({
+            userId: userObjectId,
+            status: { $in: ["pending", "approved"] },
+            createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+        });
+
+        // Fetch Visits to Whitelist URLs for current month
+        const approvedWhitelistReq = await WhitelistReq.find({
+            userId: userObjectId,
+            status: { $in: ["approved", "pending"] },
+            createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+        }).select("_id");
+
+        const whitelistReqsIds = approvedWhitelistReq.map(req => req._id);
+
+        const visitsToWhitelistUrls = await Url.aggregate([
+            { $match: { whitelistReqIds: { $in: whitelistReqsIds }, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        // Previous Month's Data
+
+        // Previous Month's Phishing Clicks Count
+        const previousPhishingClicksCount = await Url.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, isPhishing: true, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        // Previous Month's Malware Hosted Visits
+        const previousMalwareHostedVisits = await UrlhausData.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        // Previous Month's Whitelist Requests Count
+        const previousWhitelistReqsCount = await WhitelistReq.countDocuments({
+            userId: userObjectId,
+            status: { $in: ["pending", "approved"] },
+            createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
+        });
+
+        // Previous Month's Visits to Whitelist URLs
+        const previousApprovedWhitelistReq = await WhitelistReq.find({
+            userId: userObjectId,
+            status: { $in: ["pending", "approved"] },
+            createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth }
+        }).select("_id");
+
+        const previousWhitelistReqsIds = previousApprovedWhitelistReq.map(req => req._id);
+
+        const previousVisitsToWhitelistUrls = await Url.aggregate([
+            { $match: { whitelistReqIds: { $in: previousWhitelistReqsIds }, createdAt: { $gte: startOfPreviousMonth, $lt: endOfPreviousMonth } } },
+            { $unwind: "$visitedBy" },
+            { $match: { "visitedBy.userId": userObjectId } },
+            { $group: { _id: null, total: { $sum: "$visitedBy.totalVisits" } } },
+            { $project: { _id: 0, total: 1 } }
+        ]);
+
+        // Bar Graph Data grouped by day (including Malware Hosted Visits)
+        const visitsByDay = await Url.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
+                    totalVisits: { $sum: "$visitedBy.totalVisits" },
+                    phishingVisits: {
+                        $sum: { $cond: [{ $eq: ["$isPhishing", true] }, "$visitedBy.totalVisits", 0] }
+                    }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Malware Hosted Visits by Day from UrlhausData
+        const malwareHostedVisitsByDay = await UrlhausData.aggregate([
+            { $match: { "visitedBy.userId": userObjectId, createdAt: { $gte: startOfMonth, $lt: endOfMonth } } },
+            { $unwind: "$visitedBy" },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
+                    malwareHostedVisits: { $sum: "$visitedBy.totalVisits" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Merge Malware Hosted Data into visitsByDay
+        const malwareMap = new Map(malwareHostedVisitsByDay.map(item => [item._id, item.malwareHostedVisits]));
+        visitsByDay.forEach(item => {
+            item.malwareHostedVisits = malwareMap.get(item._id) || 0;
+        });
+
+        const barGraphData = {
+            labels: visitsByDay.map(item => item._id),
+            totalVisits: visitsByDay.map(item => item.totalVisits),
+            malwareHostedVisits: visitsByDay.map(item => item.malwareHostedVisits),
+            phishingVisits: visitsByDay.map(item => item.phishingVisits)
+        };
+
+        // Prepare the final response object with calculated percentages.
+        res.json({
+            phishingClicks: phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
+            malwareHostedVisits: malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
+            whitelistRequests: whitelistReqsCount,
+            visitsToWhitelistUrls: visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
+            percentagePhishingClicks: calculatePercentage(
+                phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
+                previousPhishingClicksCount.length > 0 ? previousPhishingClicksCount[0].total : 0
+            ),
+            percentageMalwareHostedVisits: calculatePercentage(
+                malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
+                previousMalwareHostedVisits.length > 0 ? previousMalwareHostedVisits[0].total : 0
+            ),
+            percentageWhitelistReq: calculatePercentage(whitelistReqsCount || 0, previousWhitelistReqsCount || 0),
+            percentageVisitToWhitelistUrls: calculatePercentage(
+                visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
+                previousVisitsToWhitelistUrls.length > 0 ? previousVisitsToWhitelistUrls[0].total : 0
+            ),
+            barGraphData
+        });
     } catch (error) {
-      res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
-  });
-  
+});
+
 
 
