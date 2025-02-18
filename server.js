@@ -51,20 +51,41 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // CORS Configuration
 // Development only
-const allowedOrigins = ['http://localhost:5173', 'chrome-extension://', 'moz-extension://', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5000'];
-
-app.use(
+const allowedOrigins = [
+    'http://localhost:5173',
+    'chrome-extension://',
+    'moz-extension://',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5000',
+    /^https?:\/\/.*\.lvh\.me(?::\d+)?$/
+  ];
+  
+  app.use(
     cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        credentials: true,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (e.g., curl, Postman)
+        if (!origin) return callback(null, true);
+  
+        const isAllowed = allowedOrigins.some((allowed) => {
+          if (typeof allowed === 'string') {
+            return origin.startsWith(allowed);
+          }
+          if (allowed instanceof RegExp) {
+            return allowed.test(origin);
+          }
+          return false;
+        });
+  
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
     })
-);
+  );
 
 // Production
 // const allowedOrigins = ['http://domain.com/', 'chrome-extension://<PUBLISHED_EXTENSION_ID>']; // Replace with your frontend origin(s)
