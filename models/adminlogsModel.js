@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+// Define the schema
 const adminLogsSchema = new mongoose.Schema(
     {
         userId: {
@@ -8,7 +9,7 @@ const adminLogsSchema = new mongoose.Schema(
         },
         operationType: {
             type: String,
-            enum: ['update', 'delete', 'add', "approved", "account recovery","password setup"],
+            enum: ['update', 'delete', 'add', "approved", "account recovery", "password setup"],
             required: [true, "Operation type cannot be null"]
         },
         operationsPerformed: {
@@ -33,8 +34,13 @@ const adminLogsSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+// Create an index for faster queries
 adminLogsSchema.index({ orgId: 1, createdAt: 1 });
-const AdminLogs = mongoose.model("AdminLogs", adminLogsSchema);
 
-export default AdminLogs;
+// ✅ Function to get AdminLogs model for a specific tenant
+const getAdminLogsModel = (tenantDb) => {
+    return tenantDb.models.AdminLogs || tenantDb.model("AdminLogs", adminLogsSchema);
+};
 
+export default getAdminLogsModel;

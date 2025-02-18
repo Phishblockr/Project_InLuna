@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import {getTenantDB} from "../../tenantdb.js"
 
 const userCourseSchema = new mongoose.Schema({
     orgId: {
@@ -44,5 +45,7 @@ const userCourseSchema = new mongoose.Schema({
     },
 });
 
-const UserCourse = mongoose.model("UserCourse", userCourseSchema);
-export default UserCourse;
+export const getUserCourseModel = async (tenantId) => {
+    const tenantDb = await getTenantDB(tenantId);
+    return tenantDb.models.UserCourse || tenantDb.model("UserCourse", userCourseSchema);
+}  

@@ -1,10 +1,11 @@
 import mongoose from 'mongoose';
+import { getTenantDB } from '../tenantdb.js';
 
 const RequestSchema = new mongoose.Schema(
     {
         userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "user",
+            ref: "User", // ✅ Ensure "User" is the correct model name
             required: [true, "UserId cannot be empty"],
         },
         url: {
@@ -25,17 +26,17 @@ const RequestSchema = new mongoose.Schema(
             type: String,
             required: [true, "Organization ID cannot be empty"],
         },
-        reqOption:{
-            type : String,
+        reqOption: {
+            type: String,
             enum: ['whitelist', 'blacklist'],
-            required:true,
+            required: true,
         },
-        reputationDetails: { 
-            type: Object, 
+        reputationDetails: {
+            type: Object,
             default: null,
         }, // Store VirusTotal analysis stats
-        reputationScore: { 
-            type: Number, 
+        reputationScore: {
+            type: Number,
             default: 0,
         }, // Store VirusTotal reputation score
     },
@@ -44,6 +45,9 @@ const RequestSchema = new mongoose.Schema(
 
 RequestSchema.index({ orgId: 1, createdAt: 1 });
 
-const Request = mongoose.model("Request", RequestSchema);
+export default RequestSchema;
 
-export default Request;
+export const getRequestModel = async (tenantId) => {
+    const tenantDb = await getTenantDB(tenantId);
+    return tenantDb.models.Request || tenantDb.model("Request", RequestSchema);
+}

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getDb } from "../admindb.js";
 
 const domainReputationSchema = new mongoose.Schema(
     {
@@ -20,6 +21,12 @@ const domainReputationSchema = new mongoose.Schema(
 
 domainReputationSchema.index({createdAt: 1});
 
-const domainReputation = mongoose.model("DomainReputation", domainReputationSchema);
+// const domainReputation = mongoose.model("DomainReputation", domainReputationSchema);
 
-export default domainReputation;
+export default domainReputationSchema;
+
+export const getdomainRepModel = async () => {
+    const adminDb = await getDb();
+
+    return adminDb.models.DomainReputation || adminDb.model("DomainReputation", domainReputationSchema);
+};

@@ -1,214 +1,236 @@
-import UserCourse from "../../models/trainingPlatform/userCourseModel.js";
-import User from "../../models/userModel.js";
-import Course from "../../models/trainingPlatform/courseModel.js";
+import {getUserCourseModel} from "../../models/trainingPlatform/userCourseModel.js";
+import {getUserModel} from "../../models/userModel.js";
 import asyncHandler from "../../middlewares/asyncHandler.js";
+import { getCourseModel } from "../../admindb.js";
 
 
 // assign course to a user
 export const assignCourse = asyncHandler(async (req, res) => {
     const { userId, courseId } = req.body;
     const adminId = req.user.userId;
-    const orgId = req.user.orgId;
+    const orgId = req.user.orgId; // Tenant/organization ID
 
-    try {
-        // Validation check
-        // check if users exists
-        const user = await User.findOne({ _id: userId, orgId });
-        if (!user) {
-            return res.status(404).json({ message: "User not found in the organization" });
-        }
+    // Retrieve the tenant-specific User model and UserCourse model
+    const User = await getUserModel(orgId);
+    const UserCourse = await getUserCourseModel(orgId);
 
-        // check if the course exists
-        const course = await Course.findById(courseId);
-        if (!course) {
-            return res.status(404).json({ message: "Course not found" })
-        }
+    // Retrieve the common Course model from adminDB
+    const Course = await getCourseModel();
 
-        // Check if the course is already assigned to the user
-        const existingAssignment = await UserCourse.findOne({ orgId, userId, courseId });
-        if (existingAssignment) {
-            return res.status(400).json({ message: "Course already assigned to the user" })
-        }
-
-        // Create a new assignment
-        const newAssignment = new UserCourse({
-            orgId,
-            userId,
-            courseId,
-            assignedBy: adminId,
-        })
-        await newAssignment.save();
-
-        res.status(201).json({ message: "Course assigned successfully", assignment: newAssignment });
-    } catch (error) {
-        console.error("Error assigning course:", error);
-        res.status(500).json({ message: "Internal server error" });
+    // Check if the user exists in the tenant database
+    const user = await User.findOne({ _id: userId, orgId });
+    if (!user) {
+        return res.status(404).json({ message: "User not found in the organization" });
     }
-})
+
+    // Check if the course exists in the admin database
+    const course = await Course.findById(courseId);
+    if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Check if the course is already assigned to the user
+    const existingAssignment = await UserCourse.findOne({ orgId, userId, courseId });
+    if (existingAssignment) {
+        return res.status(400).json({ message: "Course already assigned to the user" });
+    }
+
+    // Create a new assignment in the tenant-specific UserCourse collection
+    const newAssignment = new UserCourse({
+        orgId,
+        userId,
+        courseId,
+        assignedBy: adminId,
+    });
+
+    await newAssignment.save();
+
+    res.status(201).json({ message: "Course assigned successfully", assignment: newAssignment });
+});
 
 export const getCoursesForUser = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    try {
-        const assignments = await UserCourse.find({ userId })
-            .populate("courseId", "name category description")
-            .populate("assignedBy", "name email");
+    const orgId = req.user.orgId; // Ensure the tenant's orgId is available here
 
-        if (!assignments || assignments.length === 0) {
-            return res.status(404).json({ message: "No courses assigned to this user" });
-        }
-        res.status(200).json(assignments);
-    } catch (error) {
-        console.error("Error fetching courses for user:", error);
-        res.status(500).json({ message: "Internal server error" });
+    // Retrieve the tenant-specific UserCourse model
+    const UserCourse = await getUserCourseModel(orgId);
+
+    // Query the tenant's UserCourse collection for assignments for the specified user
+    const assignments = await UserCourse.find({ userId })
+        .populate("courseId", "name category description")
+        .populate("assignedBy", "name email");
+
+    if (!assignments || assignments.length === 0) {
+        return res.status(404).json({ message: "No courses assigned to this user" });
     }
+
+    res.status(200).json(assignments);
 });
 
-export const updateCourseProgress = async (req, res) => {
+export const updateCourseProgress = asyncHandler(async (req, res) => {
     const { userId, courseId, videoId, watchedDuration } = req.body;
+    const orgId = req.user.orgId; // Assuming tenant's organization ID is available here
 
-    try {
-        // Find the user's course assignment
-        const assignment = await UserCourse.findOne({ userId, courseId }).populate('courseId');
-        if (!assignment) {
-            return res.status(404).json({ message: "Course assignment not found" });
-        }
+    // Retrieve the tenant-specific UserCourse model
+    const UserCourse = await getUserCourseModel(orgId);
 
-        // Find the course details to get the total videos
-        const totalVideos = assignment.courseId.videos.length;
-
-        // Check if progress for the video exists
-        const videoProgress = assignment.watchStatus.find(
-            (status) => status.videoId.toString() === videoId
-        );
-
-        if (videoProgress) {
-            // Update existing progress
-            videoProgress.watchedDuration = watchedDuration;
-        } else {
-            // Add new progress entry
-            assignment.watchStatus.push({ videoId, watchedDuration });
-        }
-
-        // Calculate the number of videos marked as watched
-        const videosWatched = assignment.watchStatus.length;
-
-        // Update progress percentage
-        assignment.progress = Math.round((videosWatched / totalVideos) * 100);
-
-        await assignment.save();
-
-        res.status(200).json({
-            message: "Progress updated successfully",
-            assignment,
-        });
-    } catch (error) {
-        console.error("Error updating progress:", error);
-        res.status(500).json({ message: "Internal server error" });
+    // Find the user's course assignment and populate course details
+    const assignment = await UserCourse.findOne({ userId, courseId }).populate("courseId");
+    if (!assignment) {
+        return res.status(404).json({ message: "Course assignment not found" });
     }
-};
+
+    // Retrieve the total number of videos in the course
+    const totalVideos = assignment.courseId.videos.length;
+
+    // Find if progress for the specified video already exists
+    const videoProgress = assignment.watchStatus.find(
+        (status) => status.videoId.toString() === videoId
+    );
+
+    if (videoProgress) {
+        // Update the watched duration for the existing video progress
+        videoProgress.watchedDuration = watchedDuration;
+    } else {
+        // Add a new progress entry for the video
+        assignment.watchStatus.push({ videoId, watchedDuration });
+    }
+
+    // Calculate the number of videos with progress entries
+    const videosWatched = assignment.watchStatus.length;
+
+    // Update overall progress as a percentage
+    assignment.progress = Math.round((videosWatched / totalVideos) * 100);
+
+    // Save the updated assignment
+    await assignment.save();
+
+    res.status(200).json({
+        message: "Progress updated successfully",
+        assignment,
+    });
+});
+
 
 export const removeCourseAssignment = asyncHandler(async (req, res) => {
     const { userId, courseId } = req.body;
-    const orgId = req.user.orgId;
-    try {
-        const deletedAssignment = await UserCourse.findOneAndDelete({ userId, courseId, orgId });
+    const orgId = req.user.orgId; // Tenant's organization ID
 
-        if (!deletedAssignment) {
-            return res.status(404).json({ message: "Course assignment not found" });
-        }
-        res.status(200).json({ message: "Course assignment removed successfully" });
-    } catch (error) {
-        console.error("Error removing course assignment:", error);
-        res.status(500).json({ message: "Internal server error" });
+    // Retrieve the tenant-specific UserCourse model
+    const UserCourse = await getUserCourseModel(orgId);
+
+    // Find and delete the assignment
+    const deletedAssignment = await UserCourse.findOneAndDelete({ userId, courseId, orgId });
+
+    if (!deletedAssignment) {
+        return res.status(404).json({ message: "Course assignment not found" });
     }
-})
+
+    res.status(200).json({ message: "Course assignment removed successfully" });
+});
 
 //TODO: For User side (Training Platform) Create endpoints below this line
 
 
 // Fetch course details for a specific user
-export const getUserAssignedCourseDetails = async (req, res) => {
+export const getUserAssignedCourseDetails = asyncHandler(async (req, res) => {
     const { courseId, userId } = req.params;
-  
-    try {
-      // Check if the course is assigned to the user
-      const userCourse = await UserCourse.findOne({ courseId, userId }).populate(
-        "courseId"
-      );
-      
-      if (!userCourse) {
-        return res
-          .status(404)
-          .json({ message: "Course not assigned to this user" });
-      }
-  
-      const courseDetails = {
+    const orgId = req.user.orgId; // Retrieve tenant's organization ID
+
+    // Retrieve the tenant-specific UserCourse model
+    const UserCourse = await getUserCourseModel(orgId);
+
+    // Check if the course is assigned to the user and populate course details
+    const userCourse = await UserCourse.findOne({ courseId, userId }).populate("courseId");
+    if (!userCourse) {
+        return res.status(404).json({ message: "Course not assigned to this user" });
+    }
+
+    const courseDetails = {
         courseId: userCourse.courseId._id,
         name: userCourse.courseId.name,
         description: userCourse.courseId.description,
         videos: userCourse.courseId.videos, // Assuming course has a videos field
-        progress: userCourse.progress, // User-specific progress
+        progress: userCourse.progress,        // User-specific progress
         category: userCourse.courseId.category,
-      };
-  
-      res.status(200).json(courseDetails);
-    } catch (error) {
-      console.error("Error fetching course details:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-};
-  
+    };
+
+    res.status(200).json(courseDetails);
+});
+
 
 // Update video progress
-export const updateVideoProgress = async (req, res) => {
-    const {userId, courseId, videoId, watchedDuration} = req.body;
+export const updateVideoProgress = asyncHandler(async (req, res) => {
+    const { userId, courseId, videoId, watchedDuration } = req.body;
+    const orgId = req.user.orgId; // Assumes tenant's orgId is available on req.user
 
-    try {
-        const userCourse = await UserCourse.findOne({userId, courseId})
+    // Retrieve the tenant-specific UserCourse model
+    const UserCourse = await getUserCourseModel(orgId);
 
-        if(!userCourse){
-            return res.status(404).json({success:false, message:"Course not found for the User."})
-        }
-
-        //find the video progress inside the watchStatus array
-        const videoIndex = userCourse.watchStatus.findIndex((v)=>v.videoId.toString()===videoId);
-
-        if(videoIndex>=0){
-            //update the watched duration if the new duration is greater
-            if(watchedDuration>userCourse.watchStatus[videoId].watchedDuration){
-                userCourse.watchStatus[videoIndex].watchedDuration = watchedDuration;
-            }   
-        }else {
-            //Add new video entry 
-            userCourse.watchStatus.push({videoId,watchedDuration});
-        }
-
-        // check if all the videos are watched and update the course progress
-        const totalVideos = userCourse.watchStatus.length;
-        const fullyWatchedVideos = userCourse.watchStatus.filter((v)=> v.watchedDuration >= 90).length; // assuming 90% watched is completed
-
-        userCourse.progress = (fullyWatchedVideos/totalVideos) * 100;
-        userCourse.status = userCourse.progress === 100 ? "completed" : "inprogress";
-
-        await userCourse.save();
-        res.json({success:true,message:"Video progress updated", progress:userCourse.progress});
-    } catch (error) {
-        res.status(500).json({success: false, message:error.message})
+    // Find the user's course assignment
+    const userCourse = await UserCourse.findOne({ userId, courseId });
+    if (!userCourse) {
+        return res.status(404).json({
+            success: false,
+            message: "Course not found for the user.",
+        });
     }
-}
+
+    // Find the index of the video progress in the watchStatus array
+    const videoIndex = userCourse.watchStatus.findIndex(
+        (v) => v.videoId.toString() === videoId
+    );
+
+    if (videoIndex >= 0) {
+        // Update the watched duration only if the new duration is greater
+        if (watchedDuration > userCourse.watchStatus[videoIndex].watchedDuration) {
+            userCourse.watchStatus[videoIndex].watchedDuration = watchedDuration;
+        }
+    } else {
+        // Add a new video progress entry
+        userCourse.watchStatus.push({ videoId, watchedDuration });
+    }
+
+    // Populate course details to calculate total videos (assumes course has a 'videos' array)
+    await userCourse.populate("courseId");
+    const totalVideos = userCourse.courseId.videos.length;
+
+    // Calculate how many videos are fully watched
+    const fullyWatchedVideos = userCourse.watchStatus.filter(
+        (v) => v.watchedDuration >= 90 // assuming 90 is the threshold for "fully watched"
+    ).length;
+
+    // Update progress percentage and status
+    userCourse.progress = Math.round((fullyWatchedVideos / totalVideos) * 100);
+    userCourse.status = userCourse.progress === 100 ? "completed" : "inprogress";
+
+    await userCourse.save();
+
+    res.json({
+        success: true,
+        message: "Video progress updated",
+        progress: userCourse.progress,
+    });
+});
 
 // Get User Course Progress
-export const getUserCourseProgress = async (req, res)=>{
-    try {
-        const userCourse = await UserCourse.findOne({userId:req.params.userId,courseId:req.params.courseId});
+export const getUserCourseProgress = asyncHandler(async (req, res) => {
+    const { userId, courseId } = req.params;
+    const orgId = req.user.orgId; // Ensure tenant's orgId is available on req.user
 
-        if(!userCourse){
-            return res.status(404).json({success:false, message:"course not found"});
-        }
+    // Retrieve the tenant-specific UserCourse model
+    const UserCourse = await getUserCourseModel(orgId);
 
-        res.json({success:true,progress:userCourse.progress,watchStatus:userCourse.watchStatus});
+    // Find the course assignment for the user in the tenant DB
+    const userCourse = await UserCourse.findOne({ userId, courseId });
 
-    } catch (error) {
-        res.status(500).json({success:false,message:error.message})
+    if (!userCourse) {
+        return res.status(404).json({ success: false, message: "Course not found" });
     }
-}
+
+    res.status(200).json({
+        success: true,
+        progress: userCourse.progress,
+        watchStatus: userCourse.watchStatus,
+    });
+});

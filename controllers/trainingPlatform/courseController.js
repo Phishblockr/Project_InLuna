@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import asyncHandler from "../../middlewares/asyncHandler.js";
-import Course from "../../models/trainingPlatform/courseModel.js"
+import { getCourseModel } from "../../admindb.js";
 
 
 if (!process.env.AWS_REGION || !process.env.AWS_ACCESS_KEY || !process.env.AWS_SECRET_ACCESS_KEY || !process.env.AWS_BUCKET_NAME) {
@@ -99,93 +99,127 @@ export const getSignedUrlController = asyncHandler(async (req, res) => {
 });
 
 export const createCourse = asyncHandler(async (req, res) => {
-    try {
-        const { name, category, description, videos = [], isDraft } = req.body;
-        if (!name || !category) {
-            return res.status(400).json({ success: false, message: "name and category are mandatory." })
-        }
+    const { name, category, description, videos = [], isDraft } = req.body;
 
-        if (!Array.isArray(videos)) {
-            return res.status(400).json({ success: false, message: "Videos must be an array." });
-        }
-
-        const course = new Course({
-            name: name.trim(),
-            category: category.trim(),
-            description,
-            videos,
-            isDraft
-
+    if (!name || !category) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Name and category are mandatory." 
         });
-        const savedCourse = await course.save();
-        res.status(201).json({ success: true, template: savedCourse })
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
     }
-})
 
-export const updateCourse = asyncHandler(async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, category, description, videos, isDraft } = req.body;
-
-        if (!name || !category) {
-            return res.status(400).json({ success: false, message: "Course name and category are required." });
-        }
-
-        const course = await Course.findById(id);
-        if (!course) {
-            return res.status(404).json({ success: false, message: "Course not found." });
-        }
-
-        course.name = name.trim();
-        course.category = category.trim();
-        course.description = description;
-        course.videos = videos;
-        course.isDraft = isDraft;
-
-        const updatedCourse = await course.save();  // Save changes
-
-        res.status(200).json({ success: true, message: "Course updated successfully", course: updatedCourse });
-    } catch (error) {
-        console.error("Update Course Error:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+    if (!Array.isArray(videos)) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Videos must be an array." 
+        });
     }
+
+    // Fetch the Course model from the adminDB
+    const Course = await getCourseModel();
+
+    const course = new Course({
+        name: name.trim(),
+        category: category.trim(),
+        description,
+        videos,
+        isDraft,
+    });
+
+    const savedCourse = await course.save();
+    res.status(201).json({ 
+        success: true, 
+        course: savedCourse 
+    });
 });
 
+export const updateCourse = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { name, category, description, videos, isDraft } = req.body;
+
+    if (!name || !category) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Course name and category are required." 
+        });
+    }
+
+    // Get the Course model from the adminDB
+    const Course = await getCourseModel();
+
+    const course = await Course.findById(id);
+    if (!course) {
+        return res.status(404).json({ 
+            success: false, 
+            message: "Course not found." 
+        });
+    }
+
+    course.name = name.trim();
+    course.category = category.trim();
+    course.description = description;
+    course.videos = videos;
+    course.isDraft = isDraft;
+
+    const updatedCourse = await course.save();
+
+    res.status(200).json({ 
+        success: true, 
+        message: "Course updated successfully", 
+        course: updatedCourse 
+    });
+});
 
 // Get all Courses
 export const getAllCourses = async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
-    const search = req.query.search || "";
-    const category = req.query.category || "all";
-
-    const searchFilter = search ? { $or: [{ name: { $regex: search, $options: "i" } }], } : {};
-
-    const categoryFilter = category === "all" ? {} : {
-        category: { $regex: `^${category}$`, $options: "i" }
-    };
-
     try {
-        const queryFilter = { ...searchFilter, ...categoryFilter };
-        const courses = await Course.find(queryFilter);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || "";
+        const category = req.query.category || "all";
 
+        // Build search filter for course name if provided
+        const searchFilter = search
+            ? { $or: [{ name: { $regex: search, $options: "i" } }] }
+            : {};
+
+        // Build category filter if a specific category is provided
+        const categoryFilter =
+            category === "all"
+                ? {}
+                : { category: { $regex: `^${category}$`, $options: "i" } };
+
+        // Merge filters
+        const queryFilter = { ...searchFilter, ...categoryFilter };
+
+        // Retrieve the Course model from adminDB
+        const Course = await getCourseModel();
+
+        // Fetch paginated courses based on the filter
+        const courses = await Course.find(queryFilter).skip(skip).limit(limit);
+
+        // Format each course to include the total duration in HH:MM:SS format
         const formattedCourses = courses.map((course) => {
-            const totalDurationSeconds = course.videos.reduce((sum, video) => sum + (video.duration || 0), 0);
+            const totalDurationSeconds = course.videos.reduce(
+                (sum, video) => sum + (video.duration || 0),
+                0
+            );
             const hours = Math.floor(totalDurationSeconds / 3600);
             const minutes = Math.floor((totalDurationSeconds % 3600) / 60);
             const seconds = totalDurationSeconds % 60;
 
             const totalDurationFormatted = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
             return {
                 ...course.toObject(),
                 totalDuration: totalDurationFormatted,
             };
-        })
+        });
 
-        const totalCourses = await Course.countDocuments(queryFilter)
+        // Get the total count of courses matching the query filter (for pagination)
+        const totalCourses = await Course.countDocuments(queryFilter);
+
         res.status(200).json({
             success: true,
             courses: formattedCourses,
@@ -199,101 +233,94 @@ export const getAllCourses = async (req, res) => {
 };
 
 // Get a single course by ID
-export const getCourseById = async (req, res) => {
-    try {
-        const { id } = req.params;
+export const getCourseById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
 
-        const course = await Course.findById(id);
-        if (!course) {
-            return res
-                .status(404)
-                .json({ success: false, message: "course not found." });
-        }
+    // Get the Course model from adminDB
+    const Course = await getCourseModel();
+    const course = await Course.findById(id);
 
-        res.status(200).json({ success: true, course });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+    if (!course) {
+        return res
+            .status(404)
+            .json({ success: false, message: "Course not found." });
     }
-};
+
+    res.status(200).json({ success: true, course });
+});
 
 // Delete a course by ID
-export const deleteCourse = async (req, res) => {
-    try {
-        const { id } = req.params;
+export const deleteCourse = asyncHandler(async (req, res) => {
+    const { id } = req.params;
 
-        const deletedCourse = await Course.findByIdAndDelete(id);
-        if (!deletedCourse) {
-            return res
-                .status(404)
-                .json({ success: false, message: "Course not found." });
-        }
+    // Retrieve the Course model from the adminDB
+    const Course = await getCourseModel();
 
-        res
-            .status(200)
-            .json({ success: true, message: "Course deleted successfully." });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+    const deletedCourse = await Course.findByIdAndDelete(id);
+    if (!deletedCourse) {
+        return res
+            .status(404)
+            .json({ success: false, message: "Course not found." });
     }
-};
+
+    res
+        .status(200)
+        .json({ success: true, message: "Course deleted successfully." });
+});
 
 // fetch category list
 export const getCourseCategories = asyncHandler(async (req, res) => {
-    try {
-        const category = await Course.find({}, "category");
-        const uniqueCategory = [...new Set(category.map((doc) => doc.category))];
-        res.json(uniqueCategory);
-    } catch (error) {
-        console.error("Error fetching category: ", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
+    // Retrieve the Course model from the adminDB
+    const Course = await getCourseModel();
+
+    // Fetch only the "category" field for all courses
+    const categoryDocs = await Course.find({}, "category");
+
+    // Create an array of unique categories
+    const uniqueCategories = [...new Set(categoryDocs.map((doc) => doc.category))];
+
+    res.status(200).json(uniqueCategories);
 });
 
 // fetch title and id of the course of assigning
 export const getCourseDetails = asyncHandler(async (req, res) => {
-    try {
-        const courses = await Course.find({}, "_id name");
+    // Retrieve the Course model from the adminDB connection
+    const Course = await getCourseModel();
+    
+    // Fetch only the _id and name fields of each course
+    const courses = await Course.find({}, "_id name");
 
-        // Format the response for react-select
-        const options = courses.map((course) => ({
-            value: course._id,
-            label: course.name,
-        }));
-        res.status(200).json({ options });
-    } catch (error) {
-        console.error("Error fetching courses:", error);
-        res.status(500).json({ message: "Server error" });
-    }
+    // Format the response for react-select (or similar components)
+    const options = courses.map((course) => ({
+        value: course._id,
+        label: course.name,
+    }));
+    
+    res.status(200).json({ options });
 });
 
 // Fetch course details for a specific user
 
-export const getUserAssignedCourseDetails = async (req, res) => {
+export const getUserAssignedCourseDetails = asyncHandler(async (req, res) => {
     const { courseId, userId } = req.params;
 
-    try {
-        // Check if the course is assigned to the user
-        const userCourse = await UserCourse.findOne({ courseId, userId }).populate(
-            "courseId"
-        );
+    // Check if the course is assigned to the user and populate course details
+    const userCourse = await UserCourse.findOne({ courseId, userId }).populate("courseId");
 
-        if (!userCourse) {
-            return res
-                .status(404)
-                .json({ message: "Course not assigned to this user" });
-        }
-
-        const courseDetails = {
-            courseId: userCourse.courseId._id,
-            name: userCourse.courseId.name,
-            description: userCourse.courseId.description,
-            videos: userCourse.courseId.videos, // Assuming course has a videos field
-            progress: userCourse.progress, // User-specific progress
-            category: userCourse.courseId.category,
-        };
-
-        res.status(200).json(courseDetails);
-    } catch (error) {
-        console.error("Error fetching course details:", error);
-        res.status(500).json({ message: "Internal server error" });
+    if (!userCourse) {
+        return res
+            .status(404)
+            .json({ message: "Course not assigned to this user" });
     }
-};
+
+    const courseDetails = {
+        courseId: userCourse.courseId._id,
+        name: userCourse.courseId.name,
+        description: userCourse.courseId.description,
+        videos: userCourse.courseId.videos, // Assuming course has a videos field
+        progress: userCourse.progress,        // User-specific progress
+        category: userCourse.courseId.category,
+    };
+
+    res.status(200).json(courseDetails);
+});

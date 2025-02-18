@@ -1,58 +1,37 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
+import { getTenantDB } from "../tenantdb.js";
 
 const { Schema } = mongoose;
 
-const OrganizationSchema = new Schema({
-  name: {
-    type: String,
-    required: [true, 'Organization name is required'],
-    trim: true,
-    minlength: [2, 'Organization name must be at least 2 characters long'],
-    maxlength: [100, 'Organization name must be less than 100 characters long']
-  },
-  adminName: {
-    type: String,
-    trim: true,
-    minlength: [2, 'Admin name must be at least 2 characters long'],
-    maxlength: [100, 'Admin name must be less than 100 characters long']
-  },
-  totalUsers: {
-    type: Number,
-    required: [true, 'Total users is required'],
-    min: [1, 'There must be at least one user']
-  },
-  statistics: {
-    phishingLinksVisited: {
-      type: Number,
-      default: 0,
-      min: [0, 'Phishing links visited cannot be negative']
+const organizationSchema = new Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true
     },
-    linksWhitelisted: {
-      type: Number,
-      default: 0,
-      min: [0, 'Links whitelisted cannot be negative']
+    adminName: {
+        type: String,
+        required: true,
+        trim: true
     },
-    blacklistedLinksClicked: {
-      type: Number,
-      default: 0,
-      min: [0, 'Blacklisted links clicked cannot be negative']
+    totalUsers: {
+        type: Number,
+        required: true
     },
-    phishingLinksBlocked: {
-      type: Number,
-      default: 0,
-      min: [0, 'Phishing links blocked cannot be negative']
+    orgId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
-  },
-  orgId: {
-    type: String,
-    required: [true, 'Organization ID is required'],
-    unique: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
 });
 
-const Organization = mongoose.model('Organization', OrganizationSchema);
-export default Organization;
+export default organizationSchema;
+
+export const getOrgModel = async (tenantId) => {
+    const tenantDb = await getTenantDB(tenantId);
+    return tenantDb.models.Organization || tenantDb.model("Organization", organizationSchema);
+}

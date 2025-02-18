@@ -2,8 +2,7 @@ import http from 'http';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import {Server} from "socket.io"
-import dotenv from 'dotenv';
+import { Server } from "socket.io"
 import winston from 'winston';
 
 import authenticationRoutes from "./routes/authenticationRoutes.js";
@@ -17,8 +16,8 @@ import logsRoute from "./routes/logsRoute.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
 import phishtankRoutes from "./routes/phishtankRoutes.js";
 import urlhausRoutes from "./routes/urlhausRoutes.js"
-import templateRoutes from "./routes/templateRoutes.js";
-import blogRoutes from "./routes/blogRoutes.js";
+// import templateRoutes from "./routes/templateRoutes.js";
+// import blogRoutes from "./routes/blogRoutes.js";
 import errorHandler from './middlewares/errorHandler.js';
 import authenticateToken from "./middlewares/authenticateToken.js";
 import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js";
@@ -29,16 +28,22 @@ import heartBeatRoutes from "./routes/heartBeatRoutes.js";
 
 import cookieParser from 'cookie-parser';
 
-import fetchAndSavePhishtankData from './cronJobs/phishtankJob.js';
-import fetchAndSaveUrlhausData from './cronJobs/urlhausService.js';
+// import fetchAndSavePhishtankData from './cronJobs/phishtankJob.js';
+// import fetchAndSaveUrlhausData from './cronJobs/urlhausService.js';
 
 // Training Platform
 import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
 import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
 import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js"
 
+import tenantRoutes from "./routes/tenantRoutes.js"
+import superAdminRoutes from "./routes/superAdminRoutes.js"
 
+import dotenv from "dotenv";
 dotenv.config();
+
+import "./utils/tokenEncryption.js";
+
 
 const app = express();
 // Increase the size limit for JSON and URL-encoded bodies
@@ -46,20 +51,41 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // CORS Configuration
 // Development only
-const allowedOrigins = ['http://localhost:5173', 'chrome-extension://','moz-extension://','http://localhost:5174','http://localhost:5175'];
-
-app.use(
+const allowedOrigins = [
+    'http://localhost:5173',
+    'chrome-extension://',
+    'moz-extension://',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5000',
+    /^https?:\/\/.*\.lvh\.me(?::\d+)?$/
+  ];
+  
+  app.use(
     cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        credentials: true,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (e.g., curl, Postman)
+        if (!origin) return callback(null, true);
+  
+        const isAllowed = allowedOrigins.some((allowed) => {
+          if (typeof allowed === 'string') {
+            return origin.startsWith(allowed);
+          }
+          if (allowed instanceof RegExp) {
+            return allowed.test(origin);
+          }
+          return false;
+        });
+  
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
     })
-);
+  );
 
 // Production
 // const allowedOrigins = ['http://domain.com/', 'chrome-extension://<PUBLISHED_EXTENSION_ID>']; // Replace with your frontend origin(s)
@@ -81,29 +107,29 @@ app.use(cookieParser());
 
 
 const server = http.createServer(app);
-const io = new Server(server,  {
-  cors: {
-    origin: "*", // ALl Origin for dev purposes
-  }
+const io = new Server(server, {
+    cors: {
+        origin: "*", // ALl Origin for dev purposes
+    }
 });
 
 app.set("socketio", io);
 
 const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' })
-  ]
+    level: 'info',
+    format: winston.format.json(),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'error.log', level: 'error' })
+    ]
 });
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => {
-    console.log(err);
-    logger.error(err.message);
-  });
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => {
+        console.log(err);
+        logger.error(err.message);
+    });
 
 // Organization Routes
 app.use('/api/org', organizationRoutes);
@@ -127,7 +153,7 @@ app.use("/api/feedback", authenticateToken, feedbackRoutes);
 // Dashboard Routes
 
 // Overview Page Routes
-app.use("/api/overview",dashboardAdminMiddleware, overviewRoutes);
+app.use("/api/overview", dashboardAdminMiddleware, overviewRoutes);
 
 // Logs Route
 app.use("/api/logs/", dashboardAdminMiddleware, logsRoute);
@@ -159,6 +185,10 @@ app.use("/api/emailTemplate", emailTemplateRoutes)
 app.use("/api/course", courseRoutes)
 
 app.use("/api/userCourse", userCourseRoutes)
+
+app.use("/api/tenant", tenantRoutes)
+
+app.use("/api/superadmin", superAdminRoutes)
 
 // Start cron job
 // fetchAndSavePhishtankData();

@@ -1,4 +1,5 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
+import { getTenantDB } from "../tenantdb.js";
 
 const urlSchema = new mongoose.Schema(
   {
@@ -11,7 +12,7 @@ const urlSchema = new mongoose.Schema(
         {
           userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "user",
+            ref: "User",
           },
           visits: [
             {
@@ -43,8 +44,8 @@ const urlSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['whitelisted', 'blacklisted'],
-      default: 'whitelisted'
+      enum: ["whitelisted", "blacklisted"],
+      default: "whitelisted",
     },
     isUserAdded: {
       type: Boolean,
@@ -54,26 +55,29 @@ const urlSchema = new mongoose.Schema(
       type: String,
       required: [true, "Organization ID cannot be empty"],
     },
-    reputationDetails: { 
-        type: Object, 
-        default: null,
-    }, // Store VirusTotal analysis stats
-    reputationScore: { 
-        type: Number, 
-        default: 0,
-    }, // Store VirusTotal reputation score
+    reputationDetails: {
+      type: Object,
+      default: null,
+    },
+    reputationScore: {
+      type: Number,
+      default: 0,
+    },
     RequestIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Request',
-      }
-    ]
+        ref: "Request",
+      },
+    ],
   },
   { timestamps: true }
 );
 
 urlSchema.index({ url: 1, orgId: 1, createdAt: 1 });
 
-const Url = mongoose.model("Url", urlSchema);
+export default urlSchema;
 
-export default Url;
+export const getUrlModel = async (tenantId) => {
+  const tenantDb = await getTenantDB(tenantId);
+  return tenantDb.models.Url || tenantDb.model("Url", urlSchema);
+}
