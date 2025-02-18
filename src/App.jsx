@@ -38,6 +38,7 @@ import SetupPassword from "./components/Users/SetupPassword.jsx";
 import Layout from "./layout/Layout.jsx";
 import Training from "./components/Training/Training.jsx";
 import IndividualTraining from "./components/Training/IndividualTraining.jsx";
+import RedirectToSubdomain from "./components/RedirectToSubdomain.jsx";
 
 function App() {
   const theme = useSelector((state) => state.theme);
@@ -50,6 +51,7 @@ function App() {
           <div className="w-full h-full">
             <Router>
               <AuthProvider>
+                <RedirectToSubdomain />
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/logout" element={<Logout />} />
