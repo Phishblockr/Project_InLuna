@@ -71,11 +71,18 @@ export const deleteCourseVideo = asyncHandler(async (req, res) => {
 
 export const getSignedUrlController = asyncHandler(async (req, res) => {
     try {
-        const { fileName } = req.query;
-
-        if (!fileName) {
-            return res.status(400).json({ error: "Filename is required" });
+        const { url } = req.query;
+        if (!url) {
+            return res.status(400).json({ error: "Url is required" });
         }
+
+         // Regex to extract the file name after 'videos/'
+         const match = url.match(/videos\/(.+)$/);
+         const fileName = match ? match[1] : null;
+ 
+         if (!fileName) {
+             return res.status(400).json({ error: "Invalid URL format" });
+         }
 
         const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
