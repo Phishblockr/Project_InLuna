@@ -198,6 +198,8 @@ export const setupPassword = async (req, res) => {
 
     try {
         const User = await getUserModel(orgId); // Get tenant-specific User model
+        const tenantDb = await getTenantDB(orgId);
+        const AdminLogs = await getAdminLogsModel(tenantDb);
 
         const user = await User.findOne({
             setupPasswordExpires: { $gt: Date.now() },
