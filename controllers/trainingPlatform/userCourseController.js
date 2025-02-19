@@ -50,14 +50,20 @@ export const assignCourse = asyncHandler(async (req, res) => {
 
 export const getCoursesForUser = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const orgId = req.user.orgId; // Ensure the tenant's orgId is available here
+    const orgId = req.user.orgId; // Ensure the tenant's orgId is available
 
     // Retrieve the tenant-specific UserCourse model
     const UserCourse = await getUserCourseModel(orgId);
+    // Retrieve the common Course model from adminDB
+    const Course = await getCourseModel();
 
-    // Query the tenant's UserCourse collection for assignments for the specified user
+    // Find assignments and populate courseId using the admin Course model
     const assignments = await UserCourse.find({ userId })
-        .populate("courseId", "name category description")
+        .populate({
+            path: 'courseId',
+            select: 'name category description',
+            model: Course // Use the Course model from adminDB
+        })
         .populate("assignedBy", "name email");
 
     if (!assignments || assignments.length === 0) {
