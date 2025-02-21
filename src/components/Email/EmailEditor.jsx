@@ -20,6 +20,18 @@ const EmailCreator = () => {
     const [updatedDate, setUpdatedDate] = useState("");
     const [createdDate, setCreatedDate] = useState("");
 
+    const [subject, setSubject] = useState("");
+    const [senderAddress, setSenderAddress] = useState("");
+    const [mailedBy, setMailedBy] = useState("");
+    const [signedBy, setSignedBy] = useState("");
+    const [securityProtocol, setSecurityProtocol] = useState("");
+
+    const [isSubjectPhishing, setIsSubjectPhishing] = useState(false);
+    const [isSenderAddressPhishing, setIsSenderAddressPhishing] = useState(false);
+    const [isMailedByPhishing, setIsMailedByPhishing] = useState(false);
+    const [isSignedByPhishing, setIsSignedByPhishing] = useState(false);
+    const [isSecurityProtocolPhishing, setIsSecurityProtocolPhishing] = useState(false);
+
     // dynamic select
     const [groupOptions, setGroupOptions] = useState([]); // Store options fetched from the backend
     const [otherValue, setOtherValue] = useState(""); // Track input for "Other" value
@@ -48,6 +60,20 @@ const EmailCreator = () => {
                 setIsPhishing(data.template.isPhishing);
                 setUpdatedDate(data.template.updatedAt);
                 setCreatedDate(data.template.createdDate);
+
+                setSubject(data.template.subject);
+                setSenderAddress(data.template.senderAddress);
+                setMailedBy(data.template.mailedBy);
+                setSignedBy(data.template.signedBy);
+                setSecurityProtocol(data.template.securityProtocol);
+
+                setIsSubjectPhishing(data.template.isSubjectPhishing);
+                setIsSenderAddressPhishing(data.template.isSenderAddressPhishing);
+                setIsMailedByPhishing(data.template.isMailedByPhishing);
+                setIsSignedByPhishing(data.template.isSignedByPhishing);
+                setIsSecurityProtocolPhishing(data.template.isSecurityProtocolPhishing);
+
+
             } else {
                 toast.error(data.message || "Error fetching templates");
             }
@@ -58,7 +84,7 @@ const EmailCreator = () => {
 
     const fetchOptions = async () => {
         try {
-            const response = await fetch(`${apiUrl}/emailTemplate/getGroups` , {
+            const response = await fetch(`${apiUrl}/emailTemplate/getGroups`, {
                 method: "GET",
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -91,12 +117,22 @@ const EmailCreator = () => {
 
             const res = await fetch(`${apiUrl}/emailTemplate/update/${id}`, {
                 method: "PUT",
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
-                    "Content-Type": "application/json" 
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     title,
+                    subject,
+                    isSubjectPhishing,
+                    senderAddress,
+                    isSenderAddressPhishing,
+                    mailedBy,
+                    isMailedByPhishing,
+                    signedBy,
+                    isSignedByPhishing,
+                    securityProtocol,
+                    isSecurityProtocolPhishing,
                     htmlContent,
                     group: finalGroup,
                     isPhishing
@@ -197,7 +233,7 @@ const EmailCreator = () => {
     return (
         <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
             {loading && <LoadingOverlay loading={loading} />}
-            <h1>Edit Template</h1>
+            <h1 className="pt-3 pl-5 text-2xl font-medium">Edit Template</h1>
             <label htmlFor="title"> Title</label>
             <input
                 type="text"
@@ -254,6 +290,112 @@ const EmailCreator = () => {
                 <option value="false">False</option>
 
             </select>
+
+            <div>
+                <label htmlFor="subject">Subject</label>
+                <input
+                    name="subject"
+                    type="text"
+                    placeholder="Enter template Subject"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="w-full p-[10px] mb-[10px]"
+                />
+                <div className="flex items-center mb-[10px]">
+                    <input
+                        type="checkbox"
+                        name="isSubjectPhishing"
+                        checked={isSubjectPhishing}
+                        onChange={(e) => setIsSubjectPhishing(e.target.checked)}
+                        className="mr-2"
+                    />
+                    <label htmlFor="isSubjectPhishing">Is Subject Phishing</label>
+                </div>
+            </div>
+            <div>
+                <label htmlFor="senderAddress">Sender's E-mail Address</label>
+                <input
+                    type="text"
+                    name="senderAddress"
+                    placeholder="Enter template Sender Address"
+                    value={senderAddress}
+                    onChange={(e) => setSenderAddress(e.target.value)}
+                    className="w-full p-[10px] mb-[10px]"
+                />
+                <div className="flex items-center mb-[10px]">
+                    <input
+                        type="checkbox"
+                        name="isSenderAddressPhishing"
+                        checked={isSenderAddressPhishing}
+                        onChange={(e) => setIsSenderAddressPhishing(e.target.checked)}
+                        className="mr-2"
+                    />
+                    <label htmlFor="isSenderAddressPhishing">Is Sender Address Phishing</label>
+                </div>
+            </div>
+            <div>
+                <label htmlFor="mailedBy">Mailed By</label>
+                <input
+                    type="text"
+                    name="mailedBy"
+                    placeholder="Enter template Mailed By"
+                    value={mailedBy}
+                    onChange={(e) => setMailedBy(e.target.value)}
+                    className="w-full p-[10px] mb-[10px]"
+                />
+                <div className="flex items-center mb-[10px]">
+                    <input
+                        type="checkbox"
+                        name="isMailedByPhishing"
+                        checked={isMailedByPhishing}
+                        onChange={(e) => setIsMailedByPhishing(e.target.checked)}
+                        className="mr-2"
+                    />
+                    <label htmlFor="isMailedByPhishing">Is Mailed By Phishing</label>
+                </div>
+            </div>
+            <div>
+                <label htmlFor="signedBy">Signed By</label>
+                <input
+                    type="text"
+                    name="signedBy"
+                    placeholder="Enter template Signed By"
+                    value={signedBy}
+                    onChange={(e) => setSignedBy(e.target.value)}
+                    className="w-full p-[10px] mb-[10px]"
+                />
+                <div className="flex items-center mb-[10px]">
+                    <input
+                        type="checkbox"
+                        name="isSignedByPhishing"
+                        checked={isSignedByPhishing}
+                        onChange={(e) => setIsSignedByPhishing(e.target.checked)}
+                        className="mr-2"
+                    />
+                    <label htmlFor="isSignedByPhishing">Is Signed By Phishing</label>
+                </div>
+            </div>
+            <div>
+                <label htmlFor="securityProtocol">Security Protocol</label>
+                <input
+                    type="text"
+                    name="securityProtocol"
+                    placeholder="Enter template Security Protocol"
+                    value={securityProtocol}
+                    onChange={(e) => setSecurityProtocol(e.target.value)}
+                    className="w-full p-[10px] mb-[10px]"
+                />
+                <div className="flex items-center mb-[10px]">
+                    <input
+                        type="checkbox"
+                        name="isSecurityProtocolPhishing"
+                        checked={isSecurityProtocolPhishing}
+                        onChange={(e) => setIsSecurityProtocolPhishing(e.target.checked)}
+                        className="mr-2"
+                    />
+                    <label htmlFor="isSecurityProtocolPhishing">Is Security Protocol Phishing</label>
+                </div>
+            </div>
 
             <div className="border-2 border-gray-200 rounded-lg">
                 {/* Custom Toolbar */}
