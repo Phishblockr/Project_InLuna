@@ -9,6 +9,15 @@ const organizationSchema = new Schema({
         required: true,
         trim: true
     },
+    adminEmailIds: [{
+        type: String,
+        match: [/.+@.+\..+/, 'Please fill a valid email address'],
+        require: true
+    }],
+    adminIds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    }],
     adminName: {
         type: String,
         required: true,
