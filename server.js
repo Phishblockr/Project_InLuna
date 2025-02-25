@@ -40,7 +40,7 @@ import tenantRoutes from "./routes/tenantRoutes.js"
 import superAdminRoutes from "./routes/superAdminRoutes.js"
 
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ override: true });
 
 import "./utils/tokenEncryption.js";
 
@@ -58,6 +58,10 @@ const allowedOrigins = [
     'http://localhost:5174',
     'http://localhost:5175',
     'http://localhost:5000',
+    'https://theinluna.com',
+    'https://dashboard.theinluna.com',
+    'https://training.theinluna.com',
+    'https://superdashboard.theinluna.com',
     /^https?:\/\/.*\.lvh\.me(?::\d+)?$/
   ];
   

@@ -167,6 +167,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
         res.cookie("refreshToken", encryptedRefreshToken, cookieOptions);
 
         // Redirect based on user type
+        console.log(user.userType, process.env.USER)
         if (user.userType === process.env.ADMIN) {
             res.status(200).json({ token, redirectUrl: process.env.FRONT_END_URL });
         } else if (user.userType === process.env.USER) {

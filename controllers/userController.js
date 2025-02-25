@@ -13,7 +13,7 @@ import crypto from "crypto";
 import AdminLogs from "../models/adminlogsModel.js";
 import { getUserModel, getTenantDB } from '../tenantdb.js';
 import { getTenantModel } from '../admindb.js';
-import getAdminLogsModel from '../models/adminlogsModel.js';
+import { getAdminLogsModel } from '../models/adminlogsModel.js';
 import UserSchema from '../models/userModel.js';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -220,7 +220,7 @@ export const setupPassword = async (req, res) => {
             userId: user._id,
             operationType: "password setup",
             operationsPerformed: `Password setup successful`,
-            orgId:user.orgId,
+            orgId: user.orgId,
         });
 
         res.status(200).json({ message: "Password setup successful." });
