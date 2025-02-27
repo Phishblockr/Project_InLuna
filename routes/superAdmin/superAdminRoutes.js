@@ -1,6 +1,6 @@
 import express from "express";
-import { createSuperAdmin, fetchProfileSuperAdmin, loginSuperAdm } from "../controllers/superAdminController.js";
-import superDashboardMiddleware from "../middlewares/superDashboardMiddleware.js";
+import superDashboardMiddleware from "../../middlewares/superDashboardMiddleware.js";
+import { createSuperAdmin, fetchProfileSuperAdmin } from "../../controllers/superAdmin/superAdminController.js";
 
 const router = express.Router();
 

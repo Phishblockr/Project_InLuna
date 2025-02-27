@@ -21,11 +21,13 @@ const organizationSchema = new Schema({
     adminName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        default: ""
     },
     totalUsers: {
         type: Number,
-        required: true
+        required: true,
+        default: 0
     },
     orgId: {
         type: String,

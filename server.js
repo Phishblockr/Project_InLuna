@@ -37,7 +37,7 @@ import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
 import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js"
 
 import tenantRoutes from "./routes/tenantRoutes.js"
-import superAdminRoutes from "./routes/superAdminRoutes.js"
+import superAdminRoutes from "./routes/superAdmin/superAdminRoutes.js"
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });

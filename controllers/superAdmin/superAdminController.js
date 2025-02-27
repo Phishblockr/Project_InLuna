@@ -1,8 +1,8 @@
-import asyncHandler from "../middlewares/asyncHandler.js";
+import asyncHandler from "../../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { generateUsername } from "../utils/generateUsername.js";
-import { getSuperAdminModel } from "../models/superAdminModel.js";
+import { generateUsername } from "../../utils/generateUsername.js";
+import { getSuperAdminModel } from "../../models/superAdmin/superAdminModel.js";
 
 // Create Super Admin (Only first-time setup)
 export const createSuperAdmin = asyncHandler(async (req, res) => {
@@ -59,7 +59,7 @@ export const fetchProfileSuperAdmin = asyncHandler(async (req, res) => {
   });
   
 
-// DEMO CODE NOT IN USE
+// DEMO CODE NOT IN USE for login refer code in authenticationController.js
 
 export const loginSuperAdm = asyncHandler(async (req, res) => {
     const { username, password, rememberMe } = req.body;

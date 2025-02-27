@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { decrypt, encrypt } from '../utils/tokenEncryption.js';
 import {getUserModel} from "../tenantdb.js"
-import { getSuperAdminModel } from '../models/superAdminModel.js';
+import { getSuperAdminModel } from '../models/superAdmin/superAdminModel.js';
 
 dotenv.config();
 

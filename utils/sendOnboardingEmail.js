@@ -18,8 +18,10 @@ export const sendOnboardingEmail = async (to, subject, content, user) => {
     </header>
     <div style="padding: 10px; width: 100%;">
         <p>Hi ${user.name}</p>
-        <p>We are very excited to have you onboard here is your organisation Id please keep it safe:</p>
-        <span>${content}</span>
+        <p>We are very excited to have you onboard here is your organisation Id please keep it safe: <span>${content}</span></p>
+        <p>And here is your username: <span>${user.username}</span></p>
+        
+        <p>Get started with setting up your environment on <a href="https://dashboard.theinluna.com"></a>
         <p>Please also get our inLuna extension here: </p>
         <p>If you did not made this request, it's possible someone else is trying to access your InLuna account. <br> <strong>Please ignore this email if you did not request assistance.</strong></p>
         <p>Sincerely yours,</p>
