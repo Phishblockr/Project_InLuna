@@ -10,9 +10,9 @@ import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
 import UserSchema from '../models/userModel.js';
 import { getUserModel, getTenantDB } from '../tenantdb.js';
-import { getTenantModel } from '../admindb.js';
 import { getAdminLogsModel } from '../models/adminlogsModel.js';
 import { sendPasswordSetupEmail } from '../utils/sendPasswordSetupEmail.js';
+import { getOrgModel } from '../models/organisationModel.js';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -197,10 +197,10 @@ export const createUser = asyncHandler(async (req, res) => {
         }
 
         // Get the admin database model (Organizations)
-        const TenantModel = await getTenantModel();
+        const OrgModel = await getOrgModel(); 
 
         // Check if the organization exists in the admin DB
-        const existingOrganization = await TenantModel.findOne({ orgId });
+        const existingOrganization = await OrgModel.findOne({ orgId });
         if (!existingOrganization) {
             return res.status(400).json({ message: "Organization not found. Please create the organization first." });
         }
@@ -239,12 +239,12 @@ export const createUser = asyncHandler(async (req, res) => {
 
         const addedUser = await newUser.save();
 
-        if (addedUser.userType === process.env.ADMIN){
-            const TenantModel = await getTenantModel();
-            const orgModel = await TenantModel.findOne({ orgId });
-                orgModel.adminEmailIds.push(addedUser.email)
-                orgModel.adminIds.push(addedUser._id)
-                await orgModel.save();
+        if (addedUser.userType === process.env.ADMIN) {
+            const OrgModel = await getOrgModel(); 
+            const org = await OrgModel.findOne({ orgId });
+            org.adminEmailIds.push(addedUser.email)
+            org.adminIds.push(addedUser._id)
+            await org.save();
         }
 
         // Send password setup email
@@ -289,10 +289,10 @@ export const createAdmin = asyncHandler(async (req, res) => {
         }
 
         // Get the admin database model (Organizations)
-        const TenantModel = await getTenantModel();
+        const OrgModel = await getOrgModel(); 
 
         // Check if the organization exists in the admin DB
-        const existingOrganization = await TenantModel.findOne({ orgId });
+        const existingOrganization = await OrgModel.findOne({ orgId });
         if (!existingOrganization) {
             return res.status(400).json({ message: "Organization not found. Please create the organization first." });
         }
@@ -670,6 +670,22 @@ export const deleteUser = asyncHandler(async (req, res) => {
         // Prevent an admin from deleting their own account
         if (user._id.toString() === adminId) {
             return res.status(403).json({ error: "You cannot delete your own account." });
+        }
+
+        if (user.userType === process.env.ADMIN) {
+            console.log("Remove admin")
+            // If user is admin remove his record from organization model
+            const OrgModel = await getOrgModel(); 
+            const org = await OrgModel.findOne({ orgId });
+            if (org) {
+                org.adminIds = org.adminIds.filter(
+                    adminIdItem => adminIdItem.toString() !== user._id.toString()
+                );
+                org.adminEmailIds = org.adminEmailIds.filter(
+                    emailItem => emailItem !== user.email
+                );
+                await org.save();
+            }
         }
 
         // Delete user

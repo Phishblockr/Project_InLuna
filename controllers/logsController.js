@@ -1,15 +1,10 @@
-import mongoose from 'mongoose';
-import AdminLogs from "../models/adminlogsModel.js"
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subWeeks, subMonths, subQuarters, subYears } from 'date-fns';
 import { Parser } from 'json2csv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import Url from '../models/urlModel.js';
-import User from '../models/userModel.js';
-import WhitelistReq from '../models/RequestModel.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
-import getAdminLogsModel from '../models/adminlogsModel.js';
+import {getAdminLogsModel} from '../models/adminlogsModel.js';
 import { getTenantDB } from '../tenantdb.js';
 
 
@@ -71,7 +66,7 @@ export const getAllLogs = asyncHandler(async (req, res) => {
         const logsWithDetails = await Promise.all(
             logs.map(async (log) => ({
                 ...log,
-                entityDetails: log.entityDetails || await getEntityDetails(log.entityType, log.entityId)
+                entityDetails: log.entityDetails || await getEntityDetails(log.entityType, log.entityId, orgId)
             }))
         );
 
@@ -215,50 +210,6 @@ const getEntityDetails = async (entityType, entityId, orgId) => {
             return {};
         }
 
-        // ✅ Register models dynamically in the tenant DB
-        const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
-        const Url = tenantDb.models.Url || tenantDb.model("Url", UrlSchema);
-        const WhitelistReq = tenantDb.models.WhitelistReq || tenantDb.model("WhitelistReq", WhitelistReqSchema);
-
-        // ✅ Fetch entity details dynamically
-        switch (entityType) {
-            case "user":
-                const user = await User.findById(entityId);
-                if (user) {
-                    entityDetails = {
-                        identifier: user.email,
-                        status: user.status,
-                        extraInfo: `Department: ${user.department}`,
-                    };
-                }
-                break;
-
-            case "url":
-                const url = await Url.findById(entityId);
-                if (url) {
-                    entityDetails = {
-                        identifier: url.url,
-                        status: url.status,
-                        extraInfo: `Category: ${url.category.join(", ")}`,
-                    };
-                }
-                break;
-
-            case "whitelistReq":
-                const whitelistReq = await WhitelistReq.findById(entityId);
-                if (whitelistReq) {
-                    entityDetails = {
-                        identifier: whitelistReq.url,
-                        status: whitelistReq.status,
-                        extraInfo: `Reason: ${whitelistReq.reason}`,
-                        from: whitelistReq.userId,
-                    };
-                }
-                break;
-
-            default:
-                console.warn(`⚠️ Unknown entity type: ${entityType}`);
-        }
     } catch (error) {
         console.error(`❌ Error fetching entity details for ${entityType} (${entityId}):`, error);
     }
