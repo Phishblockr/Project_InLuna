@@ -66,7 +66,8 @@ const HelpOptions = [
     },
 ];
 
-const Navbar = () => {
+const Navbar = ({expanded}) => {
+    const navbarMarginClass = expanded ? "ml-64" : "ml-20";
     const { getToken } = useAuth();
     const dispatch = useDispatch();
     const { details, loading, error } = useSelector((state) => state.userProfile);
@@ -129,7 +130,7 @@ const Navbar = () => {
     }, []);
 
     return (
-        <nav className="bg-white px-4 py-3 flex justify-between sticky left-0 right-0 top-0 ml-64 z-10 dark:bg-[#002451]">
+        <nav className={`bg-white px-4 py-3 flex justify-between sticky left-0 right-0 top-0 z-10 dark:bg-[#002451] transition-all ${navbarMarginClass}`}>
             <LoadingOverlay loading={dataLoading} />
             <div className="flex items-center text-x1">
                 <div className="relative w-[40svw] max-w-xl md:w-65 rounded-lg hidden md:block">
