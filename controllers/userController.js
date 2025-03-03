@@ -197,7 +197,7 @@ export const createUser = asyncHandler(async (req, res) => {
         }
 
         // Get the admin database model (Organizations)
-        const OrgModel = await getOrgModel(); 
+        const OrgModel = await getOrgModel();
 
         // Check if the organization exists in the admin DB
         const existingOrganization = await OrgModel.findOne({ orgId });
@@ -240,7 +240,7 @@ export const createUser = asyncHandler(async (req, res) => {
         const addedUser = await newUser.save();
 
         if (addedUser.userType === process.env.ADMIN) {
-            const OrgModel = await getOrgModel(); 
+            const OrgModel = await getOrgModel();
             const org = await OrgModel.findOne({ orgId });
             org.adminEmailIds.push(addedUser.email)
             org.adminIds.push(addedUser._id)
@@ -289,7 +289,7 @@ export const createAdmin = asyncHandler(async (req, res) => {
         }
 
         // Get the admin database model (Organizations)
-        const OrgModel = await getOrgModel(); 
+        const OrgModel = await getOrgModel();
 
         // Check if the organization exists in the admin DB
         const existingOrganization = await OrgModel.findOne({ orgId });
@@ -675,7 +675,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
         if (user.userType === process.env.ADMIN) {
             console.log("Remove admin")
             // If user is admin remove his record from organization model
-            const OrgModel = await getOrgModel(); 
+            const OrgModel = await getOrgModel();
             const org = await OrgModel.findOne({ orgId });
             if (org) {
                 org.adminIds = org.adminIds.filter(
@@ -829,27 +829,28 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
 
             // Send password setup emails
             for (let user of insertedUsers) {
+                console.log(user)
                 try {
                     let emailContent = await generatePasswordSetupLink(user, orgId);
-                    await sendEmail(user.email, "InLuna Dashboard - Password Setup", emailContent, user);
+                    await sendPasswordSetupEmail(user.email, "InLuna Dashboard - Password Setup", emailContent, user);
                 } catch (emailError) {
                     console.error(`Failed to send email to ${user.email}:`, emailError.message);
                 }
-            }
 
-            // Add Log Entry in the Correct Tenant Database
-            try {
-                await AdminLogs.create({
-                    userId,
-                    operationType: "add",
-                    operationsPerformed: "Users added via CSV",
-                    orgId,
-                    entityId: insertedUsers.map((u) => u._id),
-                    entityType: "user",
-                });
-                console.log("Log entry created successfully in tenant DB:", orgId);
-            } catch (logError) {
-                console.error("Failed to create log in tenant DB:", logError.message);
+                // Add Log Entry in the Correct Tenant Database
+                try {
+                    await AdminLogs.create({
+                        userId,
+                        operationType: "add",
+                        operationsPerformed: "Users added via CSV",
+                        orgId,
+                        entityId: user._id,
+                        entityType: "user",
+                    });
+                    console.log("Log entry created successfully in tenant DB:", orgId);
+                } catch (logError) {
+                    console.error("Failed to create log in tenant DB:", logError.message);
+                }
             }
 
             res.status(200).json({ message: "Users added successfully." });
