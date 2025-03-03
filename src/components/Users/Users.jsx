@@ -82,7 +82,8 @@ export default function Users() {
 
     const executeCsvUpload = async () => {
         try {
-            const response = dispatch(uploadCsv({ formData: csvData, token })).unwrap()
+            const response = await dispatch(uploadCsv({ formData: csvData, token })).unwrap()
+            console.log(response)
             if (response.errors) {
                 setErrors(response.errors);
                 toast.error("CSV contains errors. Please correct them and try again.");
@@ -90,7 +91,15 @@ export default function Users() {
                 toast.success("CSV uploaded successfully");
             }
         } catch (error) {
-            toast.error("Failed to upload CSV! Make sure your CSV don't contain duplicate email & phone values");
+            if (error.errors && Array.isArray(error.errors)) {
+                error.errors.forEach((err, index) => {
+                    toast.error(`Error ${index + 1}: ${err.error}`);
+                });
+            } else {
+                const errorMessages = error;
+                toast.error(errorMessages);
+
+            }
         }
     }
 
@@ -330,13 +339,13 @@ export default function Users() {
                                             ><RiEyeLine size={24} className="hover:text-[#0364BD] transition-colors" /></button>
 
                                             <button
-                                            onClick={() => navigate(`/training/individualTraining/${user._id}`)}
-                                            title="Assign Training"
+                                                onClick={() => navigate(`/training/individualTraining/${user._id}`)}
+                                                title="Assign Training"
                                             ><RiPresentationFill size={24} className="hover:text-[#0364BD] transition-colors" /></button>
 
-                                            <button 
-                                            onClick={() => handlePasswordModalOpen(user._id, "delete")}
-                                            title="Delete User"
+                                            <button
+                                                onClick={() => handlePasswordModalOpen(user._id, "delete")}
+                                                title="Delete User"
                                             >
                                                 <RiDeleteBinLine className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
                                             </button>

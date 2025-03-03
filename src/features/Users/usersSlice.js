@@ -120,10 +120,13 @@ export const uploadCsv = createAsyncThunk('users/uploadCsv', async ({formData, t
             },
             body: formData,
         });
-        if (!response.ok) throw new Error('Failed to upload CSV');
-        return await response.json()
+        const data = await response.json();
+        if (!response.ok) {
+            return rejectWithValue(data || 'Failed to upload CSV');
+        }
+        return data;
     } catch (error) {
-        return rejectWithValue(error.message)
+        return rejectWithValue(error)
     }
 })
 
