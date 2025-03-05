@@ -39,6 +39,8 @@ import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js"
 import tenantRoutes from "./routes/tenantRoutes.js"
 import superAdminRoutes from "./routes/superAdmin/superAdminRoutes.js"
 
+import bookADemoRoutes from "./routes/superAdmin/bookADemoRoutes.js"
+
 import dotenv from "dotenv";
 dotenv.config({ override: true });
 
@@ -193,6 +195,9 @@ app.use("/api/userCourse", userCourseRoutes)
 app.use("/api/tenant", tenantRoutes)
 
 app.use("/api/superadmin", superAdminRoutes)
+
+app.use("/api/bookADemo", bookADemoRoutes)
+
 
 // Start cron job
 // fetchAndSavePhishtankData();
