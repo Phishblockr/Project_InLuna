@@ -4,12 +4,27 @@ import EmailTemplate from "../../models/trainingPlatform/emailTemplateModel.js"
 
 // Create a new email template
 export const createEmailTemplate = asyncHandler(async (req, res) => {
-    const { title, htmlContent, group, isPhishing } = req.body;
+    const {
+        title,
+        htmlContent,
+        subject,
+        isSubjectPhishing,
+        senderAddress,
+        isSenderAddressPhishing,
+        mailedBy,
+        isMailedByPhishing,
+        signedBy,
+        isSignedByPhishing,
+        securityProtocol,
+        isSecurityProtocolPhishing,
+        group,
+        isPhishing
+    } = req.body;
 
     if (!title || !htmlContent) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "Title and HTML Content are required." 
+        return res.status(400).json({
+            success: false,
+            message: "Title and HTML Content are required."
         });
     }
 
@@ -18,6 +33,16 @@ export const createEmailTemplate = asyncHandler(async (req, res) => {
 
     const emailTemplate = new EmailTemplate({
         title,
+        subject,
+        isSubjectPhishing,
+        senderAddress,
+        isSenderAddressPhishing,
+        mailedBy,
+        isMailedByPhishing,
+        signedBy,
+        isSignedByPhishing,
+        securityProtocol,
+        isSecurityProtocolPhishing,
         htmlContent,
         group,
         isPhishing
@@ -104,14 +129,44 @@ export const deleteEmailTemplate = asyncHandler(async (req, res) => {
 // Edit an email template by ID
 export const editEmailTemplate = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { title, htmlContent, group, isPhishing } = req.body;
+    const {
+        title,
+        htmlContent,
+        subject,
+        isSubjectPhishing,
+        senderAddress,
+        isSenderAddressPhishing,
+        mailedBy,
+        isMailedByPhishing,
+        signedBy,
+        isSignedByPhishing,
+        securityProtocol,
+        isSecurityProtocolPhishing,
+        group,
+        isPhishing
+    } = req.body;
 
     // Retrieve the EmailTemplate model from the adminDB connection
     const EmailTemplate = await getEmailTemplateModel();
 
     const updatedTemplate = await EmailTemplate.findByIdAndUpdate(
         id,
-        { title, htmlContent, group, isPhishing },
+        {
+            title,
+            subject,
+            isSubjectPhishing,
+            senderAddress,
+            isSenderAddressPhishing,
+            mailedBy,
+            isMailedByPhishing,
+            signedBy,
+            isSignedByPhishing,
+            securityProtocol,
+            isSecurityProtocolPhishing,
+            htmlContent,
+            group,
+            isPhishing
+        },
         { new: true, runValidators: true }
     );
 
@@ -127,12 +182,12 @@ export const editEmailTemplate = asyncHandler(async (req, res) => {
 export const getTemplatesGroups = asyncHandler(async (req, res) => {
     // Retrieve the EmailTemplate model from the adminDB connection
     const EmailTemplate = await getEmailTemplateModel();
-    
+
     // Fetch only the "group" field from all templates
     const groupsDocs = await EmailTemplate.find({}, "group");
 
     // Extract unique group values using a Set
     const uniqueGroups = [...new Set(groupsDocs.map((doc) => doc.group))];
-    
+
     res.status(200).json(uniqueGroups);
 });

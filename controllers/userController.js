@@ -8,13 +8,11 @@ import { generateUsername } from '../utils/generateUsername.js';
 import dotenv from 'dotenv';
 import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
-
-// for adminLog
-import AdminLogs from "../models/adminlogsModel.js";
-import { getUserModel, getTenantDB } from '../tenantdb.js';
-import { getTenantModel } from '../admindb.js';
-import getAdminLogsModel from '../models/adminlogsModel.js';
 import UserSchema from '../models/userModel.js';
+import { getUserModel, getTenantDB } from '../tenantdb.js';
+import { getAdminLogsModel } from '../models/adminlogsModel.js';
+import { sendPasswordSetupEmail } from '../utils/sendPasswordSetupEmail.js';
+import { getOrgModel } from '../models/organisationModel.js';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -38,27 +36,23 @@ export const getAllUsers = asyncHandler(async (req, res) => {
         const search = req.query.search || "";
         const status = req.query.status || "all";
 
-        const orgId = req.user.orgId; // Tenant ID from authenticated user
+        const orgId = req.user.orgId;
 
         if (!orgId) {
             return res.status(400).json({ error: "Tenant ID is required" });
         }
 
-        // ✅ Get the tenant-specific database connection
         const tenantDb = await getTenantDB(orgId);
         if (!tenantDb) {
             return res.status(500).json({ error: "Failed to get tenant database" });
         }
 
-        // ✅ Register User and HeartBeat models in tenant DB if not registered
         if (!tenantDb.models.User) tenantDb.model("User", UserSchema);
         if (!tenantDb.models.HeartBeat) tenantDb.model("HeartBeat", HeartBeatSchema);
 
-        // ✅ Get tenant models
         const User = tenantDb.models.User;
-        const HeartBeat = tenantDb.models.HeartBeat;  // Now correctly retrieved
+        const HeartBeat = tenantDb.models.HeartBeat;
 
-        // ✅ Search filter
         const searchFilter = search ? {
             $or: [
                 { name: { $regex: search, $options: 'i' } },
@@ -68,12 +62,10 @@ export const getAllUsers = asyncHandler(async (req, res) => {
             ]
         } : {};
 
-        // ✅ Status filter
         const statusFilter = status === "all" ? {} : { status: { $regex: `^${status}$`, $options: "i" } };
 
         const queryFilter = { orgId, ...searchFilter, ...statusFilter };
 
-        // ✅ Fetch users from the tenant's DB
         const users = await User.find(queryFilter).select('-password').skip(skip).limit(limit);
         const totalUsers = await User.countDocuments(queryFilter);
 
@@ -83,13 +75,11 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
         const userIds = users.map((user) => user._id);
 
-        // ✅ Fetch heartbeats from the tenant DB
         const heartBeats = await HeartBeat.find({ userId: { $in: userIds } });
 
         const INACTIVITY_THRESHOLD = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
         const cutoffDate = new Date(Date.now() - INACTIVITY_THRESHOLD);
 
-        // ✅ Process heartbeats
         const usersWithHeartBeatStatus = users.map((user) => {
             const heartBeat = heartBeats.find((hb) => hb.userId.toString() === user._id.toString());
 
@@ -126,12 +116,10 @@ export const getAllUsers = asyncHandler(async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error fetching users:", error);
+        console.error("Error fetching users:", error);
         res.status(500).json({ error: "Server error", message: error.message });
     }
 });
-
-
 
 //send setup password mail
 const generatePasswordSetupLink = async (user, orgId) => {
@@ -145,38 +133,6 @@ const generatePasswordSetupLink = async (user, orgId) => {
     const setPasswordLink = `${process.env.FRONT_END_URL}/setupPassword/${setPassToken}`;
 
     return `<p>Click <a href="${setPasswordLink}">here</a> to set your password.</p>`;
-};
-
-// Send Email
-const sendEmail = async (to, subject, content, user) => {
-    const msg = {
-        to,
-        from: process.env.VERIFIED_SENDER_EMAIL,
-        subject,
-        html: `
-        <body>
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; font-size: 18px; color: #333; background-color: #eeeeee;">
-                <header style="padding: 26px; background-color: #0364BD; color: #f4f4f4; font-size: 24px; display: flex; align-items: center; gap: 26px; border-radius: 0px 0px 10px 10px;">
-                    <span style="font-weight: bold;">InLuna - Support</span>
-                </header>
-                <div style="padding: 10px; width: 100%;">
-                    <p>Hi ${user.name},</p>
-                    <p>We received your request for account assistance. Here are the details:</p>
-                    <span>${content}</span>
-                    <p>If you did not make this request, please ignore this email.</p>
-                    <p>Sincerely,</p>
-                    <p>The InLuna Team</p>
-                </div>
-                <footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4;">
-                    <p>If you need further assistance, contact support at 
-                        <a href="mailto:support@InLuna.com" style="color: #f4f4f4; text-decoration: none;">support@InLuna.com</a>.
-                    </p>
-                </footer>
-            </div>
-        </body>
-        `,
-    };
-    await sgMail.send(msg);
 };
 
 // **Set Up Password for User**
@@ -220,7 +176,7 @@ export const setupPassword = async (req, res) => {
             userId: user._id,
             operationType: "password setup",
             operationsPerformed: `Password setup successful`,
-            orgId:user.orgId,
+            orgId: user.orgId,
         });
 
         res.status(200).json({ message: "Password setup successful." });
@@ -229,7 +185,6 @@ export const setupPassword = async (req, res) => {
         res.status(500).json({ message: "Error setting password." });
     }
 };
-
 
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
@@ -241,25 +196,25 @@ export const createUser = asyncHandler(async (req, res) => {
             return res.status(400).json({ error: "Organization ID is required." });
         }
 
-        // ✅ Get the admin database model (Organizations)
-        const TenantModel = await getTenantModel();
+        // Get the admin database model (Organizations)
+        const OrgModel = await getOrgModel();
 
         // Check if the organization exists in the admin DB
-        const existingOrganization = await TenantModel.findOne({ orgId });
+        const existingOrganization = await OrgModel.findOne({ orgId });
         if (!existingOrganization) {
             return res.status(400).json({ message: "Organization not found. Please create the organization first." });
         }
 
-        // ✅ Get the tenant-specific database connection
-        const tenantDb = await getTenantDB(orgId); // ✅ Ensure this returns the correct tenant DB
+        // Get the tenant-specific database connection
+        const tenantDb = await getTenantDB(orgId); // Ensure this returns the correct tenant DB
         if (!tenantDb) {
             return res.status(500).json({ message: "Failed to get tenant database." });
         }
 
-        // ✅ Register the `User` model inside the tenant DB
+        // Register the `User` model inside the tenant DB
         const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
 
-        // ✅ Get the tenant-specific `AdminLogs` model
+        // Get the tenant-specific `AdminLogs` model
         const AdminLogs = getAdminLogsModel(tenantDb);
 
         let UserTypeCode = userType === "admin" ? process.env.ADMIN : process.env.USER;
@@ -284,9 +239,17 @@ export const createUser = asyncHandler(async (req, res) => {
 
         const addedUser = await newUser.save();
 
+        if (addedUser.userType === process.env.ADMIN) {
+            const OrgModel = await getOrgModel();
+            const org = await OrgModel.findOne({ orgId });
+            org.adminEmailIds.push(addedUser.email)
+            org.adminIds.push(addedUser._id)
+            await org.save();
+        }
+
         // Send password setup email
         let emailContent = await generatePasswordSetupLink(addedUser, orgId);
-        await sendEmail(email, "InLuna Dashboard - Password Setup", emailContent, addedUser);
+        await sendPasswordSetupEmail(email, "InLuna Dashboard - Password Setup", emailContent, addedUser);
 
         // Emit real-time event (if using WebSockets)
         const io = req.app.get("socketio");
@@ -294,7 +257,7 @@ export const createUser = asyncHandler(async (req, res) => {
             io.emit("userCreated", addedUser);
         }
 
-        // ✅ Add Log Entry in the Correct Tenant Database
+        // Add Log Entry in the Correct Tenant Database
         try {
             await AdminLogs.create({
                 userId: req.user.userId,
@@ -304,19 +267,17 @@ export const createUser = asyncHandler(async (req, res) => {
                 entityId: addedUser._id,
                 entityType: "user"
             });
-            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+            console.log("Log entry created successfully in tenant DB:", orgId);
         } catch (logError) {
-            console.error("❌ Failed to create log in tenant DB:", logError.message);
+            console.error("Failed to create log in tenant DB:", logError.message);
         }
 
         res.status(201).json(addedUser);
     } catch (error) {
-        console.error("❌ Error creating user or log:", error.message);
+        console.error("Error creating user or log:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
-
-
 
 // Create a new admin
 export const createAdmin = asyncHandler(async (req, res) => {
@@ -328,11 +289,10 @@ export const createAdmin = asyncHandler(async (req, res) => {
         }
 
         // Get the admin database model (Organizations)
-        const TenantModel = await getTenantModel();
+        const OrgModel = await getOrgModel();
 
         // Check if the organization exists in the admin DB
-        const existingOrganization = await TenantModel.findOne({ orgId });
-        console.log(existingOrganization)
+        const existingOrganization = await OrgModel.findOne({ orgId });
         if (!existingOrganization) {
             return res.status(400).json({ message: "Organization not found. Please create the organization first." });
         }
@@ -422,23 +382,23 @@ export const updateUser = asyncHandler(async (req, res) => {
     const updates = { username, name, email, phone, role, department };
 
     try {
-        // ✅ Get the tenant-specific database connection
+        // Get the tenant-specific database connection
         const tenantDb = await getTenantDB(orgId);
         if (!tenantDb) {
             return res.status(500).json({ message: "Failed to get tenant database." });
         }
 
-        // ✅ Get the correct User model for this tenant
+        // Get the correct User model for this tenant
         const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
 
-        // ✅ Get the correct AdminLogs model for this tenant
+        // Get the correct AdminLogs model for this tenant
         const AdminLogs = getAdminLogsModel(tenantDb);
         if (!AdminLogs) {
-            console.error("❌ AdminLogs model is not available.");
+            console.error("AdminLogs model is not available.");
             return res.status(500).json({ message: "Failed to initialize logging model." });
         }
 
-        // ✅ Update the user in the tenant database
+        // Update the user in the tenant database
         const updatedUser = await User.findByIdAndUpdate(id, updates, {
             new: true,
             runValidators: true
@@ -448,13 +408,13 @@ export const updateUser = asyncHandler(async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // ✅ Emit WebSocket Event if available
+        // Emit WebSocket Event if available
         const io = req.app.get("socketio");
         if (io) {
             io.emit("userUpdated", updatedUser);
         }
 
-        // ✅ Add Log Entry in the Correct Tenant Database
+        // Add Log Entry in the Correct Tenant Database
         try {
             await AdminLogs.create({
                 userId,
@@ -464,14 +424,14 @@ export const updateUser = asyncHandler(async (req, res) => {
                 entityId: updatedUser._id,
                 entityType: "user"
             });
-            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+            console.log("Log entry created successfully in tenant DB:", orgId);
         } catch (logError) {
-            console.error("❌ Failed to create log in tenant DB:", logError.message);
+            console.error("Failed to create log in tenant DB:", logError.message);
         }
 
         res.status(200).json(updatedUser);
     } catch (error) {
-        console.error("❌ Error updating user:", error.message);
+        console.error("Error updating user:", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -486,39 +446,39 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
     }
 
     try {
-        // ✅ Get the tenant-specific database connection
+        // Get the tenant-specific database connection
         const tenantDb = await getTenantDB(orgId);
         if (!tenantDb) {
             return res.status(500).json({ message: "Failed to get tenant database." });
         }
 
-        // ✅ Get the correct User model for this tenant
+        // Get the correct User model for this tenant
         const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
 
-        // ✅ Get the correct AdminLogs model for this tenant
+        // Get the correct AdminLogs model for this tenant
         const AdminLogs = getAdminLogsModel(tenantDb);
         if (!AdminLogs) {
-            console.error("❌ AdminLogs model is not available.");
+            console.error("AdminLogs model is not available.");
             return res.status(500).json({ message: "Failed to initialize logging model." });
         }
 
-        // ✅ Find the user in the tenant database
+        // Find the user in the tenant database
         const user = await User.findById(id).select("-password");
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // ✅ Toggle user status
+        // Toggle user status
         user.status = user.status === "active" ? "inactive" : "active";
         const updatedUser = await user.save();
 
-        // ✅ Emit WebSocket Event if available
+        // Emit WebSocket Event if available
         const io = req.app.get("socketio");
         if (io) {
             io.emit("userStatusUpdated", updatedUser);
         }
 
-        // ✅ Add Log Entry in the Correct Tenant Database
+        // Add Log Entry in the Correct Tenant Database
         try {
             await AdminLogs.create({
                 userId,
@@ -528,14 +488,14 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
                 entityId: id,
                 entityType: "user"
             });
-            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+            console.log("Log entry created successfully in tenant DB:", orgId);
         } catch (logError) {
-            console.error("❌ Failed to create log in tenant DB:", logError.message);
+            console.error("Failed to create log in tenant DB:", logError.message);
         }
 
         res.status(200).json(updatedUser);
     } catch (error) {
-        console.error("❌ Error updating user status:", error.message);
+        console.error("Error updating user status:", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -582,7 +542,7 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "Organization ID is required." });
         }
 
-        // ✅ Validate new password
+        // Validate new password
         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
         if (newPassword !== confirmPassword) {
             return res.status(400).json({ message: "Passwords do not match." });
@@ -591,40 +551,40 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
         }
 
-        // ✅ Get the tenant-specific database connection
+        // Get the tenant-specific database connection
         const tenantDb = await getTenantDB(orgId);
         if (!tenantDb) {
             return res.status(500).json({ message: "Failed to get tenant database." });
         }
 
-        // ✅ Get the correct User model for this tenant
+        // Get the correct User model for this tenant
         const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
 
-        // ✅ Get the correct AdminLogs model for this tenant
+        // Get the correct AdminLogs model for this tenant
         const AdminLogs = getAdminLogsModel(tenantDb);
         if (!AdminLogs) {
-            console.error("❌ AdminLogs model is not available.");
+            console.error("AdminLogs model is not available.");
             return res.status(500).json({ message: "Failed to initialize logging model." });
         }
 
-        // ✅ Find the admin user within the tenant DB
+        // Find the admin user within the tenant DB
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "Admin user not found." });
         }
 
-        // ✅ Validate old password
+        // Validate old password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: "Old password is incorrect." });
         }
 
-        // ✅ Hash and update new password
+        // Hash and update new password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
         await user.save();
 
-        // ✅ Add Log Entry in the Correct Tenant Database
+        // Add Log Entry in the Correct Tenant Database
         try {
             await AdminLogs.create({
                 userId,
@@ -634,14 +594,14 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
                 entityId: userId,
                 entityType: "user"
             });
-            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+            console.log("Log entry created successfully in tenant DB:", orgId);
         } catch (logError) {
-            console.error("❌ Failed to create log in tenant DB:", logError.message);
+            console.error("Failed to create log in tenant DB:", logError.message);
         }
 
         res.status(200).json({ message: "Password updated successfully." });
     } catch (error) {
-        console.error("❌ Error updating password:", error.message);
+        console.error("Error updating password:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
@@ -685,43 +645,59 @@ export const deleteUser = asyncHandler(async (req, res) => {
     }
 
     try {
-        // ✅ Get the tenant-specific database connection
+        // Get the tenant-specific database connection
         const tenantDb = await getTenantDB(orgId);
         if (!tenantDb) {
             return res.status(500).json({ message: "Failed to get tenant database." });
         }
 
-        // ✅ Get the correct User model for this tenant
+        // Get the correct User model for this tenant
         const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
 
-        // ✅ Get the correct AdminLogs model for this tenant
+        // Get the correct AdminLogs model for this tenant
         const AdminLogs = getAdminLogsModel(tenantDb);
         if (!AdminLogs) {
-            console.error("❌ AdminLogs model is not available.");
+            console.error("AdminLogs model is not available.");
             return res.status(500).json({ message: "Failed to initialize logging model." });
         }
 
-        // ✅ Find the user in the tenant database
+        // Find the user in the tenant database
         const user = await User.findById(id).select("-password");
         if (!user) {
             return res.status(404).json({ error: "User not found." });
         }
 
-        // ✅ Prevent an admin from deleting their own account
+        // Prevent an admin from deleting their own account
         if (user._id.toString() === adminId) {
             return res.status(403).json({ error: "You cannot delete your own account." });
         }
 
-        // ✅ Delete user
+        if (user.userType === process.env.ADMIN) {
+            console.log("Remove admin")
+            // If user is admin remove his record from organization model
+            const OrgModel = await getOrgModel();
+            const org = await OrgModel.findOne({ orgId });
+            if (org) {
+                org.adminIds = org.adminIds.filter(
+                    adminIdItem => adminIdItem.toString() !== user._id.toString()
+                );
+                org.adminEmailIds = org.adminEmailIds.filter(
+                    emailItem => emailItem !== user.email
+                );
+                await org.save();
+            }
+        }
+
+        // Delete user
         await User.findByIdAndDelete(id);
 
-        // ✅ Emit WebSocket Event if available
+        // Emit WebSocket Event if available
         const io = req.app.get("socketio");
         if (io) {
             io.emit("userDeleted", user._id);
         }
 
-        // ✅ Add Log Entry in the Correct Tenant Database
+        // Add Log Entry in the Correct Tenant Database
         try {
             await AdminLogs.create({
                 userId: adminId,
@@ -736,14 +712,14 @@ export const deleteUser = asyncHandler(async (req, res) => {
                     extraInfo: `Department: ${user.department}`
                 }
             });
-            console.log("✅ Log entry created successfully in tenant DB:", orgId);
+            console.log("Log entry created successfully in tenant DB:", orgId);
         } catch (logError) {
-            console.error("❌ Failed to create log in tenant DB:", logError.message);
+            console.error("Failed to create log in tenant DB:", logError.message);
         }
 
         res.status(200).json({ message: `User ${user.email} removed successfully.` });
     } catch (error) {
-        console.error("❌ Error deleting user:", error.message);
+        console.error("Error deleting user:", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -760,23 +736,23 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
     }
 
     try {
-        // ✅ Get the tenant-specific database connection
+        // Get the tenant-specific database connection
         const tenantDb = await getTenantDB(orgId);
         if (!tenantDb) {
             return res.status(500).json({ message: "Failed to get tenant database." });
         }
 
-        // ✅ Get the correct User model for this tenant
+        // Get the correct User model for this tenant
         const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
 
-        // ✅ Get the correct AdminLogs model for this tenant
+        // Get the correct AdminLogs model for this tenant
         const AdminLogs = getAdminLogsModel(tenantDb);
         if (!AdminLogs) {
-            console.error("❌ AdminLogs model is not available.");
+            console.error("AdminLogs model is not available.");
             return res.status(500).json({ message: "Failed to initialize logging model." });
         }
 
-        // ✅ Fetch existing users' emails and phones in the tenant DB
+        // Fetch existing users' emails and phones in the tenant DB
         const existingEmails = new Set(await User.find().distinct("email"));
         const existingPhones = new Set(await User.find().distinct("phone"));
 
@@ -833,7 +809,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
                 .on("error", reject);
         });
 
-        // ✅ Return errors if found in CSV
+        // Return errors if found in CSV
         if (errors.length > 0) {
             return res.status(400).json({
                 message: "CSV contains errors",
@@ -841,39 +817,40 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
             });
         }
 
-        // ✅ Insert users into the tenant database
+        // Insert users into the tenant database
         if (users.length > 0) {
             const insertedUsers = await User.insertMany(users);
 
-            // ✅ Emit WebSocket Event if available
+            // Emit WebSocket Event if available
             const io = req.app.get("socketio");
             if (io) {
                 io.emit("usersByCsvAdded", insertedUsers);
             }
 
-            // ✅ Send password setup emails
+            // Send password setup emails
             for (let user of insertedUsers) {
+                console.log(user)
                 try {
                     let emailContent = await generatePasswordSetupLink(user, orgId);
-                    await sendEmail(user.email, "InLuna Dashboard - Password Setup", emailContent, user);
+                    await sendPasswordSetupEmail(user.email, "InLuna Dashboard - Password Setup", emailContent, user);
                 } catch (emailError) {
-                    console.error(`❌ Failed to send email to ${user.email}:`, emailError.message);
+                    console.error(`Failed to send email to ${user.email}:`, emailError.message);
                 }
-            }
 
-            // ✅ Add Log Entry in the Correct Tenant Database
-            try {
-                await AdminLogs.create({
-                    userId,
-                    operationType: "add",
-                    operationsPerformed: "Users added via CSV",
-                    orgId,
-                    entityId: insertedUsers.map((u) => u._id),
-                    entityType: "user",
-                });
-                console.log("✅ Log entry created successfully in tenant DB:", orgId);
-            } catch (logError) {
-                console.error("❌ Failed to create log in tenant DB:", logError.message);
+                // Add Log Entry in the Correct Tenant Database
+                try {
+                    await AdminLogs.create({
+                        userId,
+                        operationType: "add",
+                        operationsPerformed: "Users added via CSV",
+                        orgId,
+                        entityId: user._id,
+                        entityType: "user",
+                    });
+                    console.log("Log entry created successfully in tenant DB:", orgId);
+                } catch (logError) {
+                    console.error("Failed to create log in tenant DB:", logError.message);
+                }
             }
 
             res.status(200).json({ message: "Users added successfully." });
@@ -881,10 +858,10 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
             res.status(400).json({ message: "No valid data to add." });
         }
     } catch (error) {
-        console.error("❌ Error adding users from CSV:", error);
+        console.error("Error adding users from CSV:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     } finally {
-        // ✅ Remove the uploaded file
+        // Remove the uploaded file
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }

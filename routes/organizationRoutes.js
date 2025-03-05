@@ -11,10 +11,10 @@ import {
 const router = express.Router();
 
 router.get('/all', getAllOrganizations);
-router.post('/', createOrganization);
+router.post('/create', createOrganization);
 router.get('/search', searchOrganizations);
-router.get('/:id', getOrganization);
-router.delete('/:id', deleteOrganization);
-router.put('/:id', updateOrganization);
+router.get('/get/:id', getOrganization);
+router.delete('/delete/:id', deleteOrganization);
+router.put('/update/:id', updateOrganization);
 
 export default router;

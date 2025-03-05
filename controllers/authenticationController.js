@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { decrypt, encrypt } from '../utils/tokenEncryption.js';
 import {getUserModel} from "../tenantdb.js"
-import { getSuperAdminModel } from '../models/superAdminModel.js';
+import { getSuperAdminModel } from '../models/superAdmin/superAdminModel.js';
 
 dotenv.config();
 
@@ -167,6 +167,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
         res.cookie("refreshToken", encryptedRefreshToken, cookieOptions);
 
         // Redirect based on user type
+        console.log(user.userType, process.env.USER)
         if (user.userType === process.env.ADMIN) {
             res.status(200).json({ token, redirectUrl: process.env.FRONT_END_URL });
         } else if (user.userType === process.env.USER) {

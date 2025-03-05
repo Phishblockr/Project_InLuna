@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { getDb } from "../admindb.js";
+import { getDb } from "../../admindb.js";
 
 const { Schema } = mongoose;
 

@@ -37,10 +37,10 @@ const adminLogsSchema = new mongoose.Schema(
 
 // Create an index for faster queries
 adminLogsSchema.index({ orgId: 1, createdAt: 1 });
+export default adminLogsSchema;
 
 // ✅ Function to get AdminLogs model for a specific tenant
-const getAdminLogsModel = (tenantDb) => {
+export const getAdminLogsModel = (tenantDb) => {
     return tenantDb.models.AdminLogs || tenantDb.model("AdminLogs", adminLogsSchema);
 };
 
-export default getAdminLogsModel;
