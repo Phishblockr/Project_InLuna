@@ -75,10 +75,9 @@ const Training = () => {
             }
           );
           const detailsData = await detailsRes.json();
+
           selectedVideoId = detailsData.videos[0]._id; // First video
         }
-
-        // Store the generated link
         // Store the generated link as an object with videoId
         updatedCourseLinks[courseId] = {
           url: `/training/course/${courseName}/learn/lecture/${selectedVideoId}`,

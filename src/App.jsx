@@ -18,6 +18,7 @@ import EmailBox from "./components/EmailBox.jsx";
 import Training from "./components/Training.jsx";
 import CourseDetails from "./components/Course/CourseDetails.jsx";
 import CourseOverview from "./components/Course/CourseOverview.jsx";
+import EmailLayout from "./components/Email/EmailLayout.jsx";
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -65,7 +66,8 @@ function App() {
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<Overview />} />
-                      <Route path="/emailBox" element={<EmailBox />} />
+                      <Route path="/email/inbox" element={<EmailBox />} />
+                      <Route path="/email/inbox/:emailId" element={<EmailLayout/>}/>
                       <Route path="/training" element={<Training />} />
                       <Route
                         path="/training/courses/:courseName"

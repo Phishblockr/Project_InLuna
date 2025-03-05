@@ -20,7 +20,7 @@ const links = [
         id: 2,
         icon: <MdOutlineEmail className={iconStyle} />,
         title: "Email Box",
-        url: "/emailBox",
+        url: "/email/inbox",
     },
     {
         id: 3,
