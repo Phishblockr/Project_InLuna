@@ -1,5 +1,5 @@
 import express from "express";
-import { assignCourse, getCoursesForUser, removeCourseAssignment, getUserAssignedCourseDetails, updateVideoProgress, getUserCourseProgress } from "../../controllers/trainingPlatform/userCourseController.js";
+import { assignCourse, getCoursesForUser, removeCourseAssignment, getUserAssignedCourseDetails, updateVideoProgress, getUserCourseProgress, getAllAssignEmails } from "../../controllers/trainingPlatform/userCourseController.js";
 import authenticateToken from "../../middlewares/authenticateToken.js";
 import dashboardAdminMiddleware from "../../middlewares/dashboardAdminMiddleware.js";
 
@@ -17,5 +17,9 @@ router.post("/progress",authenticateToken,updateVideoProgress);
 // get user Course progress
 router.get("/progress/:courseId/:userId", authenticateToken, getUserCourseProgress);
 
+//get user Course Emails
+router.get("/getAssignedEmails/:userId",authenticateToken,getAllAssignEmails)
+
+// router.get("/getEmail/:emailId", authenticateToken, getEmail)
 
 export default router;
