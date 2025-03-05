@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Sidebar from '../components/Navigation/Sidebar';
+import Sidebar2 from '../components/Navigation/Sidebar2';
 import Navbar from '../components/Navigation/Navbar';
 
 const Layout = () => {
@@ -14,28 +14,25 @@ const Layout = () => {
     const showSidebarAndNavbar =
         !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage;
 
+    // Lift sidebar state here
+    const [expanded, setExpanded] = useState(true);
+
+    // Define dynamic widths/margins based on expanded state
+    const sidebarWidth = expanded ? 'w-64' : 'w-20';
+    const contentMargin = expanded ? 'ml-64' : 'ml-20';
+
     return (
         <div className="min-h-screen dark:bg-[#001733]">
-            {/* Conditional Navbar */}
-            {showSidebarAndNavbar && <Navbar />}
-
+            {/* Pass expanded state to Navbar */}
+            {showSidebarAndNavbar && <Navbar expanded={expanded} />}
             <div className="flex">
-                {/* Conditional Sidebar */}
                 {showSidebarAndNavbar && (
-                    <div className="w-64 fixed left-0 top-0 h-full z-10">
-                        <Sidebar />
+                    <div className={`${sidebarWidth} fixed left-0 top-0 h-full z-10 transition-all`}>
+                        <Sidebar2 expanded={expanded} setExpanded={setExpanded} />
                     </div>
                 )}
-
-                {/* Main Content */}
-                <div
-                    className={`flex-grow ${
-                        showSidebarAndNavbar ? 'ml-64' : ''
-                    }`}
-                >
-                    <div>
-                        <Outlet />
-                    </div>
+                <div className={`flex-grow transition-all ${showSidebarAndNavbar ? contentMargin : ''}`}>
+                    <Outlet />
                 </div>
             </div>
         </div>
