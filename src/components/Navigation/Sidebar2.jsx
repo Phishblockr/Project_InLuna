@@ -63,17 +63,17 @@ const Sidebar2 = ({ expanded, setExpanded }) => {
     ];
 
     return (
-        <nav className={`h-full flex flex-col bg-white border-r shadow-sm transition-all ${expanded ? "w-61" : "w-20"}`}>
+        <nav className={`h-full flex flex-col bg-white shadow-sm transition-all dark:bg-[#002451] ${expanded ? "w-61" : "w-20"}`}>
             <div className="p-4 pb-2 flex justify-between items-center">
                 <img className='w-[24px] mr-2' src="/vite.svg" alt="" />
                 <h1 className={`text-2xl text-left text-black font-medium tracking-tighter dark:text-[#F4F4F4] overflow-hidden transition-all ${expanded ? "w-52" : "w-0"}`}>
                     <NavLink to={'/'}>{appName}</NavLink>
                 </h1>
-                <button onClick={() => setExpanded(!expanded)} className="p-1 5 rounded-lg bg-gray-50 hover:bg-gray-100">
+                <button onClick={() => setExpanded(!expanded)} className="p-1 5 rounded-lg hover:bg-gray-100 dark:text-[#F4F4F4] dark:bg- dark:hover:bg-[#00285A]">
                     {expanded ? <LuChevronFirst /> : <LuChevronLast />}
                 </button>
             </div>
-            <ul className="flex-1 px-2">
+            <ul className="flex-1 px-2 dark:text-[#F4F4F4]">
                 {links.map((link) => (
                     <li
                         key={link.id}

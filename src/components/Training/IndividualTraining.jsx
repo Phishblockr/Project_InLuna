@@ -24,6 +24,44 @@ const IndividualTraining = () => {
     const [selectedCourses, setSelectedCourses] = useState([]);
 
     const [assignStatus, setAssignStatus] = useState(false);
+    const isDarkMode = true
+    const customStyles = {
+        control: (provided, state) => ({
+            ...provided,
+            backgroundColor: isDarkMode ? '#001C40' : provided.backgroundColor,
+            border: isDarkMode ? 'none' : provided.border,
+        }),
+        input: (provided) => ({
+            ...provided,
+            color: isDarkMode ? "#ffffff" : provided.color,
+        }),
+        menu: (provided) => ({
+            ...provided,
+            backgroundColor: isDarkMode ? "#001C40" : provided.backgroundColor,
+        }),
+        multiValue: (provided) => ({
+            ...provided,
+            backgroundColor: isDarkMode ? "#001C40" : provided.backgroundColor,
+        }),
+        multiValueLabel: (provided) => ({
+            ...provided,
+            color: isDarkMode ? "#ffffff" : provided.color,
+        }),
+        option: (provided, state) => ({
+            ...provided,
+            backgroundColor: "#001C40",
+            color: "#ffffff",
+            ...(state.isFocused && {
+                backgroundColor: "#001C40",
+            }),
+            ...(state.isSelected && {
+                backgroundColor: "#001C40",
+            }),
+            cursor: "pointer",
+        }),
+
+
+    };
 
     const assignCourseHandler = () => {
         const courseIds = selectedCourses.map(course => course.value);
@@ -39,7 +77,7 @@ const IndividualTraining = () => {
                 setAssignStatus(false)
                 return;
             }
-                navigate(`/users/userDetails/${user._id}`);
+            navigate(`/users/userDetails/${user._id}`);
 
         }
     }
@@ -70,6 +108,7 @@ const IndividualTraining = () => {
                         <span>Course</span>
                         <Select
                             isMulti
+                            styles={customStyles}
                             options={courseOptions}
                             value={selectedCourses}
                             onChange={handleMultiSelectChange}
@@ -82,7 +121,7 @@ const IndividualTraining = () => {
                             name="userName"
                             id="userName"
                             value={user.name}
-                            className="w-full p-[10px] mb-[10px] border-2 rounded-lg"
+                            className="w-full p-[10px] mb-[10px] border-2 rounded-lg dark:bg-[#001C40] dark:border-0"
                             disabled />
                     </div>
                     <button className="px-4 p-[10px] rounded-lg text-[#f4f4f4] cursor-pointer bg-[#0364BD] hover:bg-[#003A70] transition-colors"

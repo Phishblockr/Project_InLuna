@@ -259,7 +259,7 @@ export default function Requests() {
                     </div>
                 </div>
                 {requestData.length === 0 ? (
-                    <div className="flex justify-center font-medium">
+                    <div className="flex justify-center font-medium dark:text-[#f4f4f4]">
                         <span>No Records Found!</span>
                     </div>
                 ) : (

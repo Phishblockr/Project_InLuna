@@ -485,7 +485,7 @@ const UserDetails = () => {
                             </span>
                         </button>
                         <button
-                            className="flex flex-row items-center gap-x-2  justify-center bg-gray-200 hover:bg-gray-300 text-black p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733]"
+                            className="flex flex-row items-center gap-x-2  justify-center bg-gray-200 hover:bg-gray-300 text-black p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors dark:dark:bg-[#001733] dark:hover:bg-[#001733] dark:text-[#f4f4f4]"
                             onClick={scrollToCourseSection}
                         >
                             <RiPresentationFill className="w-6 h-6" /> View Training
@@ -615,7 +615,7 @@ const UserDetails = () => {
                     <div className="flex flex-row gap-2 items-center  mb-5">
                         <h2 className="text-lg font-semibold">Courses assigned to the user</h2>
                         <button 
-                        className="p-2 bg-gray-200 rounded-lg"
+                        className="p-2 bg-gray-200 rounded-lg dark:bg-[#002451] dark:hover:bg-[#001733] dark:text-[#f4f4f4]"
                         onClick={() => navigate(`/training/individualTraining/${user._id}`)}
                         >Assign New Course</button>
                     </div>
