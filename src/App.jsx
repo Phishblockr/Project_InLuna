@@ -17,6 +17,8 @@ import CourseCreator from './components/Course/CourseCreator.jsx';
 import CourseEditor from './components/Course/CourseEditor';
 import Layout from "./layout/Layout"
 
+import ListAppointments from './components/Appointments/ListAppointments.jsx';
+
 function App() {
   const theme = useSelector((state) => state.theme);
   return (
@@ -48,6 +50,7 @@ function App() {
                             <Route path="/emails" element={<Email />} />
                             <Route path="/emails/emailCreator" element={<EmailCreator />} />
                             <Route path="/emails/emailEditor/:id" element={<EditEditor />} />
+                            <Route path="/appointments" element={<ListAppointments/>}></Route>
                           </Route>
                         </Route>
                         <Route path="*" element={<NotFound />} />

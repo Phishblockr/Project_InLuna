@@ -8,6 +8,7 @@ import { useAuth } from "../../utils/AuthProvider";
 import { useDispatch, useSelector } from "react-redux";
 import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
 import debounce from "debounce";
+import Pagination from "../Pagination";
 
 const Course = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
@@ -84,8 +85,8 @@ const Course = () => {
                 setDataLoading(false);
             })
         */
-            fetchCourses({ page: currentPage, limit: perPageRec, search: query, category, token });
-            fetchCategories();
+        fetchCourses({ page: currentPage, limit: perPageRec, search: query, category, token });
+        fetchCategories();
         // dispatch(startListeningToSocket(token));
     }, []);
 
@@ -130,6 +131,7 @@ const Course = () => {
 
     const handleSetPerPageRec = (value) => {
         dispatch(setPerPageRec(value));
+        fetchCourses({ page: currentPage, limit: value, search: query, category, token });
     };
 
     function nextPage() {
@@ -246,7 +248,7 @@ const Course = () => {
                                             {course.category}
                                         </td>
                                         <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            {course.isDraft? "Draft": "Published"}
+                                            {course.isDraft ? "Draft" : "Published"}
                                         </td>
                                         <td>
                                             <button
@@ -265,42 +267,14 @@ const Course = () => {
                 )}
             </div>
             <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
-                <nav className="flex gap-x-1 justify-between">
-                    <button
-                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    >
-                        <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
-                    </button>
-                    <div className="flex gap-x-2 items-center">
-                        {visiblePages.map((page, index) =>
-                            typeof page === "number" ? (
-                                <button
-                                    key={index}
-                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === page
-                                        ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]"
-                                        : "bg-gray-200 dark:bg-[#001C40]"
-                                        }`}
-                                    onClick={() => changeCPage(page)}
-                                >
-                                    {page}
-                                </button>
-                            ) : (
-                                <span key={index} className="px-2 py-1">
-                                    {page}
-                                </span>
-                            )
-                        )}
-                    </div>
-                    <button
-                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    >
-                        Next <MdOutlineArrowForwardIos className="w-6 h-6" />
-                    </button>
-                </nav>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => {
+                        setCurrentPage(page);
+                        fetchCourses({ page, limit: perPageRec, search: query, category, token });
+                    }}
+                />
             </div>
         </div>
     );
