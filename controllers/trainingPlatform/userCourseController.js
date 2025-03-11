@@ -2,6 +2,7 @@ import {getUserCourseModel} from "../../models/trainingPlatform/userCourseModel.
 import {getUserModel} from "../../models/userModel.js";
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getCourseModel } from "../../admindb.js";
+import { getEmailTemplateModel } from "../../models/trainingPlatform/emailTemplateModel.js";
 
 
 // assign course to a user
@@ -145,9 +146,17 @@ export const getUserAssignedCourseDetails = asyncHandler(async (req, res) => {
 
     // Retrieve the tenant-specific UserCourse model
     const UserCourse = await getUserCourseModel(orgId);
+    // Retrieve the common Course model from adminDB
+    const Course = await getCourseModel();
 
     // Check if the course is assigned to the user and populate course details
-    const userCourse = await UserCourse.findOne({ courseId, userId }).populate("courseId");
+    const userCourse = await UserCourse.findOne({ userId, courseId })
+    .populate({
+        path: "courseId",
+        model: Course, // Use Course model from adminDB
+    });
+
+    console.log("Backend Usercourse",userCourse.courseId.videos);
     if (!userCourse) {
         return res.status(404).json({ message: "Course not assigned to this user" });
     }
@@ -226,9 +235,15 @@ export const getUserCourseProgress = asyncHandler(async (req, res) => {
 
     // Retrieve the tenant-specific UserCourse model
     const UserCourse = await getUserCourseModel(orgId);
+    // Retrieve the common Course model from adminDB
+    const Course = await getCourseModel();
 
     // Find the course assignment for the user in the tenant DB
-    const userCourse = await UserCourse.findOne({ userId, courseId });
+    const userCourse = await UserCourse.findOne({ userId, courseId })
+    .populate({
+        path: "courseId",
+        model: Course, // Use Course model from adminDB
+    });
 
     if (!userCourse) {
         return res.status(404).json({ success: false, message: "Course not found" });
@@ -239,4 +254,70 @@ export const getUserCourseProgress = asyncHandler(async (req, res) => {
         progress: userCourse.progress,
         watchStatus: userCourse.watchStatus,
     });
+});
+
+export const getAllAssignEmails = asyncHandler(async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const orgId = req.user.orgId; // Ensure the tenant's orgId is available
+
+        // Retrieve the tenant-specific UserCourse model
+        const UserCourse = await getUserCourseModel(orgId);
+        // Retrieve the common Course model from adminDB
+        const Course = await getCourseModel();
+        // Retrieve the common Email Template model from the adminDB
+        const EmailTemplate = await getEmailTemplateModel();
+
+        // 1️⃣ Find all assigned courses for the user
+        const userCourses = await UserCourse.find({ userId })
+            .populate({
+                path: "courseId",
+                model: Course, // Use Course model from adminDB
+            });
+
+        if (!userCourses || userCourses.length === 0) {
+            return res.status(404).json({ success: false, message: "No courses assigned to this user" });
+        }
+
+        console.log("Backend User Courses:", userCourses);
+
+        // 2️⃣ Extract all email groups from videos in assigned courses
+        let emailGroups = new Set();
+
+        userCourses.forEach((userCourse) => {
+            const course = userCourse.courseId;
+            if (course && course.videos) {
+                course.videos.forEach((video) => {
+                    if (video.assignEmail) {
+                        emailGroups.add(video.assignEmail); // Store unique email groups
+                    }
+                });
+            }
+        });
+
+        // Convert Set to Array
+        emailGroups = [...emailGroups];
+
+        console.log("Extracted Email Groups:", emailGroups);
+
+        if (emailGroups.length === 0) {
+            return res.status(404).json({ success: false, message: "No email groups assigned to any videos in courses" });
+        }
+
+        // 3️⃣ Fetch email templates that match the extracted email groups
+        const emailTemplates = await EmailTemplate.find({ group: { $in: emailGroups } });
+
+        console.log("Fetched Email Templates:", emailTemplates);
+
+        res.status(200).json({
+            success: true,
+            assignedCourses: userCourses.length,
+            emailGroups,
+            emailTemplates,
+        });
+
+    } catch (error) {
+        console.error("Error in getAllAssignEmails:", error);
+        res.status(500).json({ success: false, message: error.message || "Server Error" });
+    }    
 });
