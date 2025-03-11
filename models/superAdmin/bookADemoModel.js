@@ -6,6 +6,8 @@ const appointmentSchema = new mongoose.Schema({
     timeslot: { type: String, required: true },
     name: { type: String, required: true },
     email: { type: String, required: true },
+    approved:{type: Boolean, default: false},
+    meetUrl: {type: String}
 }, { timestamps: true });
 
 export const getBookADemoModel = async () => {

@@ -1,5 +1,6 @@
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getBookADemoModel } from "../../models/superAdmin/bookADemoModel.js";
+import { sendAppointmentCreatedEmail } from "../../utils/sendAppointmentCreatedEmail.js";
 
 // Define all possible timeslots (you can adjust these as needed)
 const ALL_TIMESLOTS = [
@@ -25,7 +26,7 @@ export const availableTimeslots = asyncHandler(async (req, res) => {
     end.setDate(end.getDate() + 1);
 
     const appointments = await Appointment.find({
-        appointmentDate: { $gte: start, $lt: end }
+        appointmentDate: { $gte: start, $lt: end }, approved: true
     });
 
     const bookedTimeslots = appointments.map(a => a.timeslot);
@@ -60,7 +61,7 @@ export const bookDemo = asyncHandler(async (req, res) => {
         appointmentDate: { $gte: start, $lt: end },
         email: email
     });
-    
+
     if (existingEmailAppointment) {
         return res.status(400).json({ message: "This email has already booked a slot for this date." });
     }
@@ -74,5 +75,68 @@ export const bookDemo = asyncHandler(async (req, res) => {
 
     await appointment.save();
 
+    await sendAppointmentCreatedEmail(email, "Appointment Requested!", email, name, appointmentDate, timeslot)
+
     return res.status(201).json({ message: "Appointment booked successfully." });
+})
+
+export const getAllAppointments = asyncHandler(async (req, res) => {
+    const { month, year } = req.query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || "";
+    const status = req.query.status || "all";
+
+    // Calculate date ranges
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0);
+
+    const Appointment = await getBookADemoModel();
+
+    const searchFilter = search
+        ? { $or: [{ name: { $regex: search, $options: "i" } }] }
+        : {};
+
+    const statusFilter =
+        status === "all"
+            ? {}
+            : { approved: { $regex: `^${status}$`, $options: "i" } };
+
+    const queryFilter = { ...searchFilter, ...statusFilter, createdAt: { $gte: startOfMonth, $lt: endOfMonth } };
+
+    const appointmentsCount = await Appointment.countDocuments(queryFilter)
+
+    const appointments = await Appointment.find(queryFilter)
+        .sort({ _id: 1 })
+        .skip(skip)
+        .limit(limit);
+
+    res.status(200).json({ appointments, appointmentsCount });
+
+})
+
+export const approveAppointments = asyncHandler(async (req, res) => {
+    const {id} = req.params;
+    if (!id) {
+        return res.status(400).json({ error: "Appointment ID is required." });
+    }
+    const Appointment = await getBookADemoModel();
+
+    const appointment = await Appointment.findById(id)
+
+    if (!appointment){
+        return res.status(404).json({ error: "appointment not found for given id" });
+    }
+
+    appointment.approved = true
+
+    const updatedAppointment = await appointment.save();
+
+    const io = req.app.get("socketio");
+    if (io) {
+        io.emit ("appointmentStatusUpdated", updatedAppointment);
+    }
+
+    res.status(200).json(updatedAppointment);
 })
