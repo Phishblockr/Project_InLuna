@@ -6,6 +6,7 @@ import { setPerPageRec } from '../../features/PerPageRec/perPageRecSlice';
 import debounce from 'debounce';
 import Pagination from '../Pagination';
 import { RiEyeLine } from 'react-icons/ri';
+import { toast } from 'sonner';
 
 const ListAppointments = () => {
 
@@ -56,6 +57,22 @@ const ListAppointments = () => {
             toast.error("Error fetching appointments:", error.message)
         }
     }
+
+    const approveAppointmentHandler = async (id) =>{
+        const res = await fetch (`${apiUrl}/bookADemo/approveAppointment/${id}`, {
+            method: "PUT",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+            
+        });
+        const data = await res.json();
+        if (!res.ok){
+            return toast.error(data.error)
+        }
+        return data;
+    } 
 
     const handleSetPerPageRec = (value) => {
         dispatch(setPerPageRec(value));
@@ -137,46 +154,60 @@ const ListAppointments = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {appointments.map((appointment) => (
-                                    <tr
-                                        key={appointment._id}
-                                        className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
-                                    >
-                                        <td className="py-2 pl-2">
-                                            <span className="font-medium">{appointment.name}</span>
-                                        </td>
-                                        <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            {appointment.email}
-                                        </td>
-                                        <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            {appointment.appointmentDate}
-                                        </td>
-                                        <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            {appointment.timeslot}
-                                        </td>
-                                        <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                            {appointment.approved ? "Approved" : "Pending"}
-                                        </td>
-                                        <td>
-                                            {appointment.approved ?
-                                                <button
-                                                    onClick={() => navigate(`/courses/courseEditor/${appointment._id}`)}
-                                                    title="Click to view details"
-                                                    className="bg-[#0364BD] hover:bg-[#14528b] text-white px-2 py-1 rounded-lg transition-colors"
-                                                >Connect</button>
-                                                :
-                                                <button
-                                                    onClick={() => navigate(`/courses/courseEditor/${appointment._id}`)}
-                                                    title="Click to view details"
-                                                    className="bg-[#0364BD] hover:bg-[#14528b] text-white px-2 py-1 rounded-lg transition-colors"
-                                                >Accept</button>
-                                            }
-                                            {/* <button onClick={() => handlePasswordModalOpen(appointment._id, "delete")}>
-                                                <RiDeleteBinLine className="w-6 h-6 text-red-500 hover:text-red-700 transition-colors" />
-                                            </button> */}
-                                        </td>
-                                    </tr>
-                                ))}
+                                {appointments.map((appointment) => {
+                                    // Create date objects and set time to midnight (0:0:0:0)
+                                    const appointmentDateOnly = new Date(appointment.appointmentDate);
+                                    appointmentDateOnly.setHours(0, 0, 0, 0);
+
+                                    const currentDateOnly = new Date();
+                                    currentDateOnly.setHours(0, 0, 0, 0);
+
+                                    console.log(appointmentDateOnly, currentDateOnly)
+
+                                    return (
+                                        <tr
+                                            key={appointment._id}
+                                            className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
+                                        >
+                                            <td className="py-2 pl-2">
+                                                <span className="font-medium">{appointment.name}</span>
+                                            </td>
+                                            <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
+                                                {appointment.email}
+                                            </td>
+                                            <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
+                                                {appointment.appointmentDate}
+                                            </td>
+                                            <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
+                                                {appointment.timeslot}
+                                            </td>
+                                            <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
+                                                {appointment.approved ? "Approved" : "Pending"}
+                                            </td>
+                                            <td>
+                                                {appointmentDateOnly >= currentDateOnly && (
+                                                    appointment.approved ? (
+                                                        <button
+                                                            onClick={() => window.open(appointment.meetUrl, '_blank')}
+                                                            title="Click to view details"
+                                                            className="bg-[#0364BD] hover:bg-[#14528b] text-white px-2 py-1 rounded-lg transition-colors"
+                                                        >
+                                                            Connect
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => approveAppointmentHandler(appointment._id)}
+                                                            title="Click to view details"
+                                                            className="bg-[#0364BD] hover:bg-[#14528b] text-white px-2 py-1 rounded-lg transition-colors"
+                                                        >
+                                                            Accept
+                                                        </button>
+                                                    )
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
