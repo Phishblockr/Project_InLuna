@@ -113,11 +113,24 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
     const appointmentsCount = await Appointment.countDocuments(queryFilter)
 
     const appointments = await Appointment.find(queryFilter)
-        .sort({ _id: 1 })
-        .skip(skip)
-        .limit(limit);
+        // .skip(skip)
+        // .limit(limit);
 
-    res.status(200).json({ appointments, appointmentsCount });
+    const now = new Date();
+
+    const sortedAppointments = appointments.sort((a, b) => {
+        const aDateTime = combineDateAndTime(a.appointmentDate, a.timeslot);
+        const bDateTime = combineDateAndTime(b.appointmentDate, b.timeslot);
+
+        const aDiff = aDateTime >= now ? aDateTime - now : Infinity;
+        const bDiff = bDateTime >= now ? bDateTime - now : Infinity;
+
+        return aDiff - bDiff
+    })
+
+    const paginatedAppointments = sortedAppointments.slice(skip, skip + limit);
+
+    res.status(200).json({ appointments: paginatedAppointments, appointmentsCount });
 
 })
 
