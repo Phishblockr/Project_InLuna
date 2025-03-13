@@ -113,7 +113,7 @@ const ListAppointments = () => {
 
                 <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                     <div>
-                        <h1 className="text-2xl font-medium tracking-tight">appointments</h1>
+                        <h1 className="text-2xl font-medium tracking-tight">Appointments (Demo)</h1>
                     </div>
                     <div className="flex items-center gap-x-3">
                         <input
