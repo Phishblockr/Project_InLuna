@@ -1,7 +1,7 @@
 import sgMail from "@sendgrid/mail";
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-export const sendAppointmentApprovedEmail = async (to, subject, user, date, time, meetUrl) => {
+export const sendAppointmentRemainderEmail = async (to, subject, user, date, time, meetUrl) => {
     const msg = {
         to,
         from: process.env.VERIFIED_SENDER_EMAIL,
@@ -14,12 +14,13 @@ export const sendAppointmentApprovedEmail = async (to, subject, user, date, time
         <circle cx="100" cy="100" r="50" fill="white" stroke="red" stroke-width="5"></circle>
         <circle cx="100" cy="100" r="25" fill="black"></circle>
       </svg>
-      <span style="font-weight: bold;">InLuna - Appointment Approved 🙏🏻</span>
+      <span style="font-weight: bold;">InLuna - Appointment Remainder 🙏🏻</span>
     </header>
     <div style="padding: 10px; width: 100%;">
       <p>Hi ${user}</p>
-      <p>Your Appointment request has been Approved for: <span>${date} at ${time}<span></p>
+      <p>We're writing to provide a friendly reminder of your appointment scheduled for: <span>${date} at ${time}<span></p>
       <p>Here is your meeting link: <span>${meetUrl}</span></p>
+      <p>We look forward to seeing you then.</p>
       <p>Thank you for using our services 😊</p>
       <p>Sincerely yours,</p>
       <p>The InLuna team</p>

@@ -1,8 +1,11 @@
+import schedule from 'node-schedule';
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getBookADemoModel } from "../../models/superAdmin/bookADemoModel.js";
 import { generateZoomMeetUrl } from "../../utils/generateZoomMeetUrl.js";
 import { sendAppointmentApprovedEmail } from "../../utils/sendAppointmentApprovedEmail.js";
 import { sendAppointmentCreatedEmail } from "../../utils/sendAppointmentCreatedEmail.js";
+import { combineDateAndTime } from '../../utils/combineDateAndTime.js';
+import { sendAppointmentRemainderEmail } from '../../utils/sendAppointmentRemainderEmail.js';
 
 // Define all possible timeslots (you can adjust these as needed)
 const ALL_TIMESLOTS = [
@@ -118,6 +121,18 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
 
 })
 
+const scheduleAppointmentRemainders = (appointment) => {
+    const fullAppointmentTime = combineDateAndTime(appointment.appointmentDate, appointment.timeslot)
+    const reminderTime = new Date(fullAppointmentTime.getTime() - 30 * 60 * 1000);
+
+    if (reminderTime > new Date ()){
+        schedule.scheduleJob(reminderTime, () => {
+            sendAppointmentRemainderEmail(appointment.email, "Appointment Reminder", appointment.name, appointment.appointmentDate, appointment.timeslot, appointment.meetUrl);
+            console.log(`Reminder email sent to ${appointment.email} at ${reminderTime}`);
+        })
+    }
+}
+
 export const approveAppointments = asyncHandler(async (req, res) => {
     const {id} = req.params;
     if (!id) {
@@ -139,7 +154,8 @@ export const approveAppointments = asyncHandler(async (req, res) => {
     const updatedAppointment = await appointment.save();
 
 
-    sendAppointmentApprovedEmail(updatedAppointment.email, "Appointment Approved Email", updatedAppointment.name, updatedAppointment.appointmentDate, updatedAppointment.timeslot, meetUrl)
+    sendAppointmentApprovedEmail(updatedAppointment.email, "Appointment Approved Email", updatedAppointment.name, updatedAppointment.appointmentDate, updatedAppointment.timeslot, updatedAppointment.meetUrl);
+    scheduleAppointmentRemainders(updatedAppointment);
 
     const io = req.app.get("socketio");
     if (io) {
