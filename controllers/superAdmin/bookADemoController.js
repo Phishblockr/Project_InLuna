@@ -1,5 +1,7 @@
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getBookADemoModel } from "../../models/superAdmin/bookADemoModel.js";
+import { generateZoomMeetUrl } from "../../utils/generateZoomMeetUrl.js";
+import { sendAppointmentApprovedEmail } from "../../utils/sendAppointmentApprovedEmail.js";
 import { sendAppointmentCreatedEmail } from "../../utils/sendAppointmentCreatedEmail.js";
 
 // Define all possible timeslots (you can adjust these as needed)
@@ -129,9 +131,15 @@ export const approveAppointments = asyncHandler(async (req, res) => {
         return res.status(404).json({ error: "appointment not found for given id" });
     }
 
-    appointment.approved = true
+    const meetUrl = generateZoomMeetUrl()
+
+    appointment.approved = true;
+    appointment.meetUrl = meetUrl;
 
     const updatedAppointment = await appointment.save();
+
+
+    sendAppointmentApprovedEmail(updatedAppointment.email, "Appointment Approved Email", updatedAppointment.name, updatedAppointment.appointmentDate, updatedAppointment.timeslot, meetUrl)
 
     const io = req.app.get("socketio");
     if (io) {
