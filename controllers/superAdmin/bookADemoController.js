@@ -100,13 +100,16 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
     const Appointment = await getBookADemoModel();
 
     const searchFilter = search
-        ? { $or: [{ name: { $regex: search, $options: "i" } }] }
+        ? { $or: [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } }
+        ] }
         : {};
 
     const statusFilter =
-        status === "all"
-            ? {}
-            : { approved: { $regex: `^${status}$`, $options: "i" } };
+    status === "all"
+    ? {}
+    : { approved: status === "true" };
 
     const queryFilter = { ...searchFilter, ...statusFilter, createdAt: { $gte: startOfMonth, $lt: endOfMonth } };
 
