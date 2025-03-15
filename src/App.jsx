@@ -15,6 +15,7 @@ import EmailCreator from './components/Email/EmailCreator';
 import EditEditor from './components/Email/EmailEditor';
 import CourseCreator from './components/Course/CourseCreator.jsx';
 import CourseEditor from './components/Course/CourseEditor';
+import ListOrganisations from './components/Organisation/ListOrganisations.jsx';
 import Layout from "./layout/Layout"
 
 import ListAppointments from './components/Appointments/ListAppointments.jsx';
@@ -51,6 +52,7 @@ function App() {
                             <Route path="/emails/emailCreator" element={<EmailCreator />} />
                             <Route path="/emails/emailEditor/:id" element={<EditEditor />} />
                             <Route path="/appointments" element={<ListAppointments/>}></Route>
+                            <Route path="/organisations" element={<ListOrganisations/>}></Route>
                           </Route>
                         </Route>
                         <Route path="*" element={<NotFound />} />

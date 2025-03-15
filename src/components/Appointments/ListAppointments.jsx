@@ -5,8 +5,9 @@ import { useAuth } from '../../utils/AuthProvider';
 import { setPerPageRec } from '../../features/PerPageRec/perPageRecSlice';
 import debounce from 'debounce';
 import Pagination from '../Pagination';
-import { RiEyeLine } from 'react-icons/ri';
 import { toast } from 'sonner';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const ListAppointments = () => {
 
@@ -23,6 +24,8 @@ const ListAppointments = () => {
 
     const [appointments, setAppointments] = useState([]);
 
+    const [selectedDate, setSelectedDate] = useState(new Date());
+
     // For Pagination and Data Filter
     const [currentPage, setCurrentPage] = useState(1);
     const [query, setQuery] = useState("");
@@ -36,7 +39,11 @@ const ListAppointments = () => {
     const [showLoading, setShowLoading] = useState(false);
 
 
-    const fetchAppointments = async ({ page, limit, search, status, token, month, year }) => {
+    const fetchAppointments = async ({ page, limit, search, status, token, selectedDate }) => {
+
+        const month = selectedDate.getMonth() + 1;
+        const year = selectedDate.getFullYear();
+
         try {
             const res = await fetch(`${apiUrl}/bookADemo/fetchAppointments?page=${page}&limit=${limit}&search=${search}&status=${status}&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`, {
                 method: "GET",
@@ -58,35 +65,42 @@ const ListAppointments = () => {
         }
     }
 
-    const approveAppointmentHandler = async (id) =>{
-        const res = await fetch (`${apiUrl}/bookADemo/approveAppointment/${id}`, {
+    const approveAppointmentHandler = async (id) => {
+        const res = await fetch(`${apiUrl}/bookADemo/approveAppointment/${id}`, {
             method: "PUT",
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
-            
+
         });
         const data = await res.json();
-        if (!res.ok){
+        if (!res.ok) {
             return toast.error(data.error)
         }
+        toast.success("Appointmnet Approved")
+        fetchAppointments({ page: currentPage, limit: perPageRec, search: query, status, token, selectedDate });
         return data;
-    } 
+    }
 
     const handleSetPerPageRec = (value) => {
         dispatch(setPerPageRec(value));
-        fetchAppointments({ page: currentPage, limit: value, search: query, status, token, month, year });
+        fetchAppointments({ page: currentPage, limit: value, search: query, status, token, selectedDate });
     };
 
     const handleSearch = debounce((value) => {
         setQuery(value)
-        fetchAppointments({ page: 1, limit: perPageRec, search: value, status, token, month, year });
+        fetchAppointments({ page: 1, limit: perPageRec, search: value, status, token, selectedDate });
     }, 300);
+
+    const handleDateChange = (date) => {
+        setSelectedDate(date);
+        fetchAppointments({ page: currentPage, limit: perPageRec, search: query, status, token, selectedDate: date });
+    };
 
     const handleStatus = (value) => {
         setStatus(value)
-        fetchAppointments({ page: 1, limit: perPageRec, search: query, status: value, token, month, year });
+        fetchAppointments({ page: 1, limit: perPageRec, search: query, status: value, token, selectedDate });
     }
 
     useEffect(() => {
@@ -102,7 +116,7 @@ const ListAppointments = () => {
                 setDataLoading(false);
             })
         */
-        fetchAppointments({ page: currentPage, limit: perPageRec, search: query, status, token, month, year });
+        fetchAppointments({ page: currentPage, limit: perPageRec, search: query, status, token, selectedDate });
         // dispatch(startListeningToSocket(token));
     }, []);
 
@@ -116,12 +130,32 @@ const ListAppointments = () => {
                         <h1 className="text-2xl font-medium tracking-tight">Appointments (Demo)</h1>
                     </div>
                     <div className="flex items-center gap-x-3">
+                        <DatePicker
+                            title='Records are seprated by month click to view per month'
+                            selected={selectedDate}
+                            onChange={handleDateChange}
+                            showMonthYearPicker
+                            dateFormat="MM/yyyy"
+                            className="w-20 p-2 text-gray-500 border-2 border-gray-300 rounded-lg text-center rounded-lg dark:text-[#F4F4F4] dark:bg-[#002451] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+                        />
                         <input
                             type="text"
                             placeholder="Search appointment..."
                             className="rounded-lg border-gray-300 border-2 text-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
                             onChange={(e) => handleSearch(e.target.value)}
                         />
+
+                        <select
+                            title='Filter records according to Status'
+                            name="filters"
+                            id="filters"
+                            className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
+                            onChange={(e) => handleStatus(e.target.value)}
+                        >
+                            <option value="all">Status</option>
+                            <option value="true">Approved</option>
+                            <option value="false">Pending</option>
+                        </select>
 
                         <select
                             name="perPageRec"
@@ -161,8 +195,6 @@ const ListAppointments = () => {
 
                                     const currentDateOnly = new Date();
                                     currentDateOnly.setHours(0, 0, 0, 0);
-
-                                    console.log(appointmentDateOnly, currentDateOnly)
 
                                     return (
                                         <tr
@@ -219,7 +251,7 @@ const ListAppointments = () => {
                     totalPages={totalPages}
                     onPageChange={(page) => {
                         setCurrentPage(page);
-                        fetchAppointments({ page, limit: perPageRec, search: query, status, token, month, year });
+                        fetchAppointments({ page, limit: perPageRec, search: query, status, token, selectedDate });
                     }}
                 />
             </div>

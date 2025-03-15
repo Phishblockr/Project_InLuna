@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { LuChevronFirst, LuChevronLast } from "react-icons/lu";
 import { MdOutlineSpaceDashboard } from 'react-icons/md';
-import { RiMailLine, RiPlayCircleLine } from 'react-icons/ri';
+import { RiBriefcaseLine, RiMailLine, RiPlayCircleLine } from 'react-icons/ri';
 
 const Sidebar2 = ({ expanded, setExpanded }) => {
     const appName = import.meta.env.VITE_APP_NAME
@@ -18,6 +18,18 @@ const Sidebar2 = ({ expanded, setExpanded }) => {
             url: "/",
         },
         {
+            id: 4,
+            icon: <RiMailLine className={iconStyle} />,
+            title: "Appointments",
+            url: "/appointments",
+        },
+        {
+            id: 5,
+            icon: <RiBriefcaseLine className={iconStyle} />,
+            title: "Organisations",
+            url: "/Organisations",
+        },
+        {
             id: 2,
             icon: <RiPlayCircleLine className={iconStyle} />,
             title: "Course",
@@ -28,12 +40,8 @@ const Sidebar2 = ({ expanded, setExpanded }) => {
             icon: <RiMailLine className={iconStyle} />,
             title: "Email",
             url: "/emails",
-        },        {
-            id: 4,
-            icon: <RiMailLine className={iconStyle} />,
-            title: "Appointments",
-            url: "/appointments",
-        },
+        }, 
+
     ];
 
     return (
