@@ -136,7 +136,7 @@ const ListAppointments = () => {
                             onChange={handleDateChange}
                             showMonthYearPicker
                             dateFormat="MM/yyyy"
-                            className="w-20 p-2 text-gray-500 border-2 border-gray-300 rounded-lg text-center rounded-lg dark:text-[#F4F4F4] dark:bg-[#002451] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+                            className="w-20 p-2 text-gray-500 border-2 border-gray-300 text-center rounded-lg dark:text-[#F4F4F4] dark:bg-[#002451] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
                         />
                         <input
                             type="text"

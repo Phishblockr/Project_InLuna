@@ -19,6 +19,7 @@ import ListOrganisations from './components/Organisation/ListOrganisations.jsx';
 import Layout from "./layout/Layout"
 
 import ListAppointments from './components/Appointments/ListAppointments.jsx';
+import AddOrganisations from './components/Organisation/AddOrganisations.jsx';
 
 function App() {
   const theme = useSelector((state) => state.theme);
@@ -53,6 +54,7 @@ function App() {
                             <Route path="/emails/emailEditor/:id" element={<EditEditor />} />
                             <Route path="/appointments" element={<ListAppointments/>}></Route>
                             <Route path="/organisations" element={<ListOrganisations/>}></Route>
+                            <Route path="/organisations/addOrganisation" element={<AddOrganisations/>}></Route>
                           </Route>
                         </Route>
                         <Route path="*" element={<NotFound />} />
