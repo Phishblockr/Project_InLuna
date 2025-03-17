@@ -1,13 +1,15 @@
-import Organization, { getOrgModel } from '../models/organisationModel.js';
+import { getOrgModel } from '../models/organisationModel.js';
 import winston from 'winston';
 import { getTenantDB, getUserModel } from '../tenantdb.js';
-import { getTenantModel } from '../admindb.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import { generateUniqueOrgId } from '../utils/generateOrgId.js';
 import { sendOnboardingEmail } from '../utils/sendOnboardingEmail.js';
 import heartbeatSchema from '../models/heartBeatModel.js';
 import adminLogsSchema from '../models/adminlogsModel.js';
 import bcrypt from 'bcryptjs';
+import { generateUsername } from '../utils/generateUsername.js';
+import { generatePasswordSetupLink } from '../utils/generatePasswordSetupLink.js';
+import { sendPasswordSetupEmail } from '../utils/sendPasswordSetupEmail.js';
 
 
 // Logger setup
@@ -22,16 +24,42 @@ const logger = winston.createLogger({
 
 // Get all organizations
 export const getAllOrganizations = async (req, res) => {
+
     try {
-        const Organisation = await getTenantModel()
-        const { page = 1, limit = 10 } = req.query;
-        const orgs = await Organisation.find()
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
+        const { month, year } = req.query
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || "";
+        const status = req.query.status || "all";
+
+        const searchFilter = search ? {
+            $or: [
+                { name: { $regex: search, $options: 'i' } },
+            ]
+        } : {};
+
+        const statusFilter =
+            status === "all"
+                ? {}
+                : { status: status === "true" };
+
+        const queryFilter = { ...searchFilter, ...statusFilter }
+
+        const Organisation = await getOrgModel()
+        const orgs = await Organisation.find(queryFilter)
+            .skip(skip)
+            .limit(limit)
             .exec();
         const count = await Organisation.countDocuments();
+
+        const orgsWithAdminCount = orgs.map(org => ({
+            ...org.toObject(),
+            adminCount: org.adminIds ? org.adminIds.length : 0
+        }));
+
         res.status(orgs.length > 0 ? 200 : 404).json(orgs.length > 0 ? {
-            orgs,
+            orgs: orgsWithAdminCount,
             totalPages: Math.ceil(count / limit),
             currentPage: page
         } : { error: 'Organizations not found' });
@@ -44,34 +72,40 @@ export const getAllOrganizations = async (req, res) => {
 export const createOrganization = asyncHandler(async (req, res) => {
     try {
         const { name, adminName, totalUsers, adminEmail, adminPassword } = req.body;
-        console.log(req.body);
 
-        if (!name || !adminName || !totalUsers || !adminEmail || !adminPassword) {
-            return res.status(400).json({ error: "All organization and admin details are required." });
+        // Check for required fields (adminPassword is optional now)
+        if (!name || !adminName || !totalUsers || !adminEmail) {
+            return res.status(400).json({ error: "All organization and admin details are required (except password, which is optional)." });
         }
 
-        // Validate the admin password (at least 6 characters with letters and numbers)
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
-        if (!passwordRegex.test(adminPassword)) {
-            return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
-        }
-        // Get the Organizations model from the admin database
-        const TenantModel = await getTenantModel();
+        // Determine if a password was provided
+        const passwordProvided = adminPassword && adminPassword.trim().length > 0;
+        let finalHashedPassword = "";
 
-        // Generate a unique 6-digit alphanumeric orgId
+        // If a password is provided, validate and hash it
+        if (passwordProvided) {
+            const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+            if (!passwordRegex.test(adminPassword)) {
+                return res.status(400).json({ message: "Password must be at least 6 characters long and contain both letters and numbers." });
+            }
+            const salt = await bcrypt.genSalt(10);
+            finalHashedPassword = await bcrypt.hash(adminPassword, salt);
+        } else {
+            finalHashedPassword = "";
+        }
+
+        const TenantModel = await getOrgModel();
+
         const orgId = await generateUniqueOrgId(TenantModel);
 
-        // Check if organization already exists (should not, since we just generated a unique orgId)
         const existingOrg = await TenantModel.findOne({ adminEmailIds: adminEmail });
         if (existingOrg) {
             return res.status(400).json({ error: "Organization with this Email Id already exists." });
         }
 
-        // Create a new organization in the Admin DB
         const newOrg = new TenantModel({ orgId, name, adminName, totalUsers, adminEmailIds: [adminEmail] });
         await newOrg.save();
 
-        // Create a new tenant database for this organization
         const tenantDb = await getTenantDB(orgId);
         if (!tenantDb) {
             return res.status(500).json({ error: "Failed to create tenant database." });
@@ -88,31 +122,34 @@ export const createOrganization = asyncHandler(async (req, res) => {
         // Get the tenant-specific User model (this function already registers User if needed)
         const User = await getUserModel(orgId);
 
-
         // Generate a unique username based on the email (append a random number)
-        const username = adminEmail.split("@")[0] + Math.floor(Math.random() * 1000);
-
-        // Hash the password securely
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(adminPassword, salt);
+        const username = generateUsername(adminEmail, 0)
 
         // Create the admin user
         const newAdmin = new User({
             username,
             name: adminName,
             email: adminEmail,
-            password: hashedPassword,
+            password: finalHashedPassword,
             orgId,
             userType: process.env.ADMIN
         });
 
         const newUser = await newAdmin.save();
 
+        // Update the organization document with the new admin's ID
         newOrg.adminIds = [newUser._id];
         newOrg.markModified('adminIds');
+        newOrg.usersCount = Number(newOrg.usersCount) + 1;
         await newOrg.save();
 
-        await sendOnboardingEmail(adminEmail, "Welcome To InLuna", orgId, newUser);
+        // If no password was provided, generate a password setup link and send an email
+        if (!passwordProvided) {
+            let emailContent = await generatePasswordSetupLink(newUser, orgId);
+            await sendPasswordSetupEmail(adminEmail, "Welcome To InLuna 🙏🏻 - Password Setup", emailContent, newUser);
+        } else {
+            await sendOnboardingEmail(adminEmail, "Welcome To InLuna 🙏🏻", orgId, newUser.username);
+        }
 
         res.status(201).json({
             message: "Organization and Admin created successfully",
@@ -137,7 +174,7 @@ export const getOrganization = asyncHandler(async (req, res) => {
         }
 
         // ✅ Get the Admin DB model (Organizations)
-        const TenantModel = await getTenantModel();
+        const TenantModel = await getOrgModel();
 
         // ✅ Find the organization in the Admin DB
         const org = await TenantModel.findOne({ orgId });
@@ -164,7 +201,7 @@ export const deleteOrganization = asyncHandler(async (req, res) => {
         }
 
         // ✅ Get the Admin DB model (Organizations)
-        const TenantModel = await getTenantModel();
+        const TenantModel = await getOrgModel();
 
         // ✅ Check if the organization exists in the Admin DB
         const org = await TenantModel.findOneAndDelete({ orgId });
@@ -199,7 +236,7 @@ export const updateOrganization = asyncHandler(async (req, res) => {
         }
 
         // ✅ Get the Admin DB model (Organizations)
-        const TenantModel = await getTenantModel();
+        const TenantModel = await getOrgModel();
 
         // ✅ Update organization in the Admin DB
         const updatedOrg = await TenantModel.findOneAndUpdate(
@@ -235,7 +272,7 @@ export const searchOrganizations = asyncHandler(async (req, res) => {
         if (adminName) query.adminName = { $regex: adminName, $options: "i" };
 
         // ✅ Get the Admin DB model (Organizations)
-        const TenantModel = await getTenantModel();
+        const TenantModel = await getOrgModel();
 
         // ✅ Apply pagination
         const skip = (parseInt(page) - 1) * parseInt(limit);

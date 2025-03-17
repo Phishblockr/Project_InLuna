@@ -11,7 +11,7 @@ export const sendPasswordSetupEmail = async (to, subject, content, user) => {
         <body>
   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; font-size: 18px; color: #333; background-color: #eeeeee;">
     <header style="padding: 26px; background-color: #0364BD; color: #f4f4f4; font-size: 24px; display: flex; align-items: center; gap: 26px; border-radius: 0 0 10px 10px;">
-      <span style="font-weight: bold;">InLuna - Support</span>
+      <span style="font-weight: bold;">InLuna - Welcome 🙏🏻</span>
     </header>
     <div style="padding: 10px; width: 100%;">
       <p>Hi ${user.name},</p>

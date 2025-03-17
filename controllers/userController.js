@@ -7,12 +7,12 @@ import fs from 'fs';
 import { generateUsername } from '../utils/generateUsername.js';
 import dotenv from 'dotenv';
 import sgMail from "@sendgrid/mail";
-import crypto from "crypto";
 import UserSchema from '../models/userModel.js';
 import { getUserModel, getTenantDB } from '../tenantdb.js';
 import { getAdminLogsModel } from '../models/adminlogsModel.js';
 import { sendPasswordSetupEmail } from '../utils/sendPasswordSetupEmail.js';
 import { getOrgModel } from '../models/organisationModel.js';
+import { generatePasswordSetupLink } from '../utils/generatePasswordSetupLink.js';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -121,19 +121,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     }
 });
 
-//send setup password mail
-const generatePasswordSetupLink = async (user, orgId) => {
-    const setPassToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = await bcrypt.hash(setPassToken, 10);
 
-    user.setupPasswordToken = hashedToken;
-    user.setupPasswordExpires = Date.now() + 86400000; // 24 hours
-    await user.save();
-
-    const setPasswordLink = `${process.env.FRONT_END_URL}/setupPassword/${setPassToken}`;
-
-    return `<p>Click <a href="${setPasswordLink}">here</a> to set your password.</p>`;
-};
 
 // **Set Up Password for User**
 export const setupPassword = async (req, res) => {
@@ -242,7 +230,7 @@ export const createUser = asyncHandler(async (req, res) => {
         const updatedOrg = await OrgModel.findOneAndUpdate(
             { orgId },
             {
-                $inc: { totalUsers: 1 },  // Increment totalUsers atomically
+                $inc: { usersCount: 1 },  // Increment usersCount atomically
                 ...(addedUser.userType === process.env.ADMIN
                     ? {
                         $push: { adminEmailIds: addedUser.email, adminIds: addedUser._id } // Add admin details
@@ -694,11 +682,11 @@ export const deleteUser = asyncHandler(async (req, res) => {
             };
         }
 
-        // Atomically update the organization: decrement totalUsers and remove admin if needed
+        // Atomically update the organization: decrement usersCount and remove admin if needed
         await OrgModel.findOneAndUpdate(
             { orgId },
             {
-                $inc: { totalUsers: -1 }, // Decrement totalUsers
+                $inc: { usersCount: -1 }, // Decrement usersCount
                 ...updateOrgQuery // Apply admin removal if applicable
             },
             { new: true }
@@ -872,7 +860,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
             const OrgModel = await getOrgModel();
             await OrgModel.findOneAndUpdate(
                 { orgId },
-                { $inc: { totalUsers: insertedUsers.length } }, // Increase by number of inserted users
+                { $inc: { usersCount: insertedUsers.length } }, // Increase by number of inserted users
                 { new: true }
             );
 

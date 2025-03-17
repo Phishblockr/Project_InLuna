@@ -30,10 +30,18 @@ const organizationSchema = new Schema({
         required: true,
         default: 0
     },
+    usersCount: {
+        type: Number,
+        default: 0
+    },
     orgId: {
         type: String,
         required: true,
         unique: true
+    },
+    status: {
+        type: Boolean,
+        default: true
     },
     createdAt: {
         type: Date,
