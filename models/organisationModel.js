@@ -45,5 +45,5 @@ export default organizationSchema;
 
 export const getOrgModel = async () => {
     const adminDb = await getDb();
-    return adminDb.models.Organization || adminDb.model("Organization", organizationSchema);
+    return (adminDb.models.Organization || adminDb.model("Organization", organizationSchema));
 }

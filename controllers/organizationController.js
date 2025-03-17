@@ -1,4 +1,4 @@
-import Organization from '../models/organisationModel.js';
+import Organization, { getOrgModel } from '../models/organisationModel.js';
 import winston from 'winston';
 import { getTenantDB, getUserModel } from '../tenantdb.js';
 import { getTenantModel } from '../admindb.js';
@@ -23,12 +23,13 @@ const logger = winston.createLogger({
 // Get all organizations
 export const getAllOrganizations = async (req, res) => {
     try {
+        const Organisation = await getTenantModel()
         const { page = 1, limit = 10 } = req.query;
-        const orgs = await Organization.find()
+        const orgs = await Organisation.find()
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        const count = await Organization.countDocuments();
+        const count = await Organisation.countDocuments();
         res.status(orgs.length > 0 ? 200 : 404).json(orgs.length > 0 ? {
             orgs,
             totalPages: Math.ceil(count / limit),
