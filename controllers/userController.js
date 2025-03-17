@@ -239,12 +239,21 @@ export const createUser = asyncHandler(async (req, res) => {
 
         const addedUser = await newUser.save();
 
-        if (addedUser.userType === process.env.ADMIN) {
-            const OrgModel = await getOrgModel();
-            const org = await OrgModel.findOne({ orgId });
-            org.adminEmailIds.push(addedUser.email)
-            org.adminIds.push(addedUser._id)
-            await org.save();
+        const updatedOrg = await OrgModel.findOneAndUpdate(
+            { orgId },
+            {
+                $inc: { totalUsers: 1 },  // Increment totalUsers atomically
+                ...(addedUser.userType === process.env.ADMIN
+                    ? {
+                        $push: { adminEmailIds: addedUser.email, adminIds: addedUser._id } // Add admin details
+                    }
+                    : {})
+            },
+            { new: true } // Return updated document
+        );
+
+        if (!updatedOrg) {
+            return res.status(500).json({ message: "Failed to update organization data." });
         }
 
         // Send password setup email
@@ -672,21 +681,28 @@ export const deleteUser = asyncHandler(async (req, res) => {
             return res.status(403).json({ error: "You cannot delete your own account." });
         }
 
+        const OrgModel = await getOrgModel();
+
+        // Remove the user from the organization if they are an admin
+        let updateOrgQuery = {};
         if (user.userType === process.env.ADMIN) {
-            console.log("Remove admin")
-            // If user is admin remove his record from organization model
-            const OrgModel = await getOrgModel();
-            const org = await OrgModel.findOne({ orgId });
-            if (org) {
-                org.adminIds = org.adminIds.filter(
-                    adminIdItem => adminIdItem.toString() !== user._id.toString()
-                );
-                org.adminEmailIds = org.adminEmailIds.filter(
-                    emailItem => emailItem !== user.email
-                );
-                await org.save();
-            }
+            updateOrgQuery = {
+                $pull: {
+                    adminIds: user._id, // Remove admin ID
+                    adminEmailIds: user.email // Remove admin email
+                }
+            };
         }
+
+        // Atomically update the organization: decrement totalUsers and remove admin if needed
+        await OrgModel.findOneAndUpdate(
+            { orgId },
+            {
+                $inc: { totalUsers: -1 }, // Decrement totalUsers
+                ...updateOrgQuery // Apply admin removal if applicable
+            },
+            { new: true }
+        );
 
         // Delete user
         await User.findByIdAndDelete(id);
@@ -852,6 +868,13 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
                     console.error("Failed to create log in tenant DB:", logError.message);
                 }
             }
+
+            const OrgModel = await getOrgModel();
+            await OrgModel.findOneAndUpdate(
+                { orgId },
+                { $inc: { totalUsers: insertedUsers.length } }, // Increase by number of inserted users
+                { new: true }
+            );
 
             res.status(200).json({ message: "Users added successfully." });
         } else {
