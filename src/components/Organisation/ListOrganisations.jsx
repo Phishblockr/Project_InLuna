@@ -141,7 +141,7 @@ const ListOrganisations = () => {
                                 <tr>
                                     <th className="py-3 text-left">Name</th>
                                     <th className="py-3 text-left">Total Admin(s)</th>
-                                    <th className="py-3 text-left">Total Users</th>
+                                    <th className="py-3 text-left">Total Users (including Admin)</th>
                                     <th className="py-3 text-left">Status</th>
                                     <th className="py-3 text-left">Actions</th>
                                 </tr>
@@ -161,7 +161,7 @@ const ListOrganisations = () => {
                                                 {organisation.adminCount}
                                             </td>
                                             <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                                {organisation.totalUsers}
+                                            {organisation.usersCount} / {organisation.totalUsers}
                                             </td>
                                             <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
                                                 {organisation.status ? "Active" : "Inactive"}
