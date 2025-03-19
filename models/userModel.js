@@ -74,7 +74,7 @@ const userSchema = new Schema({
         type: Date 
     },
     orgId: { 
-        type: String, required: true 
+        type: String,
     },
     refreshToken: { 
         type: String 

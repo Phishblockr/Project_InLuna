@@ -26,14 +26,14 @@ export const sendOnboardingEmail = async (to, subject, content, user) => {
       <p>Sincerely yours,</p>
       <p>The InLuna team</p>
     </div>
-    <footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4; border-radius: 10px 10px 0 0;">
+<footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4; border-radius: 10px 10px 0 0;">
       <p>If you need further assistance, please contact our support team at 
-          <a href="mailto:support@InLuna.com" style="color: #f4f4f4; text-decoration: none;">support@InLuna.com</a>.
+          <a href="mailto:support@excellitude.com" style="color: #f4f4f4; text-decoration: none;">support@excellitude.com</a>.
       </p>
-      <p style="margin-top: 10px;">Excellitude Pvt ltd. | 1234 Cybersecurity Lane, Suite 100 | Security City, SC 12345</p>
+      <p style="margin-top: 10px;">Excellitude Pvt ltd.</p>
       <p style="margin-top: 10px;">
-          <a href="https://InLuna.com/privacy-policy" style="color: #f4f4f4; text-decoration: none;">Privacy Policy</a> | 
-          <a href="https://InLuna.com/terms-of-service" style="color: #f4f4f4; text-decoration: none;">Terms of Service</a>
+          <a href="https://theinluna.com/privacyPolicy" style="color: #f4f4f4; text-decoration: none;">Privacy Policy</a> | 
+          <a href="https://theinluna.com/termsOfUse" style="color: #f4f4f4; text-decoration: none;">Terms of Service</a>
       </p>
     </footer>
   </div>

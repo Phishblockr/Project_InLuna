@@ -1,12 +1,12 @@
 import sgMail from "@sendgrid/mail";
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-export const sendAppointmentCreatedEmail = async (to, subject, email, user, date, time) => {
-  const msg = {
-    to,
-    from: process.env.VERIFIED_SENDER_EMAIL,
-    subject,
-    html: `
+export const sendOnboardingIndividualUsrEmail = async (to, subject, user) => {
+    const msg = {
+        to,
+        from: process.env.VERIFIED_SENDER_EMAIL,
+        subject,
+        html: `
         <body>
   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; font-size: 18px; color: #333; background-color: #eeeeee;">
     <header style="padding: 26px; background-color: #0364BD; color: #f4f4f4; font-size: 24px; display: flex; align-items: center; gap: 26px; border-radius: 0 0 10px 10px; box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;">
@@ -17,14 +17,16 @@ export const sendAppointmentCreatedEmail = async (to, subject, email, user, date
       <span style="font-weight: bold;">InLuna - Welcome 🙏🏻</span>
     </header>
     <div style="padding: 10px; width: 100%;">
-      <p>Hi ${user}</p>
-      <p>Your Appointment request has been sent for: <span>${date} at ${time}<span></p>
-      <p>If we approve your appointment we will contact you back shortly.</p>
+      <p>Hi ${user.name}</p>
+      <p>We are very excited to have you onboard. Here is your username: <span>${user.username}</span></p>
+      <p>Get started with setting up your environment on InLuna extension:</p>
+      <p><a href="#" style="color: #0364BD; text-decoration: underline;">For Chrome</a></p>
+      <p><a href="#" style="color: #0364BD; text-decoration: underline;">For Firefox</a></p>
       <p>Thank you for using our services 😊</p>
       <p>Sincerely yours,</p>
       <p>The InLuna team</p>
     </div>
-<footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4; border-radius: 10px 10px 0 0;">
+    <footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4; border-radius: 10px 10px 0 0;">
       <p>If you need further assistance, please contact our support team at 
           <a href="mailto:support@excellitude.com" style="color: #f4f4f4; text-decoration: none;">support@excellitude.com</a>.
       </p>
@@ -48,6 +50,6 @@ export const sendAppointmentCreatedEmail = async (to, subject, email, user, date
   </style>
 </body>
         `,
-  };
-  await sgMail.send(msg);
+    };
+    await sgMail.send(msg);
 };

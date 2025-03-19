@@ -17,6 +17,7 @@ import {
 } from '../controllers/userController.js';
 import multer from 'multer';
 import authenticateToken from '../middlewares/authenticateToken.js';
+import { createindividualUser } from '../controllers/individual/registration.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -35,5 +36,8 @@ router.route("/verifyAdminPassword").post(dashboardAdminMiddleware, verifyAdminP
 router.route("/authenticateAdmin").put(dashboardAdminMiddleware, updateAdminPwd);
 router.post("/addUsersFromCsv", upload.single("file"),dashboardAdminMiddleware, addUsersFromCsv);
 router.post("/setupPassword/:token",setupPassword)
+
+// Individual User Routes
+router.post('/register', createindividualUser);
 
 export default router;

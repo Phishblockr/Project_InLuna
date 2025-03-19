@@ -27,9 +27,14 @@ export const sendPasswordSetupEmail = async (to, subject, content, user) => {
       <p>Sincerely,</p>
       <p>The InLuna Team</p>
     </div>
-    <footer style="padding: 20px; font-size: 14px; text-align: center; background-color: #0364BD; color: #f4f4f4;">
-      <p>If you need further assistance, contact support at 
-        <a href="mailto:support@InLuna.com" style="color: #f4f4f4; text-decoration: none;">support@InLuna.com</a>.
+<footer style="padding: 20px; font-size: 14px; color: #777; text-align: center; background-color: #0364BD; color: #f4f4f4; border-radius: 10px 10px 0 0;">
+      <p>If you need further assistance, please contact our support team at 
+          <a href="mailto:support@excellitude.com" style="color: #f4f4f4; text-decoration: none;">support@excellitude.com</a>.
+      </p>
+      <p style="margin-top: 10px;">Excellitude Pvt ltd.</p>
+      <p style="margin-top: 10px;">
+          <a href="https://theinluna.com/privacyPolicy" style="color: #f4f4f4; text-decoration: none;">Privacy Policy</a> | 
+          <a href="https://theinluna.com/termsOfUse" style="color: #f4f4f4; text-decoration: none;">Terms of Service</a>
       </p>
     </footer>
   </div>
