@@ -33,7 +33,8 @@ export const createindividualUser = asyncHandler(async (req, res) => {
         email,
         role,
         password: hashedPassword,
-        userType: process.env.INDIVIDUAL
+        userType: process.env.INDIVIDUAL,
+        subscription: "freemium"
     });
 
     const addedUser = await newUser.save();

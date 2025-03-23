@@ -82,6 +82,9 @@ const userSchema = new Schema({
     refreshTokenExt: { 
         type: String 
     },
+    subscription: {
+        type: String
+    },
 });
 
 userSchema.index({ orgId: 1 });

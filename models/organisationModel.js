@@ -46,7 +46,11 @@ const organizationSchema = new Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    subscription: {
+        type: String,
+        default: "freemium"
+    },
 });
 
 export default organizationSchema;

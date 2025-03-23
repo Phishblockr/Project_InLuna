@@ -41,6 +41,8 @@ import superAdminRoutes from "./routes/superAdmin/superAdminRoutes.js"
 
 import bookADemoRoutes from "./routes/superAdmin/bookADemoRoutes.js"
 
+import SOverviewRoutes from "./routes/superAdmin/overview.js";
+
 import dotenv from "dotenv";
 dotenv.config({ override: true });
 
@@ -54,44 +56,44 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // CORS Configuration
 // Development only
 const allowedOrigins = [
-    'http://localhost:5173',
-    'chrome-extension://',
-    'moz-extension://',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'http://localhost:5000',
-    'https://theinluna.com',
-    'https://dashboard.theinluna.com',
-    'https://training.theinluna.com',
-    'https://superdashboard.theinluna.com',
-    /^https?:\/\/.*\.lvh\.me(?::\d+)?$/
-  ];
-  
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (e.g., curl, Postman)
-        if (!origin) return callback(null, true);
-  
-        const isAllowed = allowedOrigins.some((allowed) => {
-          if (typeof allowed === 'string') {
-            return origin.startsWith(allowed);
-          }
-          if (allowed instanceof RegExp) {
-            return allowed.test(origin);
-          }
-          return false;
-        });
-  
-        if (isAllowed) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
+  'http://localhost:5173',
+  'chrome-extension://',
+  'moz-extension://',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5000',
+  'https://theinluna.com',
+  'https://dashboard.theinluna.com',
+  'https://training.theinluna.com',
+  'https://superdashboard.theinluna.com',
+  /^https?:\/\/.*\.lvh\.me(?::\d+)?$/
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., curl, Postman)
+      if (!origin) return callback(null, true);
+
+      const isAllowed = allowedOrigins.some((allowed) => {
+        if (typeof allowed === 'string') {
+          return origin.startsWith(allowed);
         }
-      },
-      credentials: true,
-    })
-  );
+        if (allowed instanceof RegExp) {
+          return allowed.test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Production
 // const allowedOrigins = ['http://domain.com/', 'chrome-extension://<PUBLISHED_EXTENSION_ID>']; // Replace with your frontend origin(s)
@@ -114,28 +116,28 @@ app.use(cookieParser());
 
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: "*", // ALl Origin for dev purposes
-    }
+  cors: {
+    origin: "*", // ALl Origin for dev purposes
+  }
 });
 
 app.set("socketio", io);
 
 const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.json(),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'error.log', level: 'error' })
-    ]
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'error.log', level: 'error' })
+  ]
 });
 
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => {
-        console.log(err);
-        logger.error(err.message);
-    });
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => {
+    console.log(err);
+    logger.error(err.message);
+  });
 
 // Organization Routes
 app.use('/api/org', organizationRoutes);
@@ -195,6 +197,8 @@ app.use("/api/userCourse", userCourseRoutes)
 app.use("/api/tenant", tenantRoutes)
 
 app.use("/api/superadmin", superAdminRoutes)
+
+app.use("/api/supermetrics", SOverviewRoutes)
 
 app.use("/api/bookADemo", bookADemoRoutes)
 
