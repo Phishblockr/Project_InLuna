@@ -1,10 +1,11 @@
 import express from "express";
-import { getOverallStats, getStatsGraph, getMonthlySignups } from "../../controllers/superAdmin/overview.js";
+import { getOverallStats, getLastMonthSignups, getLastWeekSignups } from "../../controllers/superAdmin/overview.js";
 
 const router = express.Router();
 
-router.get("/getStatsGraph", getStatsGraph);
 router.get("/getOverallStats", getOverallStats);
-router.get("/getMonthlySignups", getMonthlySignups);
+router.get("/getLastMonthSignups", getLastMonthSignups);
+router.get("/getLastWeekSignups", getLastWeekSignups);
+
 
 export default router;
