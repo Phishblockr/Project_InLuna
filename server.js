@@ -6,6 +6,7 @@ import { Server } from "socket.io"
 import winston from 'winston';
 
 import authenticationRoutes from "./routes/authenticationRoutes.js";
+import indAuthRoutes from "./routes/IndividualRoutes/indAuthRoutes.js"
 import organizationRoutes from './routes/organizationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import urlRoutes from './routes/urlRoutes.js';
@@ -144,6 +145,8 @@ app.use('/api/org', organizationRoutes);
 
 // Authentication Routes
 app.use("/api/auth", authenticationRoutes);
+
+app.use("/api/indAuth", indAuthRoutes)
 
 // Users Routes
 // Individual middleware to added specific routes for user
