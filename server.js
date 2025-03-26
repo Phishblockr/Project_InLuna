@@ -6,10 +6,14 @@ import { Server } from "socket.io"
 import winston from 'winston';
 
 import authenticationRoutes from "./routes/authenticationRoutes.js";
-import indAuthRoutes from "./routes/IndividualRoutes/indAuthRoutes.js"
+import indAuthRoutes from "./routes/IndividualRoutes/indAuthRoutes.js";
+
 import organizationRoutes from './routes/organizationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+
 import urlRoutes from './routes/urlRoutes.js';
+import indUrlRoutes from "./routes/IndividualRoutes/indUrlRoutes.js"
+
 import RequestRoutes from './routes/RequestRoutes.js';
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import overviewRoutes from "./routes/overviewRoutes.js";
@@ -154,6 +158,9 @@ app.use('/api/user', userRoutes);
 
 // Url Routes
 app.use("/api/url", authenticateToken, urlRoutes);
+
+app.use("/api/indUrl", indUrlRoutes);
+
 
 // Whitelist URL Request Routes
 app.use("/api/Request", authenticateToken, RequestRoutes);

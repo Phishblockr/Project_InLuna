@@ -1,5 +1,5 @@
-import userSchema from "./userModel.js"
-import { getGlobalDB } from '../individualdb.js';
+import userSchema from "../userModel.js"
+import { getGlobalDB } from '../../individualdb.js';
 
 export const getIndividualUserModel = async () => {
   const db = await getGlobalDB();

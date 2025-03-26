@@ -1,5 +1,5 @@
 import asyncHandler from "../../middlewares/asyncHandler.js";
-import { getIndividualUserModel } from "../../models/individualUserModel.js";
+import { getIndividualUserModel } from "../../models/individualModels/individualUserModel.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 

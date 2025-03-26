@@ -53,7 +53,6 @@ const urlSchema = new mongoose.Schema(
     },
     orgId: {
       type: String,
-      required: [true, "Organization ID cannot be empty"],
     },
     reputationDetails: {
       type: Object,
@@ -73,7 +72,7 @@ const urlSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-urlSchema.index({ url: 1, orgId: 1, createdAt: 1 });
+urlSchema.index({ userId: 1, });
 
 export default urlSchema;
 
