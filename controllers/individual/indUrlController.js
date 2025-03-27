@@ -1,5 +1,6 @@
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getIndividualUrlModel } from "../../models/individualModels/indUrlModel.js";
+import mongoose from 'mongoose';
 
 export const addUrlInd = asyncHandler(async (req, res) => {
     const userId = req.user.userId;
@@ -55,8 +56,7 @@ export const addUrlInd = asyncHandler(async (req, res) => {
 });
 
 export const fetchUrlMetricsInd = asyncHandler(async (req, res) => {
-    const userId = req.user.userId;
-    // const userId = req.body;
+    const userId = new mongoose.Types.ObjectId(`${req.user.userId}`);
 
     if (!userId) {
         return res.status(400).json({ message: "User ID is required." });
@@ -86,8 +86,7 @@ export const fetchUrlMetricsInd = asyncHandler(async (req, res) => {
 });
 
 export const getUrlsInd = asyncHandler(async (req, res) => {
-    const userId = req.user.userId;
-    // const userId = req.body;
+    const userId = new mongoose.Types.ObjectId(`${req.user.userId}`);
 
     if (!userId) {
         return res.status(400).json({ message: "User ID is required." });
