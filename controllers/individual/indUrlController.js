@@ -82,6 +82,7 @@ export const fetchUrlMetricsInd = asyncHandler(async (req, res) => {
         response.visitedUrls = item.totalVisits;
     });
 
+
     res.status(200).json(response);
 });
 
@@ -104,4 +105,29 @@ export const getUrlsInd = asyncHandler(async (req, res) => {
     ]);
 
     res.status(200).json(url);
-})
+});
+
+export const getUrlInd = asyncHandler(async (req, res) => {
+    try {
+        const { url } = req.query;
+
+        if (!url) {
+            return res.status(400).json({ message: "URL is required." });
+        }
+
+        //  Get the correct Url model for this tenant
+        const Url = await getIndividualUrlModel();
+
+        //  Fetch URL from the tenant's DB
+        const urlData = await Url.findOne({ url });
+
+        if (!urlData) {
+            return res.status(404).json({ error: "URL does not exist in the database." });
+        }
+
+        res.status(200).json({ urlData });
+    } catch (error) {
+        console.error(" Error fetching URL:", error.message);
+        res.status(500).json({ error: "Server error", details: error.message });
+    }
+});

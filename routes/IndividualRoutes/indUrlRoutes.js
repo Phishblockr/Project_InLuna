@@ -1,10 +1,12 @@
 import express from "express";
-import { addUrlInd, fetchUrlMetricsInd, getUrlsInd } from "../../controllers/individual/indUrlController.js";
+import { addUrlInd, fetchUrlMetricsInd, getUrlInd, getUrlsInd } from "../../controllers/individual/indUrlController.js";
+import authenticateToken from "../../middlewares/authenticateToken.js";
 
 const router = express.Router();
 
-router.post("/add", addUrlInd);
-router.get("/metrics", fetchUrlMetricsInd);
-router.get("/fetch", getUrlsInd);
+router.post("/add", authenticateToken, addUrlInd);
+router.get("/metrics", authenticateToken, fetchUrlMetricsInd);
+router.get("/fetchAll", authenticateToken, getUrlsInd);
+router.get("/fetch", authenticateToken, getUrlInd);
 
 export default router;

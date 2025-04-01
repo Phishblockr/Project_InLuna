@@ -3,5 +3,5 @@ import urlSchema from "../urlModel.js";
 
 export const getIndividualUrlModel = async () => {
   const db = await getGlobalDB();
-  return db.models.User || db.model('Url', urlSchema);
+  return db.models.Url || db.model('Url', urlSchema);
 };
