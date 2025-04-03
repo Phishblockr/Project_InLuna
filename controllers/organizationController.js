@@ -294,3 +294,36 @@ export const searchOrganizations = asyncHandler(async (req, res) => {
         res.status(500).json({ error: "Server error", details: error.message });
     }
 });
+
+
+export const getOrgDetails = asyncHandler(async (req,res) => {
+    const { id: orgId } = req.params;
+
+    if (!orgId) {
+        return res.status(400).json({ error: "Organization ID is required." });
+    }
+
+    try {
+        const User = await getUserModel(orgId);
+        const users = await User.find({ orgId: orgId });
+        
+        const userDetails = await User.find({ orgId: orgId }).select('name department userType role email createdAt');
+
+        const departments = [...new Set(users.map(user => user.department))];
+
+        const departmentCounts = users.reduce((acc, user) => {
+            acc[user.department] = (acc[user.department] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const response = {
+            Users: userDetails,
+            Department : departments,
+            UsersPerDepartment: departmentCounts,
+        }
+
+        res.status(200).send(response)
+    } catch (error) {
+        res.status(500).send(error.message)
+    }
+})

@@ -1,6 +1,8 @@
+import { response } from "express";
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getIndividualUserModel } from "../../models/individualModels/individualUserModel.js";
 import { getOrgModel } from "../../models/organisationModel.js";
+import { getUrlModel } from "../../models/urlModel.js";
 
 export const getOverallStats = asyncHandler(async (req, res) => {
     const OrgModel = await getOrgModel();
@@ -183,3 +185,4 @@ export const getLastWeekSignups = asyncHandler(async (req, res) => {
         individualSignups
     });
 })
+
