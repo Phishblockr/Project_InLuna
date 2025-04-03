@@ -117,7 +117,7 @@ const Training = () => {
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
       <div>
-        <div className="flex items-center gap-4 bg-white px-3">
+        <div className="flex items-center gap-4 bg-white px-3 rounded-lg">
           <h2 className="text-xl font-bold">My Courses</h2>
           <div className="flex items-center gap-4 py-2">
             <div className="relative w-1/3">

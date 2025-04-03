@@ -70,7 +70,7 @@ const EmailBox = () => {
           ))}
         </ul>
       ) : (
-        <p></p>
+        <p>Emails not found</p>
       )}
     </div>
   );

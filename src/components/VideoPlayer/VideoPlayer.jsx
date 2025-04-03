@@ -32,11 +32,11 @@ const VideoPlayer = ({ options, userId, courseId, videoId, apiUrl }) => {
       }));
 
       // Prevent skipping ahead
-      player.on("seeking", () => {
-        if (player.currentTime() > lastWatchedTime + 10) {
-          player.currentTime(lastWatchedTime);
-        }
-      });
+      // player.on("seeking", () => {
+      //   if (player.currentTime() > lastWatchedTime + 10) {
+      //     player.currentTime(lastWatchedTime);
+      //   }
+      // });
 
       // Track progress
       player.on("timeupdate", async () => {
