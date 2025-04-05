@@ -48,6 +48,11 @@ import bookADemoRoutes from "./routes/superAdmin/bookADemoRoutes.js"
 
 import SOverviewRoutes from "./routes/superAdmin/overview.js";
 
+// import Provider from "oidc-provider";
+// import { findAccount } from './controllers/individual/indAuthController.js';
+// import oidcRoutes from './routes/oidcRoutes.js';
+// import oidcConfiguration from "./oidcConfiguration.js"
+
 import dotenv from "dotenv";
 dotenv.config({ override: true });
 
@@ -144,6 +149,12 @@ mongoose.connect(process.env.MONGO_URI)
     logger.error(err.message);
   });
 
+const PORT = process.env.PORT || 5000;
+// oidcConfiguration.findAccount = findAccount;
+// const ISSUER = process.env.ISSUER || `http://localhost:${PORT}`;
+
+// const oidc = new Provider(ISSUER, oidcConfiguration);
+
 // Organization Routes
 app.use('/api/org', organizationRoutes);
 
@@ -212,6 +223,12 @@ app.use("/api/supermetrics", SOverviewRoutes)
 
 app.use("/api/bookADemo", bookADemoRoutes)
 
+// OIDC
+// app.use('/oidc', oidcRoutes(oidc));
+
+// app.use('/oidc', oidc.callback());
+
+
 
 // Start cron job
 // fetchAndSavePhishtankData();
@@ -220,5 +237,4 @@ app.use("/api/bookADemo", bookADemoRoutes)
 // Error handling middleware
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

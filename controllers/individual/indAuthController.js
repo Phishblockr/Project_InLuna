@@ -89,3 +89,33 @@ export const logoutIndUser = asyncHandler(async (req, res) => {
 
     res.status(200).json({ message: "User logged out successfully" });
 })
+
+export const findAccount = async (ctx, id) => {
+    const User = await getIndividualUserModel();
+  
+    let user;
+    try {
+      // Convert the id to a MongoDB ObjectId (if it isn't already) and query
+      user = await User.findById(new mongoose.Types.ObjectId(id));
+    } catch (err) {
+      console.error("findAccount error:", err);
+      return undefined;
+    }
+    
+    if (!user) return undefined;
+    
+    // Return an object with the accountId and a claims function.
+    return {
+      accountId: id,
+      async claims(use, scope) {
+        // Return a claims object. You can customize which claims are returned
+        return {
+          sub: id,
+          name: user.name,
+          email: user.email,
+          // Add additional claims as needed
+        };
+      }
+    };
+  };
+  
