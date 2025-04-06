@@ -85,6 +85,9 @@ const userSchema = new Schema({
     subscription: {
         type: String
     },
+    googleId: {
+        type: String
+    },
 });
 
 userSchema.index({ orgId: 1 });
