@@ -28,6 +28,8 @@ import authenticateToken from "./middlewares/authenticateToken.js";
 import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js";
 
 import forgotDetailsRoutes from './routes/forgotDetailsRoutes.js';
+import indForgotDetailsRoutes from './routes/IndividualRoutes/indForgotDetailsRoutes.js';
+
 
 import heartBeatRoutes from "./routes/heartBeatRoutes.js";
 
@@ -189,6 +191,7 @@ app.use("/api/logs/", dashboardAdminMiddleware, logsRoute);
 
 // forgot Details Route
 app.use("/api/forgot", forgotDetailsRoutes);
+app.use("/api/forgotInd", indForgotDetailsRoutes);
 
 // HeartBeat Route
 app.use("/api/heartBeat", authenticateToken, heartBeatRoutes)
