@@ -38,6 +38,8 @@ import SetupPassword from "./components/Users/SetupPassword.jsx";
 import Layout from "./layout/Layout.jsx";
 import Training from "./components/Training/Training.jsx";
 import IndividualTraining from "./components/Training/IndividualTraining.jsx";
+import PasswordResetDone from "./components/ForgotDetails/PasswordResetDone.jsx";
+import SetupPasswordDone from "./components/Users/SetupPasswordDone.jsx";
 // import RedirectToSubdomain from "./components/RedirectToSubdomain.jsx";
 
 function App() {
@@ -60,6 +62,11 @@ function App() {
                   <Route path="/resetPassword/:token" element={<PasswordReset />} />
 
                   <Route path="/setupPassword/:token" element={<SetupPassword />} />
+
+                  <Route path="/passwordResetSuccessful" element={<PasswordResetDone/>} />
+
+                  <Route path="/passwordSetSuccessful" element={<SetupPasswordDone/>} />
+
 
                   <Route element={<Layout />}>
                     {/* Protected Routes */}

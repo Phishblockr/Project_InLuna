@@ -1,49 +1,44 @@
 import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from "sonner";
+const PasswordResetInd = () => {
 
-const PasswordReset = () => {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    const navigate = useNavigate();
-    const { token } = useParams();
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [orgId, setOrgId] = useState("");
-
-    const handlePasswordReset = async (event) => {
-        event.preventDefault();
-
-        const formData = {
-            orgId,
-            newPassword,
-            confirmPassword
-        };
-
-        try {
-            const response = await fetch(`${apiUrl}/forgot/resetPassword/${token}`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                toast.error(data.message || 'Unable to reset password.');
-                return
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const navigate = useNavigate();
+        const { token } = useParams();
+        const [newPassword, setNewPassword] = useState('');
+        const [confirmPassword, setConfirmPassword] = useState('');
+    
+        const handlePasswordReset = async (event) => {
+            event.preventDefault();
+    
+            const formData = {
+                newPassword,
+                confirmPassword
+            };
+    
+            try {
+                const response = await fetch(`${apiUrl}/forgotInd/resetPassword/${token}`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+    
+                if (!response.ok) {
+                    const data = await response.json();
+                    toast.error(data.message || 'Unable to reset password.');
+                    return
+                }
+                toast.success("Password Reset Successful! You can now close this window.");
+                navigate("/passwordResetSuccessful")
+            } catch (err) {
+                toast.error(err.message);
             }
-            toast.success("Password Reset Successful! You can now close this window.");
-            navigate("/passwordResetSuccessful")
-        } catch (err) {
-            toast.error(err.message);
         }
-
-    }
-
-    return (
-
-        <div className="flex justify-center">
+  return (
+    <div className="flex justify-center">
             <div className="flex flex-col ">
                 <h1 className=" flex justify-center text-2xl text-left text-black font-bold tracking-tighter my-5 dark:text-[#F4F4F4]">
                     InLuna
@@ -52,18 +47,6 @@ const PasswordReset = () => {
                     <form onSubmit={handlePasswordReset}>
 
                         <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
-                        <div className="mb-4">
-                            <label htmlFor="email">Organisation Id:</label>
-                            <input
-                                type="orgId"
-                                name="orgId"
-                                id="orgId"
-                                value={orgId}
-                                onChange={(e) => setOrgId(e.target.value)}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                            />
-                        </div>
                         <div className="mb-4">
                             <label htmlFor="newPassword">New Password:</label>
                             <input
@@ -95,7 +78,7 @@ const PasswordReset = () => {
                 </div>
             </div>
         </div>
-    )
+  )
 }
 
-export default PasswordReset
+export default PasswordResetInd

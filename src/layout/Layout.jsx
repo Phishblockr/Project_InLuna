@@ -10,9 +10,11 @@ const Layout = () => {
     const isLogoutPage = location.pathname === '/logout';
     const isForgotDetailsPage = location.pathname === '/forgotDetails';
     const isResetPasswordPage = location.pathname.startsWith('/resetPassword');
+    const isPasswordResetSuccessfulPage = location.pathname === "/passwordResetSuccessful"
+    const isPasswordSetSuccessfulPage = location.pathname === "/passwordSetSuccessful"
 
     const showSidebarAndNavbar =
-        !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage;
+        !isLoginPage && !isLogoutPage && !isResetPasswordPage && !isForgotDetailsPage &&isPasswordResetSuccessfulPage && isPasswordSetSuccessfulPage;
 
     // Lift sidebar state here
     const [expanded, setExpanded] = useState(true);

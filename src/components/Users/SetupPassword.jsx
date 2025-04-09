@@ -34,6 +34,7 @@ const SetupPassword = () => {
                 return
             }
             toast.success("Password setup Successful! You can now close this window.");
+            navigate("/passwordSetSuccessful")
         } catch (err) {
             toast.error(err.message);
         }
