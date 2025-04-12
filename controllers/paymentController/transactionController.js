@@ -1,0 +1,59 @@
+import {
+  saveToAdminDB,
+  saveToOrgDB,
+  saveToUserDB,
+} from "../../utils/transactionService.js";
+import { decrypt } from "./ccavutil.js";
+
+const workingKey = process.env.CCA_WORKING_KEY;
+
+export const handlePaymentResponse = async (req, res) => {
+  try {
+    const { encResp } = req.body;
+    if (!encResp) return res.status(400).send("Missing encResp");
+    const decrypted = decrypt(encResp, workingKey);
+    const parsed = Object.fromEntries(new URLSearchParams(decrypted));
+
+    console.log("✅ Decrypted CCAvenue Response:", parsed);
+
+    const {
+      order_id,
+      tracking_id,
+      currency,
+      amount,
+      payment_mode,
+      order_status,
+      merchant_param1,
+    } = parsed;
+
+    const customData = JSON.parse(merchant_param1 || "{}");
+    const { userId, orgId, planName } = customData;
+
+    const transaction = {
+      transaction_id: tracking_id,
+      order_id,
+      amount: parseFloat(amount),
+      currency,
+      plan_name: planName,
+      payment_status: order_status,
+      payment_mode,
+      created_at: new Date(),
+      user_id: userId || null,
+      org_id: orgId || null,
+      source: userId ? "user" : "org",
+      gateway_response: parsed,
+    };
+
+    await saveToAdminDB(transaction);
+
+    if (userId) await saveToUserDB(userId, transaction);
+    if (orgId) await saveToOrgDB(orgId, transaction);
+
+    res.redirect(
+      `${process.env.PAYMENT_FRONTEND_URL}/success?order_id=${order_id}`,
+    );
+  } catch (error) {
+    console.error("❌ Error handling CCAvenue response:", error);
+    res.redirect(`${process.env.PAYMENT_FRONTEND_URL}/failure`);
+  }
+};
