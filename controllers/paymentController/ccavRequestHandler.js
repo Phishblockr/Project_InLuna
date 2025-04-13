@@ -1,6 +1,6 @@
+// This is official code for CCA just update to be used with es7 this code handles requests form to make payment
 import { encrypt } from "./ccavutil.js";
 
-// 🔐 Environment variables (securely stored)
 const workingKey = process.env.CCA_WORKING_KEY;
 const accessCode = process.env.CCA_ACCESS_CODE;
 const merchantId = process.env.CCA_MERCHANT_ID;

@@ -1,10 +1,10 @@
+// This is official code for CCA just update to be used with es7
 import { decrypt } from "./ccavutil.js";
 
 const workingKey = process.env.CCA_WORKING_KEY;
 
 export const postRes = async (req, res) => {
   try {
-    // Body should be URL-encoded and already parsed by express
     const { encResp } = req.body;
 
     if (!encResp) {

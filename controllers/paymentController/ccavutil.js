@@ -1,3 +1,4 @@
+// CCA Encryption and decryption logic
 import crypto from "crypto";
 
 // Encrypt using AES-128-CBC with working key (MD5 hashed)
