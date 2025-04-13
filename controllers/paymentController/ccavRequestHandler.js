@@ -31,8 +31,6 @@ export const postReq = async (req, res) => {
       merchant_param1: JSON.stringify(customData),
     }).toString();
 
-    console.log(formData);
-
     // Encrypt the payload
     const encRequest = encrypt(formData, workingKey);
 
