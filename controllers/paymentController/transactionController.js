@@ -45,9 +45,13 @@ export const handlePaymentResponse = async (req, res) => {
       gateway_response: parsed,
     };
 
+    // Admin Database
     await saveToAdminDB(transaction);
 
+    // Individividual Database
     if (userId) await saveToUserDB(userId, transaction);
+
+    // Tenant Database
     if (orgId) await saveToOrgDB(orgId, transaction);
 
     res.redirect(
