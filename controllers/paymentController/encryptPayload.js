@@ -7,6 +7,10 @@ export const generateSecurePaymentLink = async (req, res) => {
     return res.status(400).json({ error: "userId or orgId required" });
   }
 
+  if (orgId) {
+    userId = null;
+  }
+
   const payload = {
     userId,
     orgId,
