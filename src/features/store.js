@@ -10,6 +10,7 @@ import userProfileSlice from './userProfile/userProfileSlice';
 import logsSlice from "./Logs/logsSlice";
 import campaignSlice from "./Campaign/Campaign";
 import userCourseReducer from "./UserCourse/userCourseSlice";
+import userEmailReducer from "./UserEmail/userEmailSlice";
 
 const store = configureStore({
   reducer: {
@@ -23,6 +24,7 @@ const store = configureStore({
     userProfile: userProfileSlice,
     logs: logsSlice,
     userCourses: userCourseReducer,
+    userEmails: userEmailReducer,
     campaign: campaignSlice 
   },
 });
