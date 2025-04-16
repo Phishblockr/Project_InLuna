@@ -1,5 +1,5 @@
 import express from "express";
-import { createEmailTemplate, deleteEmailTemplate, editEmailTemplate, getAllEmailTemplates, getEmailTemplateById, getTemplatesGroups } from "../../controllers/trainingPlatform/emailTemplateController.js";
+import { createEmailTemplate, deleteEmailTemplate, editEmailTemplate, getAllEmailTemplates, getEmailDetails, getEmailTemplateById, getTemplatesGroups } from "../../controllers/trainingPlatform/emailTemplateController.js";
 import superDashboardMiddleware from "../../middlewares/superDashboardMiddleware.js"
 import authenticateToken from "../../middlewares/authenticateToken.js";
 
@@ -14,5 +14,7 @@ router.put("/update/:id", superDashboardMiddleware, editEmailTemplate);
 
 // Get groups for dynamic select
 router.get("/getGroups", authenticateToken, getTemplatesGroups);
+
+router.get("/options", authenticateToken,getEmailDetails)
 
 export default router;

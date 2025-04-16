@@ -7,12 +7,12 @@ export const generateSecurePaymentLink = async (req, res) => {
     return res.status(400).json({ error: "userId or orgId required" });
   }
 
-  if (orgId) {
-    userId = null;
-  }
+  // if (orgId) {
+  //   userId = null;
+  // }
 
   const payload = {
-    userId,
+    userId: orgId ? null : userId,
     orgId,
     expires: Date.now() + 15 * 60 * 1000, // valid for 15 minutes
   };

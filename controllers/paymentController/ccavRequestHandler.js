@@ -33,12 +33,13 @@ export const postReq = async (req, res) => {
 
     // Encrypt the payload
     const encRequest = encrypt(formData, workingKey);
+    
 
     // Build the auto-submit HTML form
     const formHTML = `
       <html>
         <body onload="document.forms[0].submit()">
-          <form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction">
+          <form id="nonseamless" method="post" name="redirect" action="https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction">
             <input type="hidden" id="encRequest" name="encRequest" value="${encRequest}" />
             <input type="hidden" id="access_code" name="access_code" value="${accessCode}" />
           </form>

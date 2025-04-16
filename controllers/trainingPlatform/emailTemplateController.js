@@ -191,3 +191,22 @@ export const getTemplatesGroups = asyncHandler(async (req, res) => {
 
     res.status(200).json(uniqueGroups);
 });
+
+
+export const getEmailDetails = asyncHandler(async (req, res) => {
+    try {
+        const EmailTemplate = await getEmailTemplateModel();
+
+        const emailDetails = await EmailTemplate.find({},"_id title");
+
+        const options = emailDetails.map((email) => ({
+            value: email._id,
+            label: email.title,
+        }));
+
+        res.status(200).json({options});
+        
+    } catch (error) {
+        res.status(500).json({ message: "Unable to fetch email details.", error: error });
+    }
+})

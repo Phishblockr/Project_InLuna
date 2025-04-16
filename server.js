@@ -41,6 +41,7 @@ import cookieParser from "cookie-parser";
 import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
 import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
 import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js";
+import userEmailRoutes from "./routes/trainingPlatform/userEmailRoutes.js";
 
 import tenantRoutes from "./routes/tenantRoutes.js";
 import superAdminRoutes from "./routes/superAdmin/superAdminRoutes.js";
@@ -217,6 +218,8 @@ app.use("/api/emailTemplate", emailTemplateRoutes);
 app.use("/api/course", courseRoutes);
 
 app.use("/api/userCourse", userCourseRoutes);
+
+app.use("/api/userEmail",userEmailRoutes);
 
 app.use("/api/tenant", tenantRoutes);
 

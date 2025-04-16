@@ -20,6 +20,5 @@ router.get("/progress/:courseId/:userId", authenticateToken, getUserCourseProgre
 //get user Course Emails
 router.get("/getAssignedEmails/:userId",authenticateToken,getAllAssignEmails)
 
-// router.get("/getEmail/:emailId", authenticateToken, getEmail)
 
 export default router;
