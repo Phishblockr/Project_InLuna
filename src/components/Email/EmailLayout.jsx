@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useParams } from "react-router-dom";
 import { useAuth } from "../../utils/AuthProvider";
 import { toast } from "sonner";
 import { useSelector } from "react-redux";
@@ -10,26 +10,32 @@ const EmailLayout = () => {
   const { getToken } = useAuth();
   const token = getToken();
   const location = useLocation();
-  const { emailId, userId } = location.state;
+  const userId = location.state?.userId;
+  const { emailId } = useParams();
   const { details } = useSelector((state) => state.userProfile);
   const userEmail = details?.email;
   const userName = details?.name;
 
   const [emailDetails, setEmailDetails] = useState(null);
-  const canEdit = false
+  const canEdit = false;
 
   const fetchEmail = async () => {
     try {
-      const res = await fetch(`${apiUrl}/emailTemplate/get/${emailId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      if(!emailId) return;
+      const res = await fetch(
+        `${apiUrl}/userEmail/details/${emailId}/${userId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       const data = await res.json();
-      setEmailDetails(data.template);
+      setEmailDetails(data.userEmail?.emailTemplateId);
     } catch (error) {
+      console.error("Error fetching email:", error);
       toast.error("Error fetching email:", error);
     }
   };
@@ -40,10 +46,15 @@ const EmailLayout = () => {
 
   useEffect(() => {}, [emailDetails]);
 
+  if (!emailId || !userId) {
+    return <div>Error: Missing email or user ID.</div>;
+  }
+  
+
   if (!emailDetails) {
     return (
       <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4 overflow-hidden">
-        Loading video...
+        Loading Email...
       </div>
     );
   }
@@ -86,14 +97,11 @@ const EmailLayout = () => {
         )}
         <div
           id="previewContainer"
-          data-placeholder= {userName}
+          data-placeholder={userName}
           dangerouslySetInnerHTML={{ __html: emailDetails.htmlContent }}
           className="p-4 bg-white rounded-lg"
         />
       </div>
-
-      
-
     </div>
   );
 };

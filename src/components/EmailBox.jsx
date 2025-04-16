@@ -15,7 +15,7 @@ const EmailBox = () => {
   const FetchAssignedEmails = async (token, id) => {
     if (!token || !id) return;
     try {
-      const res = await fetch(`${apiUrl}/userCourse/getAssignedEmails/${id}`, {
+      const res = await fetch(`${apiUrl}/userEmail/getAssigned/${id}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -23,11 +23,18 @@ const EmailBox = () => {
         },
       });
       const data = await res.json();
-      console.log("ResData: ", data);
 
-      setAssignEmails(data.emailTemplates);
+      if (!res.ok) {
+        // If server returns 404 or any error, handle it gracefully
+        console.log("No emails assigned or fetch failed:", data.message);
+        setAssignEmails([]); // Ensure it's an array
+        return;
+      }
+
+      setAssignEmails(data.assignments);
     } catch (error) {
-      toast.error("Error Fetch Course: ", error.message);
+      console.log("Error Fetch Email: ", error);
+      toast.error("Error Fetch Email: ", error);
     }
   };
 
@@ -36,17 +43,17 @@ const EmailBox = () => {
   }, [token, id]);
 
   useEffect(() => {
-    console.log("Updated AssignEmails:", assignEmails);
+    
   }, [assignEmails]);
 
   return (
     <div className="z-1 max-w-screen-xl w-[calc(100svw-17.1rem)] min-h-[calc(100svh-65px)] flex flex-col relative left-[16rem] right-0 bottom-0 p-4 gap-4">
-      {assignEmails.length > 0 ? (
+      {Array.isArray(assignEmails) && assignEmails.length > 0 ? (
         <ul className="">
           {assignEmails.map((email) => (
             <Link
               key={email._id}
-              to={`/email/inbox/${email._id}`}
+              to={`/email/inbox/${email.emailTemplateId._id}`}
               state={{
                 emailId: email._id,
                 userId: id,
