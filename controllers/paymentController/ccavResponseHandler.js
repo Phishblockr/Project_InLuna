@@ -1,13 +1,16 @@
 // This is official code for CCA just update to be used with es7 to be replaced with transactionController.js
+import {
+  saveToAdminDB,
+  saveToOrgDB,
+  saveToUserDB,
+} from "../../utils/transactionService.js";
 import { decrypt } from "./ccavutil.js";
-
 
 export const postRes = async (req, res) => {
   try {
     const workingKey = process.env.CCA_WORKING_KEY;
     const { encResp } = req.body;
     console.log("encResp", encResp);
-    
 
     if (!encResp) {
       return res.status(400).send("Missing encResp in the request");
@@ -19,6 +22,45 @@ export const postRes = async (req, res) => {
     const formattedData = decryptedResponse
       .replace(/=/g, "</td><td>")
       .replace(/&/g, "</td></tr><tr><td>");
+
+    const {
+      order_id,
+      tracking_id,
+      currency,
+      amount,
+      payment_mode,
+      order_status,
+      merchant_param1,
+      merchant_param2,
+      merchant_param3,
+    } = decryptedResponse;
+
+    const userId = merchant_param2;
+    const orgId = merchant_param3;
+
+    const transaction = {
+      transaction_id: tracking_id,
+      order_id,
+      amount: parseFloat(amount),
+      currency,
+      plan_name: merchant_param1,
+      payment_status: order_status,
+      payment_mode,
+      created_at: new Date(),
+      user_id: merchant_param2 || null,
+      org_id: merchant_param3 || null,
+      source: userId ? "user" : "org",
+      gateway_response: decryptedResponse,
+    };
+
+    // Admin Database
+    await saveToAdminDB(transaction);
+
+    // Individividual Database
+    if (userId) await saveToUserDB(userId, transaction);
+
+    // Tenant Database
+    if (orgId) await saveToOrgDB(orgId, transaction);
 
     const htmlOutput = `
       <html>

@@ -25,6 +25,8 @@ export const handlePaymentResponse = async (req, res) => {
       payment_mode,
       order_status,
       merchant_param1,
+      merchant_param2,
+      merchant_param3,
     } = parsed;
 
     const customData = JSON.parse(merchant_param1 || "{}");
@@ -35,12 +37,12 @@ export const handlePaymentResponse = async (req, res) => {
       order_id,
       amount: parseFloat(amount),
       currency,
-      plan_name: planName,
+      plan_name: merchant_param1,
       payment_status: order_status,
       payment_mode,
       created_at: new Date(),
-      user_id: userId || null,
-      org_id: orgId || null,
+      user_id: merchant_param2 || null,
+      org_id: merchant_param3	 || null,
       source: userId ? "user" : "org",
       gateway_response: parsed,
     };

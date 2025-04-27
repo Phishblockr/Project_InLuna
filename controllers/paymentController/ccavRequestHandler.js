@@ -21,7 +21,11 @@ export const postReq = async (req, res) => {
     console.log(req.body);
     const customData = {
       planName,
+    };
+    const customData2 = {
       ...(userId && { userId }),
+    };
+    const customData3 = {
       ...(orgId && { orgId }),
     };
     const orderId = "ORD" + Date.now();
@@ -36,6 +40,8 @@ export const postReq = async (req, res) => {
       cancel_url: cancelUrl,
       language: "EN",
       merchant_param1: JSON.stringify(customData),
+      merchant_param2: JSON.stringify(customData2),
+      merchant_param3: JSON.stringify(customData3),
     }).toString();
 
     // console.log("form Data",formData);
