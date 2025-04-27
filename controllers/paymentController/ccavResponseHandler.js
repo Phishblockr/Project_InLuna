@@ -1,13 +1,12 @@
 // This is official code for CCA just update to be used with es7 to be replaced with transactionController.js
 import { decrypt } from "./ccavutil.js";
 
-const workingKey = process.env.CCA_WORKING_KEY;
 
 export const postRes = async (req, res) => {
   try {
+    const workingKey = process.env.CCA_WORKING_KEY;
     const { encResp } = req.body;
     console.log("encResp", encResp);
-    
     
 
     if (!encResp) {
