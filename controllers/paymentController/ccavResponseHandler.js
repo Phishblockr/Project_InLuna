@@ -6,6 +6,9 @@ const workingKey = process.env.CCA_WORKING_KEY;
 export const postRes = async (req, res) => {
   try {
     const { encResp } = req.body;
+    console.log("encResp", encResp);
+    
+    
 
     if (!encResp) {
       return res.status(400).send("Missing encResp in the request");

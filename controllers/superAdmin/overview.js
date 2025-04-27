@@ -186,3 +186,72 @@ export const getLastWeekSignups = asyncHandler(async (req, res) => {
     });
 })
 
+export const getLastFiveWeeksSignups = asyncHandler(async (req, res) => {
+    const now = new Date();
+  
+    // Get this week's Monday
+    const currentWeekMonday = new Date(now);
+    if (now.getDay() === 0) {
+      // If Sunday, go back 6 days
+      currentWeekMonday.setDate(now.getDate() - 6);
+    } else {
+      currentWeekMonday.setDate(now.getDate() - (now.getDay() - 1));
+    }
+  
+    const OrgModel = await getOrgModel();
+    const IndividualUser = await getIndividualUserModel();
+  
+    const weeks = [];
+  
+    for (let i = 0; i < 5; i++) {
+      const endDate = new Date(currentWeekMonday);
+      endDate.setDate(currentWeekMonday.getDate() - 7 * i);
+  
+      const startDate = new Date(endDate);
+      startDate.setDate(endDate.getDate() - 7);
+  
+      const [orgAggregation] = await OrgModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lt: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            organizationSignups: { $sum: 1 },
+          },
+        },
+      ]);
+  
+      const [individualAggregation] = await IndividualUser.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lt: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            individualSignups: { $sum: 1 },
+          },
+        },
+      ]);
+  
+      const organizationSignups = orgAggregation?.organizationSignups || 0;
+      const individualSignups = individualAggregation?.individualSignups || 0;
+  
+      weeks.push({
+        [`week${i + 1}`]: {
+          startDate: startDate.toISOString().split("T")[0],
+          endDate: endDate.toISOString().split("T")[0],
+          organizationSignups,
+          individualSignups,
+          userSignups: organizationSignups + individualSignups,
+        },
+      });
+    }
+  
+    res.status(200).json(weeks);
+  });
+  

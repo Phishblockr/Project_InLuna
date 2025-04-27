@@ -5,8 +5,15 @@ const workingKey = process.env.CCA_WORKING_KEY;
 const accessCode = process.env.CCA_ACCESS_CODE;
 const merchantId = process.env.CCA_MERCHANT_ID;
 
+// console.log("Working Key",workingKey);
+// console.log("Access Code",accessCode);
+// console.log("Merchant Id",merchantId);
+
 const redirectUrl = `${process.env.PAYMENT_FRONTEND_URL}/success`;
 const cancelUrl = `${process.env.PAYMENT_FRONTEND_URL}/failure`;
+
+console.log("Redirect Url",redirectUrl);
+console.log("Cancel Url",cancelUrl);
 
 export const postReq = async (req, res) => {
   try {
@@ -31,14 +38,17 @@ export const postReq = async (req, res) => {
       merchant_param1: JSON.stringify(customData),
     }).toString();
 
+    console.log("form Data",formData);
+
     // Encrypt the payload
     const encRequest = encrypt(formData, workingKey);
+    // console.log("Encrypted Request", encRequest);
     
 
     // Build the auto-submit HTML form
     const formHTML = `
       <html>
-        <body onload="document.forms[0].submit()">
+        <body onload="document.forms[0].sbmit()">
           <form id="nonseamless" method="post" name="redirect" action="https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction">
             <input type="hidden" id="encRequest" name="encRequest" value="${encRequest}" />
             <input type="hidden" id="access_code" name="access_code" value="${accessCode}" />

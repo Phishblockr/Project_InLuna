@@ -75,11 +75,13 @@ const allowedOrigins = [
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:5177",
+  "http://localhost:5137",
   "http://localhost:5000",
   "https://theinluna.com",
   "https://dashboard.theinluna.com",
   "https://training.theinluna.com",
   "https://superdashboard.theinluna.com",
+  "https://test.ccavenue.com",
   /^https?:\/\/.*\.lvh\.me(?::\d+)?$/,
 ];
 
