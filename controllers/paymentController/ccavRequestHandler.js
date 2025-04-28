@@ -9,8 +9,8 @@ const merchantId = process.env.CCA_MERCHANT_ID;
 // console.log("Access Code",accessCode);
 // console.log("Merchant Id",merchantId);
 
-const redirectUrl = `https://theinluna.com/api/ccavenue/paymentResponse`;
-const cancelUrl = `http://localhost:5000/api/ccavenue/paymentResponse`;
+const redirectUrl = `https://3110-103-49-242-215.ngrok-free.app/api/ccavenue/paymentResponse`;
+const cancelUrl = `https://3110-103-49-242-215.ngrok-free.app/api/ccavenue/paymentResponse`;
 
 // console.log("Redirect Url",redirectUrl);
 // console.log("Cancel Url",cancelUrl);
@@ -19,15 +19,7 @@ export const postReq = async (req, res) => {
   try {
     const { amount, planName, userId, orgId } = req.body;
     console.log(req.body);
-    const customData = {
-      planName,
-    };
-    const customData2 = {
-      ...(userId && { userId }),
-    };
-    const customData3 = {
-      ...(orgId && { orgId }),
-    };
+
     const orderId = "ORD" + Date.now();
 
     // Build the plain text payload
@@ -39,9 +31,9 @@ export const postReq = async (req, res) => {
       redirect_url: redirectUrl,
       cancel_url: cancelUrl,
       language: "EN",
-      merchant_param1: JSON.stringify(customData),
-      merchant_param2: JSON.stringify(customData2),
-      merchant_param3: JSON.stringify(customData3),
+      merchant_param1: planName,
+      merchant_param2: userId,
+      merchant_param3: orgId,
     }).toString();
 
     // console.log("form Data",formData);

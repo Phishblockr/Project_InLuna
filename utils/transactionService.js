@@ -11,7 +11,7 @@ export const saveToAdminDB = async (tx) => {
 
 export const saveToUserDB = async (userId, tx) => {
   if (!userId) return;
-  const UserTransaction = awaigetIndividualTransactionModel();
+  const UserTransaction = await getIndividualTransactionModel();
   await UserTransaction.create(tx);
 };
 

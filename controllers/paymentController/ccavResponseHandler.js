@@ -18,6 +18,11 @@ export const postRes = async (req, res) => {
 
     const decryptedResponse = decrypt(encResp, workingKey);
 
+    // Parse the decrypted query string into an object
+    const params = Object.fromEntries(
+      decryptedResponse.split("&").map((pair) => pair.split("="))
+    );
+
     // Convert decrypted response string into HTML table
     const formattedData = decryptedResponse
       .replace(/=/g, "</td><td>")
@@ -33,15 +38,20 @@ export const postRes = async (req, res) => {
       merchant_param1,
       merchant_param2,
       merchant_param3,
-    } = decryptedResponse;
+    } = params;
 
     const userId = merchant_param2;
     const orgId = merchant_param3;
 
+    console.log("Decrypted Response:", params);
+    console.log("Order Id:", params.order_id);
+    console.log("Transaction Id:", params.tracking_id);
+    console.log("Amount:", params.amount);
+
     const transaction = {
       transaction_id: tracking_id,
       order_id,
-      amount: parseFloat(amount),
+      amount: amount,
       currency,
       plan_name: merchant_param1,
       payment_status: order_status,
@@ -49,8 +59,8 @@ export const postRes = async (req, res) => {
       created_at: new Date(),
       user_id: merchant_param2 || null,
       org_id: merchant_param3 || null,
-      source: userId ? "user" : "org",
-      gateway_response: decryptedResponse,
+      source: merchant_param2 ? "user" : "org",
+      gateway_response: params,
     };
 
     // Admin Database
@@ -61,6 +71,18 @@ export const postRes = async (req, res) => {
 
     // Tenant Database
     if (orgId) await saveToOrgDB(orgId, transaction);
+
+    if (!order_id || !order_status) {
+      console.error("Invalid response data");
+      return res.redirect("http://localhost:5137/failure?reason=invalid_response");
+    }
+
+    // Redirect to frontend success/failure page
+    if (order_status === "Success") {
+      return res.redirect(`http://localhost:5137/success?order_id=${order_id}`);
+    } else {
+      return res.redirect(`http://localhost:5137/failure?order_id=${order_id}`);
+    }
 
     const htmlOutput = `
       <html>
@@ -73,11 +95,15 @@ export const postRes = async (req, res) => {
             <h2 style="color:blue;">Payment Response</h2>
             <table border="1" cellpadding="8" cellspacing="0">
               <tr><td>${formattedData}</td></tr>
+              <p>${decryptedResponse}</p>
+              <pre>${JSON.stringify(transaction, null, 2)}</pre>
             </table>
           </center>
         </body>
       </html>
     `;
+
+    
 
     res.status(200).send(htmlOutput);
   } catch (error) {
