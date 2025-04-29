@@ -3,6 +3,7 @@ import { IoDocumentTextOutline } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { setTheme } from "../../features/Theme/themeSlice";
 import { useAuth } from "../../utils/AuthProvider";
+import Transaction from "../Transaction/Transaction";
 
 const Settings = () => {
   // Redux
@@ -39,7 +40,7 @@ const Settings = () => {
             InLuna Settings
           </h1>
         </div>
-        <div className="absolute top-20 bottom-5 left-5 right-5 flex flex-col justify-between">
+        <div className="absolute top-20 bottom-5 left-5 right-5 flex flex-col gap-y-5">
           <div className="grid grid-cols-[minmax(10%,_1fr)_300px]  gap-5">
             <div className="p-2 bg-gray-100 rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4]">
               <span className="text-xl font-medium">Themes</span>
@@ -56,17 +57,9 @@ const Settings = () => {
                 <option value="dark">Dark Theme</option>
               </select>
             </div>
-            <div className="p-2 bg-gray-100 rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4] flex flex-col">
-              <span className="text-xl font-medium">Subscription Details</span>
-              <button
-                className="bg-white p-2 hover:shadow-lg transition-all"
-                onClick={() => goToPaymentPage()}
-              >
-                Make Payment
-              </button>
-            </div>
           </div>
-          <div className="flex justify-end gap-2 dark:text-[#F4F4F4]">
+          <Transaction />
+          <div className="flex justify-end gap-2 dark:text-[#F4F4F4] bottom-2 absolute right-2">
             <a href="#" title="Privacy policy">
               <IoDocumentTextOutline className="w-6 h-6" />
             </a>
