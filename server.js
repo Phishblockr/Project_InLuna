@@ -56,6 +56,7 @@ import SOverviewRoutes from "./routes/superAdmin/overview.js";
 // import oidcConfiguration from "./oidcConfiguration.js"
 
 import ccaRoutes from "./routes/paymentRoutes/ccaRoutes.js";
+import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js"
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -242,6 +243,9 @@ app.use("/api/bookADemo", bookADemoRoutes);
 
 // CCA
 app.use("/api/ccavenue", ccaRoutes);
+
+//Transaction Routes
+app.use("/api/transactions",TransactionRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

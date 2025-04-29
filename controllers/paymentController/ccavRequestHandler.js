@@ -9,8 +9,8 @@ const merchantId = process.env.CCA_MERCHANT_ID;
 // console.log("Access Code",accessCode);
 // console.log("Merchant Id",merchantId);
 
-const redirectUrl = `https://3110-103-49-242-215.ngrok-free.app/api/ccavenue/paymentResponse`;
-const cancelUrl = `https://3110-103-49-242-215.ngrok-free.app/api/ccavenue/paymentResponse`;
+const redirectUrl = `${process.env.NGROK_API_URL}/api/ccavenue/paymentResponse`;
+const cancelUrl = `${process.env.NGROK_API_URL}/api/ccavenue/paymentResponse`;
 
 // console.log("Redirect Url",redirectUrl);
 // console.log("Cancel Url",cancelUrl);

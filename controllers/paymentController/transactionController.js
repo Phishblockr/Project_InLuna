@@ -1,4 +1,5 @@
 // Custom version to store transactions into mongodb (replace ccavResponseHandler.js with this)
+import { getTenantTransactionModel } from "../../models/paymentModels/TransactionsModel.js";
 import {
   saveToAdminDB,
   saveToOrgDB,
@@ -64,3 +65,22 @@ export const handlePaymentResponse = async (req, res) => {
     res.redirect(`${process.env.PAYMENT_FRONTEND_URL}/failure`);
   }
 };
+
+export const getAllOrgTransactions = async(req,res)=>{
+  try {
+
+    const orgId = req.user.orgId;
+
+    const Transaction = await getTenantTransactionModel(orgId);
+
+    if (!Transaction) {
+      return res.status(404).json({ error: "Transaction model not found" });
+    }
+
+    const transactions = await Transaction.find();
+    res.json(transactions);
+  } catch (error) {
+    console.error("❌ Error fetching transactions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
