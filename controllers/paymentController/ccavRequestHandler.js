@@ -4,13 +4,14 @@ import { encrypt } from "./ccavutil.js";
 const workingKey = process.env.CCA_WORKING_KEY;
 const accessCode = process.env.CCA_ACCESS_CODE;
 const merchantId = process.env.CCA_MERCHANT_ID;
+const ccavUrl = process.env.NGROK_API_URL;
 
 // console.log("Working Key",workingKey);
 // console.log("Access Code",accessCode);
 // console.log("Merchant Id",merchantId);
 
-const redirectUrl = `https://3110-103-49-242-215.ngrok-free.app/api/ccavenue/paymentResponse`;
-const cancelUrl = `https://3110-103-49-242-215.ngrok-free.app/api/ccavenue/paymentResponse`;
+const redirectUrl = `${ccavUrl}/api/ccavenue/paymentResponse`;
+const cancelUrl = `${ccavUrl}/api/ccavenue/paymentResponse`;
 
 // console.log("Redirect Url",redirectUrl);
 // console.log("Cancel Url",cancelUrl);
@@ -41,7 +42,6 @@ export const postReq = async (req, res) => {
     // Encrypt the payload
     const encRequest = encrypt(formData, workingKey);
     // console.log("Encrypted Request", encRequest);
-    
 
     // Build the auto-submit HTML form
     const formHTML = `
