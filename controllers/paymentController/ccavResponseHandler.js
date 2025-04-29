@@ -20,7 +20,7 @@ export const postRes = async (req, res) => {
 
     // Parse the decrypted query string into an object
     const params = Object.fromEntries(
-      decryptedResponse.split("&").map((pair) => pair.split("="))
+      decryptedResponse.split("&").map((pair) => pair.split("=")),
     );
 
     // Convert decrypted response string into HTML table
@@ -74,14 +74,20 @@ export const postRes = async (req, res) => {
 
     if (!order_id || !order_status) {
       console.error("Invalid response data");
-      return res.redirect("http://localhost:5137/failure?reason=invalid_response");
+      return res.redirect(
+        "http://localhost:5137/failure?reason=invalid_response",
+      );
     }
 
     // Redirect to frontend success/failure page
     if (order_status === "Success") {
-      return res.redirect(`http://localhost:5137/success?order_id=${order_id}`);
+      return res.redirect(
+        `http://localhost:5137/success?order_id=${order_id}&transaction_id=${tracking_id}&amount=${amount}&plan_name=${merchant_param1}&payment_mode=${payment_mode}&amount=${amount}`,
+      );
     } else {
-      return res.redirect(`http://localhost:5137/failure?order_id=${order_id}`);
+      return res.redirect(
+        `http://localhost:5137/failure?order_id=${order_id}&transaction_id=${tracking_id}&amount=${amount}&plan_name=${merchant_param1}&payment_mode=${payment_mode}&amount=${amount}`,
+      );
     }
 
     const htmlOutput = `
@@ -102,8 +108,6 @@ export const postRes = async (req, res) => {
         </body>
       </html>
     `;
-
-    
 
     res.status(200).send(htmlOutput);
   } catch (error) {
