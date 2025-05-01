@@ -56,7 +56,7 @@ import SOverviewRoutes from "./routes/superAdmin/overview.js";
 // import oidcConfiguration from "./oidcConfiguration.js"
 
 import ccaRoutes from "./routes/paymentRoutes/ccaRoutes.js";
-import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js"
+import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -82,6 +82,7 @@ const allowedOrigins = [
   "https://dashboard.theinluna.com",
   "https://training.theinluna.com",
   "https://superdashboard.theinluna.com",
+  "https://payment.theinluna.com",
   "https://test.ccavenue.com",
   /^https?:\/\/.*\.lvh\.me(?::\d+)?$/,
 ];
@@ -222,7 +223,7 @@ app.use("/api/course", courseRoutes);
 
 app.use("/api/userCourse", userCourseRoutes);
 
-app.use("/api/userEmail",userEmailRoutes);
+app.use("/api/userEmail", userEmailRoutes);
 
 app.use("/api/tenant", tenantRoutes);
 
@@ -245,7 +246,7 @@ app.use("/api/bookADemo", bookADemoRoutes);
 app.use("/api/ccavenue", ccaRoutes);
 
 //Transaction Routes
-app.use("/api/transactions",TransactionRoutes);
+app.use("/api/transactions", TransactionRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
