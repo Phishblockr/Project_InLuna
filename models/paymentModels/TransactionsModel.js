@@ -6,18 +6,81 @@ import { getTenantDB } from "../../tenantdb.js";
 const { Schema } = mongoose;
 
 const TransactionSchema = new Schema({
-  transaction_id: String,
-  order_id: String,
+  transaction_id: String, // CCAvenue tracking_id
+  order_id: String, // CCAvenue order_id
   amount: Number,
-  currency: String,
+  currency: {
+    type: String,
+    default: "INR",
+  },
   plan_name: String,
-  payment_status: String,
-  payment_mode: String,
-  user_id: { type: String, default: null },
-  org_id: { type: String, default: null },
-  source: { type: String, enum: ["user", "org"] },
-  gateway_response: Object,
-  created_at: { type: Date, default: Date.now },
+
+  payment_status: String, // Success / Failure
+  payment_mode: String, // Card / UPI / NetBanking
+
+  // Auto-Renewal (SI) specific fields:
+  is_recurring: {
+    type: Boolean,
+    default: false,
+  },
+  si_type: {
+    type: String,
+    enum: ["FIXED", "ONDEMAND"],
+    default: null,
+  },
+  si_mer_ref_no: {
+    type: String,
+    default: null,
+  }, // Mandate ID
+  si_status: {
+    type: String,
+    enum: ["ACTIVE", "FAILED", "CANCELLED", "EXPIRED"],
+    default: null,
+  },
+  si_start_date: {
+    type: Date,
+    default: null,
+  },
+  si_end_date: {
+    type: Date,
+    default: null,
+  },
+  si_frequency: {
+    type: String,
+    enum: ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"],
+    default: null,
+  },
+  si_billing_cycle: {
+    type: Number,
+    default: null,
+  },
+  next_billing_date: {
+    type: Date,
+    default: null,
+  }, // Computed locally
+
+  // User / Org mapping
+  user_id: {
+    type: String,
+    default: null,
+  },
+  org_id: {
+    type: String,
+    default: null,
+  },
+  source: {
+    type: String,
+    enum: ["user", "org"],
+  },
+
+  // Full decrypted gateway response for reference/debugging
+  gateway_response: {
+    type: Object,
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 export default TransactionSchema;
