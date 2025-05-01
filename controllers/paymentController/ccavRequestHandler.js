@@ -4,14 +4,14 @@ import { encrypt } from "./ccavutil.js";
 const workingKey = process.env.CCA_WORKING_KEY;
 const accessCode = process.env.CCA_ACCESS_CODE;
 const merchantId = process.env.CCA_MERCHANT_ID;
-const ccavUrl = process.env.NGROK_API_URL;
+const ccavUrl = process.env.CCA_REDIRECT_API_URL;
 
 // console.log("Working Key",workingKey);
 // console.log("Access Code",accessCode);
 // console.log("Merchant Id",merchantId);
 
-const redirectUrl = `${ccavUrl}/api/ccavenue/paymentResponse`;
-const cancelUrl = `${ccavUrl}/api/ccavenue/paymentResponse`;
+const redirectUrl = `${ccavUrl}/ccavenue/paymentResponse`;
+const cancelUrl = `${ccavUrl}/ccavenue/paymentResponse`;
 
 // console.log("Redirect Url",redirectUrl);
 // console.log("Cancel Url",cancelUrl);
