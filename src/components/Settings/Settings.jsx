@@ -1,8 +1,7 @@
-import React from "react";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { setTheme } from "../../features/Theme/themeSlice";
-import { useAuth } from "../../utils/AuthProvider";
+// import { useAuth } from "../../utils/AuthProvider";
 import Transaction from "../Transaction/Transaction";
 
 const Settings = () => {
@@ -11,25 +10,11 @@ const Settings = () => {
   const dispatch = useDispatch();
   // End of Redux
 
-  const { getToken } = useAuth();
-  const token = getToken();
+  // const { getToken } = useAuth();
+  // const token = getToken();
 
   const handleSetTheme = (value) => {
     dispatch(setTheme(value));
-  };
-
-  const goToPaymentPage = async () => {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    const res = await fetch(`${apiUrl}/ccavenue/encryptPayload`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await res.json();
-    window.location.href = data.url;
   };
 
   return (
