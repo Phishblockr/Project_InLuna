@@ -57,6 +57,7 @@ import SOverviewRoutes from "./routes/superAdmin/overview.js";
 
 import ccaRoutes from "./routes/paymentRoutes/ccaRoutes.js";
 import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
+import contactUsRoutes from "./routes/contactUsRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -241,6 +242,9 @@ app.use("/api/bookADemo", bookADemoRoutes);
 // Start cron job
 // fetchAndSavePhishtankData();
 // fetchAndSaveUrlhausData();
+
+// Contact Users
+app.use("/api/contactUs", contactUsRoutes);
 
 // CCA
 app.use("/api/ccavenue", ccaRoutes);
