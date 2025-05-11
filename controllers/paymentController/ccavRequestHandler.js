@@ -10,8 +10,8 @@ const ccavUrl = process.env.CCA_REDIRECT_API_URL;
 // console.log("Access Code",accessCode);
 // console.log("Merchant Id",merchantId);
 
-const redirectUrl = `${ccavUrl}/ccavenue/paymentResponse`;
-const cancelUrl = `${ccavUrl}/ccavenue/paymentResponse`;
+const redirectUrl = `${ccavUrl}/api/ccavenue/paymentResponse`;
+const cancelUrl = `${ccavUrl}/api/ccavenue/paymentResponse`;
 
 // console.log("Redirect Url",redirectUrl);
 // console.log("Cancel Url",cancelUrl);
