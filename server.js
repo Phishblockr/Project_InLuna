@@ -57,6 +57,7 @@ import SOverviewRoutes from "./routes/superAdmin/overview.js";
 
 import ccaRoutes from "./routes/paymentRoutes/ccaRoutes.js";
 import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
+import contactUsRoutes from "./routes/contactUsRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -67,25 +68,32 @@ const app = express();
 // Increase the size limit for JSON and URL-encoded bodies
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
 // CORS Configuration
-// Development only
-const allowedOrigins = [
-  "http://localhost:5173",
-  "chrome-extension://",
-  "moz-extension://",
-  "http://localhost:5174",
-  "http://localhost:5175",
-  "http://localhost:5177",
-  "http://localhost:5137",
-  "http://localhost:5000",
-  "https://theinluna.com",
-  "https://dashboard.theinluna.com",
-  "https://training.theinluna.com",
-  "https://superdashboard.theinluna.com",
-  "https://payment.theinluna.com",
-  "https://test.ccavenue.com",
-  /^https?:\/\/.*\.lvh\.me(?::\d+)?$/,
-];
+const isDevelopment = process.env.NODE_ENV === "development";
+const allowedOrigins = isDevelopment
+  ? [
+      "http://localhost:5173",
+      "chrome-extension://",
+      "moz-extension://",
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "http://localhost:5177",
+      "http://localhost:5137",
+      "http://localhost:5000",
+      "https://test.ccavenue.com",
+      /^https?:\/\/.*\.lvh\.me(?::\d+)?$/,
+    ]
+  : [
+      "chrome-extension://ilipomonpoifiljejfngempgpibngkmc",
+      "chrome-extension://blcmmmkhbjlminfjgdfgohbehagoclho",
+      "moz-extension://",
+      "https://theinluna.com",
+      "https://dashboard.theinluna.com",
+      "https://training.theinluna.com",
+      "https://superdashboard.theinluna.com",
+      "https://payment.theinluna.com",
+    ];
 
 app.use(
   cors({
@@ -110,24 +118,9 @@ app.use(
       }
     },
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Extension-ID"],
   }),
 );
-
-// Production
-// const allowedOrigins = ['http://domain.com/', 'chrome-extension://<PUBLISHED_EXTENSION_ID>']; // Replace with your frontend origin(s)
-
-// app.use(
-//     cors({
-//         origin: function (origin, callback) {
-//             if (!origin || allowedOrigins.includes(origin)) {
-//                 callback(null, true);
-//             } else {
-//                 callback(new Error('Not allowed by CORS'));
-//             }
-//         },
-//         credentials: true, // Allow cookies and credentials
-//     })
-// );
 
 app.use(cookieParser());
 
@@ -241,6 +234,9 @@ app.use("/api/bookADemo", bookADemoRoutes);
 // Start cron job
 // fetchAndSavePhishtankData();
 // fetchAndSaveUrlhausData();
+
+// Contact Users
+app.use("/api/contactUs", contactUsRoutes);
 
 // CCA
 app.use("/api/ccavenue", ccaRoutes);
