@@ -72,7 +72,6 @@ const TransactionSchema = new Schema({
     type: String,
     enum: ["user", "org"],
   },
-
   // Full decrypted gateway response for reference/debugging
   gateway_response: {
     type: Object,
