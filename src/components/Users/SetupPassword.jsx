@@ -1,101 +1,106 @@
-import React, { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const SetupPassword = () => {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    const navigate = useNavigate();
-    const { token } = useParams();
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [orgId, setOrgId] = useState('');
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
+  const { token } = useParams();
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [orgId, setOrgId] = useState("");
 
-    const handlePasswordSetup = async (event) => {
-        event.preventDefault();
+  const handlePasswordSetup = async (event) => {
+    event.preventDefault();
 
-        const formData = {
-            orgId,
-            newPassword,
-            confirmPassword
-        };
+    const formData = {
+      orgId,
+      newPassword,
+      confirmPassword,
+    };
 
-        try {
-            const response = await fetch(`${apiUrl}/user/setupPassword/${token}`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
+    try {
+      const response = await fetch(`${apiUrl}/user/setupPassword/${token}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-            if (!response.ok) {
-                const data = await response.json();
-                toast.error(data.message || 'Unable to set password.');
-                return
-            }
-            toast.success("Password setup Successful! You can now close this window.");
-            navigate("/passwordSetSuccessful")
-        } catch (err) {
-            toast.error(err.message);
-        }
-
+      if (!response.ok) {
+        const data = await response.json();
+        toast.error(data.message || "Unable to set password.");
+        return;
+      }
+      toast.success(
+        "Password setup Successful! You can now close this window.",
+      );
+      navigate("/passwordSetSuccessful");
+    } catch (err) {
+      toast.error(err.message);
     }
+  };
 
-    return (
-
-        <div className="flex justify-center">
-            <div className="flex flex-col ">
-                <h1 className=" flex justify-center text-2xl text-left text-black font-bold tracking-tighter my-5 dark:text-[#F4F4F4]">
-                    InLuna
-                </h1>
-                <div className="bg-white rounded-lg shadow p-10 dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
-                    <form onSubmit={handlePasswordSetup}>
-
-                        <h2 className="text-2xl font-bold mb-6 text-center">Password Setup</h2>
-                        <div className="mb-4">
-                            <label htmlFor="email">Organisation Id:</label>
-                            <input
-                                type="orgId"
-                                name="orgId"
-                                id="orgId"
-                                value={orgId}
-                                onChange={(e) => setOrgId(e.target.value)}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label htmlFor="newPassword">New Password:</label>
-                            <input
-                                type="password"
-                                name="newPassword"
-                                id="newPassword"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                            />
-                        </div>
-
-                        <div className="mb-4">
-                            <label htmlFor="confirmPassword">Confirm Password:</label>
-                            <input
-                                type="password"
-                                name="confirmPassword"
-                                id="confirmPassword"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
-                            />
-                        </div>
-
-                        <input className="w-full bg-[#0364BD] text-[#f4f4f4] py-2 rounded-md hover:bg-[#003A70] transition-colors font-medium" type="submit" value="Set Password" />
-                    </form>
-                </div>
+  return (
+    <div className="flex justify-center">
+      <div className="flex flex-col ">
+        <h1 className=" flex justify-center text-2xl text-left text-black font-bold tracking-tighter my-5 dark:text-[#F4F4F4]">
+          InLuna
+        </h1>
+        <div className="bg-white rounded-lg shadow p-10 dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+          <form onSubmit={handlePasswordSetup}>
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Password Setup
+            </h2>
+            <div className="mb-4">
+              <label htmlFor="email">Organisation Id:</label>
+              <input
+                type="text"
+                name="orgId"
+                id="orgId"
+                value={orgId}
+                onChange={(e) => setOrgId(e.target.value)}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+              />
             </div>
-        </div>
-    )
-}
+            <div className="mb-4">
+              <label htmlFor="newPassword">New Password:</label>
+              <input
+                type="password"
+                name="newPassword"
+                id="newPassword"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+              />
+            </div>
 
-export default SetupPassword
+            <div className="mb-4">
+              <label htmlFor="confirmPassword">Confirm Password:</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001C40] dark:border-0"
+              />
+            </div>
+
+            <input
+              className="w-full bg-[#0364BD] text-[#f4f4f4] py-2 rounded-md hover:bg-[#003A70] transition-colors font-medium"
+              type="submit"
+              value="Set Password"
+            />
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SetupPassword;
