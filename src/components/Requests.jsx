@@ -425,7 +425,7 @@ export default function Requests() {
                       {truncateUrl(request.url)}
                     </a>
                   </p>
-                  <p className="mt-2 bg-gray-100 rounded-lg p-2 dark:bg-[#001733]">
+                  <p className="mt-2 bg-gray-50 rounded-lg p-2 dark:bg-[#001733]">
                     <span className="font-medium">Reason: </span>{" "}
                     {request.reason}
                   </p>
@@ -434,36 +434,53 @@ export default function Requests() {
                 <div className="mt-3">
                   <h4 className="font-medium text-lg">Domain Reputation:</h4>
                   {request.reputationDetails ? (
-                    <ul className="bg-gray-50 p-3 rounded-lg dark:bg-[#001733] flex justify-between">
-                      <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
-                        <LiaUserShieldSolid className="text-3xl" />
-                        <span className="font-medium">Harmless </span>
-                        {request.reputationDetails.harmless ?? "N/A"}
+                    <ul className="bg-white p-3 rounded-lg flex gap-4  dark:bg-[#002451]">
+                      <li className="w-full dark:bg-[#001733] border-2 border-gray-100 p-5 flex flex-col items-center rounded-md shadow text-gray-500 dark:text-[#e6e3e3] dark:border-none">
+                        {/* <LiaUserShieldSolid className="text-3xl" /> */}
+                        <span className="mb-2">Harmless </span>
+                        <span className="text-3xl font-bold text-black dark:text-white">
+                          {request.reputationDetails.harmless ?? "N/A"}
+                        </span>
                       </li>
-                      <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
-                        <PiShieldWarningBold className="text-3xl" />
-                        <span className="font-medium">Malicious </span>
-                        {request.reputationDetails.malicious ?? "N/A"}
+                      <li className="w-full dark:bg-[#001733] border-2 border-gray-100 p-5 flex flex-col items-center rounded-md shadow text-gray-500 dark:text-[#e6e3e3] dark:border-none">
+                        {/* <PiShieldWarningBold className="text-3xl" /> */}
+                        <span className="mb-2">Malicious </span>
+                        <span className="text-3xl font-bold text-black dark:text-white">
+                          {" "}
+                          {request.reputationDetails.malicious ?? "N/A"}{" "}
+                        </span>
                       </li>
-                      <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
-                        <PiWarningLight className="text-3xl" />
-                        <span className="font-medium">Suspicious </span>
-                        {request.reputationDetails.suspicious ?? "N/A"}
+                      <li className="w-full dark:bg-[#001733] border-2 border-gray-100 p-5 flex flex-col items-center rounded-md shadow text-gray-500 dark:text-[#e6e3e3] dark:border-none">
+                        {/* <PiWarningLight className="text-3xl" /> */}
+                        <span className="mb-2">Suspicious </span>
+                        <span className="text-3xl font-bold text-black dark:text-white">
+                          {" "}
+                          {request.reputationDetails.suspicious ?? "N/A"}{" "}
+                        </span>
                       </li>
-                      <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
-                        <VscWorkspaceUnknown className="text-3xl" />
-                        <span className="font-medium">Undetected </span>
-                        {request.reputationDetails.undetected ?? "N/A"}
+                      <li className="w-full dark:bg-[#001733] border-2 border-gray-100 p-5 flex flex-col items-center rounded-md shadow text-gray-500 dark:text-[#e6e3e3] dark:border-none">
+                        {/* <VscWorkspaceUnknown className="text-3xl" /> */}
+                        <span className="mb-2">Undetected </span>
+                        <span className="text-3xl font-bold text-black dark:text-white">
+                          {" "}
+                          {request.reputationDetails.undetected ?? "N/A"}{" "}
+                        </span>
                       </li>
-                      <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
-                        <IoTimeOutline className="text-3xl" />
-                        <span className="font-medium">Timeout </span>
-                        {request.reputationDetails.timeout ?? "N/A"}
+                      <li className="w-full dark:bg-[#001733] border-2 border-gray-100 p-5 flex flex-col items-center rounded-md shadow text-gray-500 dark:text-[#e6e3e3] dark:border-none">
+                        {/* <IoTimeOutline className="text-3xl" /> */}
+                        <span className="mb-2">Timeout </span>
+                        <span className="text-3xl font-bold text-black dark:text-white">
+                          {" "}
+                          {request.reputationDetails.timeout ?? "N/A"}{" "}
+                        </span>
                       </li>
-                      <li className="border-2 border-[#b7b7b7] p-5 flex flex-col items-center rounded-md shadow">
-                        <IoShieldCheckmarkOutline className="text-3xl" />
-                        <span className="font-medium">Reputation Score </span>
-                        {request.reputationScore ?? "N/A"}
+                      <li className="w-full dark:bg-[#001733] border-2 border-gray-100 p-5 flex flex-col items-center rounded-md shadow text-gray-500 dark:text-[#e6e3e3] dark:border-none">
+                        {/* <IoShieldCheckmarkOutline className="text-3xl" /> */}
+                        <span className="mb-2">Reputation Score </span>
+                        <span className="text-3xl font-bold text-black dark:text-white">
+                          {" "}
+                          {request.reputationScore ?? "N/A"}{" "}
+                        </span>
                       </li>
                     </ul>
                   ) : (
