@@ -29,7 +29,7 @@
     "winston": "^3.13.0"
   },
   "name": "backend-node",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "type": "module",
   "main": "server.js",
   "keywords": [],
