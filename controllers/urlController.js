@@ -7,7 +7,7 @@ import csvParser from 'csv-parser';
 
 // for adminLog
 import { getTenantDB } from '../tenantdb.js';
-import getAdminLogsModel from '../models/adminlogsModel.js';
+import { getAdminLogsModel} from '../models/adminlogsModel.js';
 
 // Helper function to normalize URLs by removing 'www.' and ensuring the URL starts with 'https://'
 function normalizeUrl(url) {
