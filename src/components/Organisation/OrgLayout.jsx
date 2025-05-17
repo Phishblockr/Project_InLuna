@@ -6,6 +6,8 @@ import {
   MdOutlineArrowBackIos,
   MdOutlineArrowForwardIos,
 } from "react-icons/md";
+import { RiEyeLine } from "react-icons/ri";
+import { useNavigate } from "react-router-dom";
 
 const OrgLayout = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -14,6 +16,7 @@ const OrgLayout = () => {
   const { orgId } = location.state;
   const { getToken } = useAuth();
   const token = getToken();
+  const navigate = useNavigate();
   const [orgData, setOrgData] = useState();
   const [userDetails, setUserDetails] = useState();
   const [users, setUsers] = useState();
@@ -141,7 +144,7 @@ const OrgLayout = () => {
             <OverviewCards data={orgMetric} />
           </div>
         </div>
-        
+
         <div className="z-1 flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
           <div>
             <div className="flex items-center gap-x-5 mt-5 bg-white py-3 px-2 rounded-xl shadow-sm">
@@ -241,6 +244,24 @@ const OrgLayout = () => {
                             >
                               {user.userType === Admin ? "Admin" : "User"}
                             </span>
+                          </td>
+                          <td>
+                            <button
+                              onClick={() =>
+                                navigate(`/organisations/${orgData.name}/userDetails/${user._id}`,{
+                                  state:{
+                                    orgId: orgData._id,
+                                    userId: user._id,
+                                  }
+                                })
+                              }
+                              title="Click to view details"
+                            >
+                              <RiEyeLine
+                                size={24}
+                                className="hover:text-[#0364BD] transition-colors"
+                              />
+                            </button>
                           </td>
                         </tr>
                       );
