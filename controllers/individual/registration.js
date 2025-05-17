@@ -1,45 +1,58 @@
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getIndividualUserModel } from "../../models/individualModels/individualUserModel.js";
-import { generateUsername } from "../../utils/generateUsername.js"
-import bcrypt from 'bcryptjs';
+import { generateUsername } from "../../utils/generateUsername.js";
+import bcrypt from "bcryptjs";
 import { sendOnboardingIndividualUsrEmail } from "../../utils/sendOnboardingIndividualUsrEmail.js";
 
 export const createindividualUser = asyncHandler(async (req, res) => {
-    const { name, email, password, role } = req.body;
+  const { name, email, password, role } = req.body;
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ error: "Name, email, and password are required." });
-    }
+  if (!name || !email || !password) {
+    return res
+      .status(400)
+      .json({ message: "Name, email, and password are required." });
+  }
 
-    const User = await getIndividualUserModel();
+  const User = await getIndividualUserModel();
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        return res.status(400).json({ message: "User with this email already exists." });
-    }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res
+      .status(400)
+      .json({ message: "User with this email already exists." });
+  }
 
-    const username = generateUsername(email, 0)
+  const username = generateUsername(email);
 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
-    if (!passwordRegex.test(password)){
-        return res.status(400).json({ error: "Password must be at least 6 characters long and contain both letters and numbers." });
-    }
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new User ({
-        username,
-        name,
-        email,
-        role,
-        password: hashedPassword,
-        userType: process.env.INDIVIDUAL,
-        subscription: "freemium"
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({
+      message:
+        "Password must be at least 6 characters long and contain both letters and numbers.",
     });
+  }
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-    const addedUser = await newUser.save();
+  const newUser = new User({
+    username,
+    name,
+    email,
+    role,
+    password: hashedPassword,
+    userType: process.env.INDIVIDUAL,
+    subscription: "freemium",
+  });
 
-    sendOnboardingIndividualUsrEmail(addedUser.email, "Welcom to Inluna 🙏🏻", addedUser);
+  const addedUser = await newUser.save();
 
-    res.status(201).json({ message: "Individual user created successfully", user: addedUser });
+  sendOnboardingIndividualUsrEmail(
+    addedUser.email,
+    "Welcom to Inluna 🙏🏻",
+    addedUser,
+  );
+
+  res
+    .status(201)
+    .json({ message: "Individual user created successfully", user: addedUser });
 });

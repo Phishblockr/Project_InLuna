@@ -85,8 +85,9 @@ const allowedOrigins = isDevelopment
       /^https?:\/\/.*\.lvh\.me(?::\d+)?$/,
     ]
   : [
-      "chrome-extension://ilipomonpoifiljejfngempgpibngkmc",
-      "chrome-extension://blcmmmkhbjlminfjgdfgohbehagoclho",
+      // "chrome-extension://ilipomonpoifiljejfngempgpibngkmc",
+      // "chrome-extension://blcmmmkhbjlminfjgdfgohbehagoclho",
+      "chrome-extension://",
       "moz-extension://",
       "https://theinluna.com",
       "https://dashboard.theinluna.com",

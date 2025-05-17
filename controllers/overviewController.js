@@ -232,7 +232,7 @@ export const fetchOrgMetrics = async (req, res) => {
 
     const scatterPlotData = departments.map((department) => {
       const departmentData = visitDataByDep.find(
-        (d) => d.department === department
+        (d) => d.department === department,
       );
       return (
         departmentData || {
@@ -387,7 +387,7 @@ export const fetchOrgMetrics = async (req, res) => {
     const heartBeats = await HeartBeat.find({ orgId: orgId });
     const updateProfileWithHeartbeat = (profile) => {
       const heartBeat = heartBeats.find(
-        (hb) => hb.userId.toString() === profile.userId.toString()
+        (hb) => hb.userId.toString() === profile.userId.toString(),
       );
       if (heartBeat) {
         const isInactive = heartBeat.timestamp < cutoffDate;
@@ -709,7 +709,7 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
       malwareHostedVisitsByDay.map((item) => [
         item._id,
         item.malwareHostedVisits,
-      ])
+      ]),
     );
     visitsByDay.forEach((item) => {
       item.malwareHostedVisits = malwareMap.get(item._id) || 0;
@@ -728,30 +728,30 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
         phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
       malwareHostedVisits:
         malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
-      whitelistRequests: whitelistReqsCount,
-      visitsToWhitelistUrls:
+      requests: whitelistReqsCount,
+      visitsToRequestedUrls:
         visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
       percentagePhishingClicks: calculatePercentage(
         phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
         previousPhishingClicksCount.length > 0
           ? previousPhishingClicksCount[0].total
-          : 0
+          : 0,
       ),
       percentageMalwareHostedVisits: calculatePercentage(
         malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
         previousMalwareHostedVisits.length > 0
           ? previousMalwareHostedVisits[0].total
-          : 0
+          : 0,
       ),
-      percentageWhitelistReq: calculatePercentage(
+      percentageReq: calculatePercentage(
         whitelistReqsCount || 0,
-        previousWhitelistReqsCount || 0
+        previousWhitelistReqsCount || 0,
       ),
-      percentageVisitToWhitelistUrls: calculatePercentage(
+      percentageVisitToRequestedUrls: calculatePercentage(
         visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
         previousVisitsToWhitelistUrls.length > 0
           ? previousVisitsToWhitelistUrls[0].total
-          : 0
+          : 0,
       ),
       barGraphData,
     });

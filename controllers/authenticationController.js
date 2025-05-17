@@ -131,7 +131,9 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   if (!orgId || !username || !password) {
     return res
       .status(400)
-      .json({ error: "Organization ID, username, and password are required." });
+      .json({
+        message: "Organization ID, username, and password are required.",
+      });
   }
 
   const cookieOptions = {
@@ -152,13 +154,13 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     const user = await User.findOne({ orgId, username });
 
     if (!user) {
-      return res.status(404).json({ error: "Invalid credentials." });
+      return res.status(404).json({ message: "Invalid credentials." });
     }
 
     // Validate password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials." });
+      return res.status(401).json({ message: "Invalid credentials." });
     }
 
     // Generate JWT tokens
