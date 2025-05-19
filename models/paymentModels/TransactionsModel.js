@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { getDb } from "../../admindb.js";
-import { getGlobalDB } from "../../individualdb.js";
 import { getTenantDB } from "../../tenantdb.js";
 
 const { Schema } = mongoose;
@@ -15,8 +14,31 @@ const TransactionSchema = new Schema({
   },
   plan_name: String,
 
-  payment_status: String, // Success / Failure
+  payment_status: String,
   payment_mode: String, // Card / UPI / NetBanking
+  card_details: {
+    card_type: {
+      type: String, // e.g., VISA, MasterCard
+      default: null,
+    },
+    cardholder_name: {
+      type: String,
+      default: null,
+    },
+    last4: {
+      type: String, // Only store last 4 digits (e.g., "1234")
+      match: [/^\d{4}$/, "Must be last 4 digits of card"],
+      default: null,
+    },
+    issuer: {
+      type: String, // e.g., HDFC, SBI, etc.
+      default: null,
+    },
+    network: {
+      type: String, // Optional: e.g., Rupay, Amex
+      default: null,
+    },
+  },
 
   // Auto-Renewal (SI) specific fields:
   is_recurring: {
@@ -90,11 +112,6 @@ export const getTenantTransactionModel = async (tenantId) => {
     tenantDb.models.Transaction ||
     tenantDb.model("Transaction", TransactionSchema)
   );
-};
-
-export const getIndividualTransactionModel = async () => {
-  const db = await getGlobalDB();
-  return db.models.Transaction || db.model("Transaction", TransactionSchema);
 };
 
 export const getAdminTransactionModel = async () => {
