@@ -232,7 +232,7 @@ export const fetchOrgMetrics = async (req, res) => {
 
     const scatterPlotData = departments.map((department) => {
       const departmentData = visitDataByDep.find(
-        (d) => d.department === department,
+        (d) => d.department === department
       );
       return (
         departmentData || {
@@ -387,7 +387,7 @@ export const fetchOrgMetrics = async (req, res) => {
     const heartBeats = await HeartBeat.find({ orgId: orgId });
     const updateProfileWithHeartbeat = (profile) => {
       const heartBeat = heartBeats.find(
-        (hb) => hb.userId.toString() === profile.userId.toString(),
+        (hb) => hb.userId.toString() === profile.userId.toString()
       );
       if (heartBeat) {
         const isInactive = heartBeat.timestamp < cutoffDate;
@@ -709,7 +709,7 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
       malwareHostedVisitsByDay.map((item) => [
         item._id,
         item.malwareHostedVisits,
-      ]),
+      ])
     );
     visitsByDay.forEach((item) => {
       item.malwareHostedVisits = malwareMap.get(item._id) || 0;
@@ -720,6 +720,61 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
       totalVisits: visitsByDay.map((item) => item.totalVisits),
       malwareHostedVisits: visitsByDay.map((item) => item.malwareHostedVisits),
       phishingVisits: visitsByDay.map((item) => item.phishingVisits),
+    };
+
+    // Generate daily keys for the last one month
+    const generateLastMonthBarData = () => {
+      const selectedMonth = parseInt(month); // from req.query
+      const selectedYear = parseInt(year);
+
+      const startDate = new Date(selectedYear, selectedMonth - 1, 1); // 1st of selected month
+      const endDate = new Date(selectedYear, selectedMonth, 0); // last day of selected month
+
+      // Create a lookup map from visitsByDay
+      const dayMap = new Map(
+        visitsByDay.map((item) => [
+          item._id, // date in "dd/MM/yyyy"
+          {
+            totalVisits: item.totalVisits || 0,
+            malwareHostedVisits: item.malwareHostedVisits || 0,
+            phishingVisits: item.phishingVisits || 0,
+          },
+        ])
+      );
+
+      const labels = [];
+      const totalVisits = [];
+      const malwareHostedVisits = [];
+      const phishingVisits = [];
+
+      const current = new Date(startDate);
+
+      while (current <= endDate) {
+        const dd = String(current.getDate()).padStart(2, "0");
+        const mm = String(current.getMonth() + 1).padStart(2, "0");
+        const yyyy = current.getFullYear();
+        const formatted = `${dd}/${mm}/${yyyy}`;
+
+        const data = dayMap.get(formatted) || {
+          totalVisits: 0,
+          malwareHostedVisits: 0,
+          phishingVisits: 0,
+        };
+
+        labels.push(formatted);
+        totalVisits.push(data.totalVisits);
+        malwareHostedVisits.push(data.malwareHostedVisits);
+        phishingVisits.push(data.phishingVisits);
+
+        current.setDate(current.getDate() + 1);
+      }
+
+      return {
+        labels,
+        totalVisits,
+        malwareHostedVisits,
+        phishingVisits,
+      };
     };
 
     // Prepare the final response object with calculated percentages.
@@ -735,23 +790,24 @@ export const fetchUserMetrics = asyncHandler(async (req, res) => {
         phishingClicksCount.length > 0 ? phishingClicksCount[0].total : 0,
         previousPhishingClicksCount.length > 0
           ? previousPhishingClicksCount[0].total
-          : 0,
+          : 0
       ),
       percentageMalwareHostedVisits: calculatePercentage(
         malwareHostedVisits.length > 0 ? malwareHostedVisits[0].total : 0,
         previousMalwareHostedVisits.length > 0
           ? previousMalwareHostedVisits[0].total
-          : 0,
+          : 0
       ),
       percentageReq: calculatePercentage(
         whitelistReqsCount || 0,
-        previousWhitelistReqsCount || 0,
+        previousWhitelistReqsCount || 0
       ),
+      rosenUserBarGraphData: generateLastMonthBarData(),
       percentageVisitToRequestedUrls: calculatePercentage(
         visitsToWhitelistUrls.length > 0 ? visitsToWhitelistUrls[0].total : 0,
         previousVisitsToWhitelistUrls.length > 0
           ? previousVisitsToWhitelistUrls[0].total
-          : 0,
+          : 0
       ),
       barGraphData,
     });
