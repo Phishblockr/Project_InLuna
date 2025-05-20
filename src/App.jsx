@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./utils/ProtectedRoute.jsx";
 import { AuthProvider } from "./utils/AuthProvider.jsx";
 import Users from "./components/Users/Users.jsx";
@@ -40,6 +36,7 @@ import Training from "./components/Training/Training.jsx";
 import IndividualTraining from "./components/Training/IndividualTraining.jsx";
 import PasswordResetDone from "./components/ForgotDetails/PasswordResetDone.jsx";
 import SetupPasswordDone from "./components/Users/SetupPasswordDone.jsx";
+import TransactionSettings from "./components/Transaction/TransactionSettings.jsx";
 // import RedirectToSubdomain from "./components/RedirectToSubdomain.jsx";
 
 function App() {
@@ -59,14 +56,25 @@ function App() {
                   <Route path="/logout" element={<Logout />} />
 
                   <Route path="/forgotDetails" element={<ForgotDetails />} />
-                  <Route path="/resetPassword/:token" element={<PasswordReset />} />
+                  <Route
+                    path="/resetPassword/:token"
+                    element={<PasswordReset />}
+                  />
 
-                  <Route path="/setupPassword/:token" element={<SetupPassword />} />
+                  <Route
+                    path="/setupPassword/:token"
+                    element={<SetupPassword />}
+                  />
 
-                  <Route path="/passwordResetSuccessful" element={<PasswordResetDone/>} />
+                  <Route
+                    path="/passwordResetSuccessful"
+                    element={<PasswordResetDone />}
+                  />
 
-                  <Route path="/passwordSetSuccessful" element={<SetupPasswordDone/>} />
-
+                  <Route
+                    path="/passwordSetSuccessful"
+                    element={<SetupPasswordDone />}
+                  />
 
                   <Route element={<Layout />}>
                     {/* Protected Routes */}
@@ -99,14 +107,25 @@ function App() {
                       <Route path="/requests" element={<Requests />} />
                       <Route path="/feedback" element={<Feedbacks />} />
                       <Route path="/logs" element={<Logs />} />
-                      <Route path="/profileSettings" element={<AdminSettings />} />
+                      <Route
+                        path="/profileSettings"
+                        element={<AdminSettings />}
+                      />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/report" element={<ReportBug />} />
                       <Route path="/faq" element={<Faqs />} />
 
+                      <Route
+                        path="/transactionSettings"
+                        element={<TransactionSettings />}
+                      />
+
                       {/* Training Routes */}
                       <Route path="/training" element={<Training />} />
-                      <Route path="/training/individualTraining/:id" element={<IndividualTraining />} />
+                      <Route
+                        path="/training/individualTraining/:id"
+                        element={<IndividualTraining />}
+                      />
                     </Route>
                   </Route>
                   <Route path="*" element={<NotFound />} />

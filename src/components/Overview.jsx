@@ -270,7 +270,7 @@ const Overview = () => {
         },
         {
           id: 2,
-          title: "Links whitelisted",
+          title: "Url Requests",
           count: data.totalApprovedWhitelistRequests,
           lastMonth: data.percentageChangeApprovedWhitelistRequests,
           logo: "bi bi-shield-check",
