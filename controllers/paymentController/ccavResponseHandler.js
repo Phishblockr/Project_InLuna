@@ -1,9 +1,5 @@
 // This is official code for CCA just update to be used with es7 to be replaced with transactionController.js
-import {
-  saveToAdminDB,
-  saveToOrgDB,
-  saveToUserDB,
-} from "../../utils/transactionService.js";
+import { saveToAdminDB, saveToOrgDB } from "../../utils/transactionService.js";
 import { decrypt } from "./ccavutil.js";
 
 export const postRes = async (req, res) => {
@@ -20,7 +16,7 @@ export const postRes = async (req, res) => {
 
     // Parse the decrypted query string into an object
     const params = Object.fromEntries(
-      decryptedResponse.split("&").map((pair) => pair.split("=")),
+      decryptedResponse.split("&").map((pair) => pair.split("="))
     );
 
     // Convert decrypted response string into HTML table
@@ -66,27 +62,24 @@ export const postRes = async (req, res) => {
     // Admin Database
     await saveToAdminDB(transaction);
 
-    // Individividual Database
-    if (userId) await saveToUserDB(userId, transaction);
-
     // Tenant Database
     if (orgId) await saveToOrgDB(orgId, transaction);
 
     if (!order_id || !order_status) {
       console.error("Invalid response data");
       return res.redirect(
-        "http://localhost:5137/failure?reason=invalid_response",
+        "http://localhost:5137/failure?reason=invalid_response"
       );
     }
 
     // Redirect to frontend success/failure page
     if (order_status === "Success") {
       return res.redirect(
-        `http://localhost:5137/success?order_id=${order_id}&transaction_id=${tracking_id}&amount=${amount}&plan_name=${merchant_param1}&payment_mode=${payment_mode}&amount=${amount}`,
+        `http://localhost:5137/success?order_id=${order_id}&transaction_id=${tracking_id}&amount=${amount}&plan_name=${merchant_param1}&payment_mode=${payment_mode}&amount=${amount}`
       );
     } else {
       return res.redirect(
-        `http://localhost:5137/failure?order_id=${order_id}&transaction_id=${tracking_id}&amount=${amount}&plan_name=${merchant_param1}&payment_mode=${payment_mode}&amount=${amount}`,
+        `http://localhost:5137/failure?order_id=${order_id}&transaction_id=${tracking_id}&amount=${amount}&plan_name=${merchant_param1}&payment_mode=${payment_mode}&amount=${amount}`
       );
     }
 
