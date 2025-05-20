@@ -29,8 +29,27 @@ export const fetchOrgMetrics = async (req, res) => {
     const HeartBeat = await getHeartBeatModel(orgId);
 
     // Calculate date ranges
-    const startOfMonth = new Date(year, month - 1, 1);
-    const endOfMonth = new Date(year, month, 0);
+    let startDate, endDate;
+
+    // Always end at today
+    endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+
+    if (timeFrame === "weekly") {
+      startDate = new Date();
+      startDate.setDate(endDate.getDate() - 6); // last 7 days (including today)
+      startDate.setHours(0, 0, 0, 0);
+    } else if (timeFrame === "fortnightly") {
+      startDate = new Date();
+      startDate.setDate(endDate.getDate() - 13); // last 14 days
+      startDate.setHours(0, 0, 0, 0);
+    } else {
+      // Default to full month
+      startDate = new Date(year, month - 1, 1);
+      endDate = new Date(year, month, 0);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
     const previousYear = month == 1 ? year - 1 : year;
     const previousMonth = month == 1 ? 12 : month - 1;
     const startOfPreviousMonth = new Date(previousYear, previousMonth - 1, 1);
@@ -40,7 +59,7 @@ export const fetchOrgMetrics = async (req, res) => {
     const approvedWhitelistCount = await WhitelistReq.countDocuments({
       orgId: orgId,
       status: "approved",
-      createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+      createdAt: { $gte: startDate, $lt: endDate },
     });
     const previousApprovedWhitelistCount = await WhitelistReq.countDocuments({
       orgId: orgId,
@@ -52,7 +71,7 @@ export const fetchOrgMetrics = async (req, res) => {
     const blacklistedUrlsCount = await Url.countDocuments({
       orgId: orgId,
       status: "blacklisted",
-      createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+      createdAt: { $gte: startDate, $lt: endDate },
     });
     const previousBlacklistedUrlsCount = await Url.countDocuments({
       orgId: orgId,
@@ -65,7 +84,7 @@ export const fetchOrgMetrics = async (req, res) => {
       {
         $match: {
           orgId: orgId,
-          createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+          createdAt: { $gte: startDate, $lt: endDate },
         },
       },
       { $unwind: "$visitedBy" },
@@ -132,12 +151,11 @@ export const fetchOrgMetrics = async (req, res) => {
 
     // Define the time grouping based on the timeFrame parameter
     let timeGroup;
-    if (timeFrame === "monthly") {
-      timeGroup = { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } }; // daily view
-    } else if (timeFrame === "daily") {
-      timeGroup = { $hour: "$createdAt" }; // hourly view
-    } else if (timeFrame === "weekly") {
-      timeGroup = { $dateToString: { format: "%V/%Y", date: "$createdAt" } }; // weekly view
+    if (timeFrame === "daily") {
+      timeGroup = { $hour: "$createdAt" };
+    } else {
+      // For weekly, fortnightly, monthly — use daily grouping
+      timeGroup = { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } };
     }
 
     // Aggregate visits by time frame
@@ -145,7 +163,7 @@ export const fetchOrgMetrics = async (req, res) => {
       {
         $match: {
           orgId: orgId,
-          createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+          createdAt: { $gte: startDate, $lt: endDate },
         },
       },
       { $unwind: "$visitedBy" },
@@ -182,7 +200,7 @@ export const fetchOrgMetrics = async (req, res) => {
       {
         $match: {
           orgId: orgId,
-          createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+          createdAt: { $gte: startDate, $lt: endDate },
         },
       },
       { $unwind: "$visitedBy" },
@@ -249,7 +267,7 @@ export const fetchOrgMetrics = async (req, res) => {
       {
         $match: {
           orgId: orgId,
-          createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+          createdAt: { $gte: startDate, $lt: endDate },
         },
       },
       { $unwind: "$visitedBy" },
@@ -315,7 +333,7 @@ export const fetchOrgMetrics = async (req, res) => {
           $match: {
             "visitedBy.userId": userId,
             orgId: orgId,
-            createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+            createdAt: { $gte: startDate, $lt: endDate },
           },
         },
         { $unwind: "$visitedBy" },
@@ -413,19 +431,10 @@ export const fetchOrgMetrics = async (req, res) => {
     goodBrowsingProfile.forEach(updateProfileWithHeartbeat);
     badBrowsingProfile.forEach(updateProfileWithHeartbeat);
 
-    // Generate daily keys for the last one month
-    const generateLastMonthBarData = () => {
-      const selectedMonth = parseInt(month); // from req.query
-      const selectedYear = parseInt(year);
-
-      const startDate = new Date(selectedYear, selectedMonth - 1, 1); // 1st of selected month
-      const endDate = new Date(selectedYear, selectedMonth, 0); // last day of selected month
-      const today = new Date();
-
-      // Create a lookup map from visitsByTimeFrame
+    const generateBarData = (startDate, endDate) => {
       const dayMap = new Map(
         visitsByTimeFrame.map((item) => [
-          item._id, // date in "dd/MM/yyyy"
+          item._id,
           {
             totalVisits: item.totalVisits,
             blacklistedVisits: item.blacklistedVisits,
@@ -504,7 +513,7 @@ export const fetchOrgMetrics = async (req, res) => {
         ),
         phishingVisits: visitsByTimeFrame.map((item) => item.phishingVisits),
       },
-      rosenBarGraphData: generateLastMonthBarData(),
+      rosenBarGraphData: generateBarData(startDate, endDate),
       scatterPlotData,
       heatmapData,
       goodBrowsingProfile,
