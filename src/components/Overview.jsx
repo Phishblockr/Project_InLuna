@@ -81,8 +81,8 @@ const Overview = () => {
                       user.heartBeatStatus === "active"
                         ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
                         : user.heartBeatStatus === "not initialized"
-                          ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
-                          : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
+                        ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                        : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                     }`}
                   >
                     {user.heartBeatStatus}
@@ -114,6 +114,7 @@ const Overview = () => {
   });
   const [scatterPlotData, setScatterPlotData] = useState([]);
   const [selectedSeries, setSelectedSeries] = useState("all");
+  const [selectedFilter, setSelectedFilter] = useState("monthly");
   const [currentWeek, setCurrentWeek] = useState({
     start: startOfWeek(new Date(), { weekStartsOn: 1 }),
     end: endOfWeek(new Date(), { weekStartsOn: 1 }),
@@ -133,7 +134,7 @@ const Overview = () => {
   const isDarkMode = theme === "dark";
   const backgroundColor = isDarkMode ? "#001C40" : "#ffffff";
   const gridColor = isDarkMode ? "#444444" : "#e5e5e5";
-  const textColor = isDarkMode ? "#f4f4f4" : "#9CA3AF ";
+  const textColor = isDarkMode ? "#f4f4f4" : "#a0a4ae ";
   const textColor2 = isDarkMode ? "#f4f4f4" : "#D1D5DB";
   const textColor3 = isDarkMode ? "#f4f4f4" : "#000000";
 
@@ -184,10 +185,31 @@ const Overview = () => {
     const firstWeekEnd = endOfWeek(startOfMonth(date), { weekStartsOn: 1 });
     setCurrentWeek({ start: firstWeekStart, end: firstWeekEnd });
     fetchMetrics(date, timeFrame);
+    if (
+      !isCurrentMonth() &&
+      (timeFrame === "weekly" || timeFrame === "fortnightly")
+    ) {
+      setTimeFrame("monthly");
+      setSelectedFilter("monthly");
+    }
   };
 
   const handleSeriesChange = (e) => {
     setSelectedSeries(e.target.value);
+  };
+
+  const handleFilterChange = (e) => {
+    const value = e.target.value;
+    setSelectedFilter(value);
+    setTimeFrame(value); // Add this to reflect the change
+  };
+
+  const isCurrentMonth = () => {
+    const now = new Date();
+    return (
+      selectedDate.getMonth() === now.getMonth() &&
+      selectedDate.getFullYear() === now.getFullYear()
+    );
   };
 
   const fetchMetrics = async (date, timeFrame) => {
@@ -206,9 +228,9 @@ const Overview = () => {
       const token = getToken();
       const response = await fetch(
         `${apiUrl}/overview/org-metrics?month=${encodeURIComponent(
-          month,
+          month
         )}&year=${encodeURIComponent(
-          year,
+          year
         )}&timeFrame=${timeFrame}&browsingProfileMetrics=${browsingProfileMetrics}`,
         {
           method: "GET",
@@ -216,7 +238,7 @@ const Overview = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
       const data = await response.json();
       console.log("Org data", data);
@@ -230,7 +252,7 @@ const Overview = () => {
             x: time,
             y: values.visits[index],
           })),
-        })),
+        }))
       );
 
       setBadBrowsingProfile(data.badBrowsingProfile);
@@ -253,7 +275,7 @@ const Overview = () => {
         labels: mergedBarGraphData.map((item) => item.label),
         totalVisits: mergedBarGraphData.map((item) => item.totalVisits),
         blacklistedVisits: mergedBarGraphData.map(
-          (item) => item.blacklistedVisits,
+          (item) => item.blacklistedVisits
         ),
         phishingVisits: mergedBarGraphData.map((item) => item.phishingVisits),
       });
@@ -324,49 +346,13 @@ const Overview = () => {
     return () => {
       events.forEach((event) => socket.off(event, handleSocketEvent));
     };
-  }, [selectedDate, timeFrame]); // Dependencies here ensure re-fetching on date/timeFrame changes
+  }, [selectedDate, timeFrame]);
 
   useEffect(() => {
     fetchMetrics(selectedDate, timeFrame);
   }, [dispatch, selectedDate, timeFrame, currentWeek]);
 
-  const chartStyles =
-    theme === "dark"
-      ? {
-          textColor: "#f4f4f4",
-          gridColor: "#444444",
-        }
-      : {
-          textColor: "#000000",
-          gridColor: "#E0E0E0",
-        };
-
-  const chartData = barGraphData.labels.map((label, index) => ({
-    name: label,
-    detection: barGraphData.totalVisits[index],
-    phishing: barGraphData.phishingVisits[index],
-    blacklisted: barGraphData.blacklistedVisits[index],
-  }));
-
-  const chartData2 = [
-    { key: "Jan 2020", values: [11.1, 9.5] },
-    { key: "Feb 2020", values: [18.3, 16.7] },
-    { key: "Mar 2020", values: [25.1, 19.5] },
-    { key: "Apr 2020", values: [35.5, 24.9] },
-    { key: "May 2020", values: [31.7, 28.1] },
-    { key: "Jun 2020", values: [25.8, 20.2] },
-    { key: "Jul 2020", values: [15.8, 10.2] },
-    { key: "Aug 2020", values: [24.8, 17.2] },
-    { key: "Sep 2020", values: [32.5, 23.9] },
-    { key: "Oct 2020", values: [36.7, 27.1] },
-    { key: "Nov 2020", values: [34.7, 28.1] },
-    { key: "Dec 2020", values: [42.7, 33.1] },
-    { key: "Jan 2021", values: [39.7, 36.1] },
-  ];
-
   const formatRosenChartData = (dataArray) => {
-    console.log("dataArray", dataArray);
-
     return dataArray.map((item) => {
       const [day, month, year] = item.key.split("/");
       const date = new Date(`${year}-${month}-${day}`);
@@ -382,7 +368,7 @@ const Overview = () => {
   };
 
   // Usage
-  const chartData3 = Array.isArray(rosenBarChartData)
+  const chartData = Array.isArray(rosenBarChartData)
     ? formatRosenChartData(rosenBarChartData)
     : rosenBarChartData?.labels?.map((label, index) => {
         const [day, month, year] = label.split("/");
@@ -391,7 +377,7 @@ const Overview = () => {
           "default",
           {
             month: "short",
-          },
+          }
         )}`;
 
         const detection = rosenBarChartData.totalVisits?.[index] || 0;
@@ -420,7 +406,11 @@ const Overview = () => {
         };
       }) || [];
 
-  console.log("chartData3", chartData3);
+  const hasValidData = chartData?.some((entry) =>
+    selectedSeries === "all"
+      ? entry.values.some((v) => v !== 0)
+      : entry.values[0] !== 0
+  );
 
   const legendItems =
     {
@@ -438,10 +428,33 @@ const Overview = () => {
     selectedSeries === "all"
       ? ["#B89DFB", "#DAA6FF", "#e7deff"] // Detection, Phishing, Blacklisted
       : selectedSeries === "totalVisits"
-        ? ["#B89DFB"]
-        : selectedSeries === "phishingVisits"
-          ? ["#DAA6FF"]
-          : ["#e7deff"];
+      ? ["#B89DFB"]
+      : selectedSeries === "phishingVisits"
+      ? ["#DAA6FF"]
+      : ["#e7deff"];
+
+  const hasScatterData = (() => {
+    if (!scatterPlotData || scatterPlotData.length === 0) return false;
+
+    switch (selectedSeries) {
+      case "phishingVisits":
+        return scatterPlotData.some((d) => d.phishingVisits > 0);
+      case "blacklistedVisits":
+        return scatterPlotData.some((d) => d.blacklistedVisits > 0);
+      case "totalVisits":
+        return scatterPlotData.some((d) => d.totalVisits > 0);
+      case "all":
+      default:
+        return scatterPlotData.some(
+          (d) =>
+            d.phishingVisits > 0 || d.blacklistedVisits > 0 || d.totalVisits > 0
+        );
+    }
+  })();
+
+  const hasHeatmapData =
+    Array.isArray(heatmapData) &&
+    heatmapData.some((series) => series.data?.some((point) => point.y > 0));
 
   return (
     <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
@@ -467,26 +480,51 @@ const Overview = () => {
         <OverviewCards points={overviewPoints} />
 
         <div className="w-full mt-10 dark:text-[#f4f4f4]">
-          <div className="mt-4">
-            <label htmlFor="seriesSelect" className="mr-2">
-              Show Data:
-            </label>
-            <select
-              id="seriesSelect"
-              value={selectedSeries}
-              onChange={handleSeriesChange}
-              className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4] dark:border-[#001C40] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
-            >
-              <option value="all">All</option>
-              <option value="totalVisits">Detection</option>
-              <option value="phishingVisits">Phishing Visits</option>
-              <option value="blacklistedVisits">Blacklisted Visits</option>
-            </select>
+          <div className="flex items-center space-x-4">
+            <div className="mt-4">
+              <label htmlFor="seriesSelect" className="mr-2">
+                Show Data:
+              </label>
+              <select
+                id="seriesSelect"
+                value={selectedSeries}
+                onChange={handleSeriesChange}
+                className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4] dark:border-[#001C40] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+              >
+                <option value="all">All</option>
+                <option value="totalVisits">Detection</option>
+                <option value="phishingVisits">Phishing Visits</option>
+                <option value="blacklistedVisits">Blacklisted Visits</option>
+              </select>
+            </div>
+            <div className="mt-4">
+              <label htmlFor="filterSelect" className="mr-2">
+                Filter:
+              </label>
+              <select
+                id="filterSelect"
+                value={selectedFilter}
+                onChange={handleFilterChange}
+                className="p-2 border rounded-lg dark:bg-[#001C40] dark:text-[#F4F4F4] dark:border-[#001C40] focus:outline-none focus:ring-2 focus:ring-[#0364BD]"
+              >
+                <option value="monthly">Month</option>
+                <option value="weekly" disabled={!isCurrentMonth()}>
+                  Weekly
+                </option>
+                <option value="fortnightly" disabled={!isCurrentMonth()}>
+                  Fortnightly
+                </option>
+              </select>
+            </div>
           </div>
 
           <div className="mt-3 p-[20px] rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]">
             <h2 className="text-center dark:text-[#F4F4F4]">
-              Monthly URL Access
+              {selectedFilter
+                ? `${selectedFilter
+                    .charAt(0)
+                    .toUpperCase()}${selectedFilter.slice(1)} URL Access`
+                : "URL Access"}
             </h2>
             <div className="flex justify-center gap-4 mb-4 mt-2">
               {legendItems.map(({ label, color }, index) => (
@@ -500,148 +538,166 @@ const Overview = () => {
               ))}
             </div>
 
-            {chartData3 && chartData3.length > 0 && (
+            {hasValidData ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChartMultiVerticalTooltip
-                  data={chartData3}
+                  data={chartData}
                   colors={chartColors}
                 />
-                {/* <BarChartMultiVertical data={chartData2} /> */}
               </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-300 mt-4">
+                No data available for the selected timeframe.
+              </p>
             )}
           </div>
           <div className="w-full mt-3 p-2 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]">
-            <Plot
-              className="w-full h-[400px]"
-              data={[
-                // Conditionally render data for Phishing Visits
-                (selectedSeries === "all" ||
-                  selectedSeries === "phishingVisits") && {
-                  x: scatterPlotData.map((d) => d.department),
-                  y: scatterPlotData.map((d) => d.phishingVisits),
-                  mode: "markers",
-                  type: "scatter",
-                  name: "Phishing Visits",
-                  marker: { color: phishingColor, size: 8 },
-                },
-                // Conditionally render data for Blacklisted Visits
-                (selectedSeries === "all" ||
-                  selectedSeries === "blacklistedVisits") && {
-                  x: scatterPlotData.map((d) => d.department),
-                  y: scatterPlotData.map((d) => d.blacklistedVisits),
-                  mode: "markers",
-                  type: "scatter",
-                  name: "Blacklisted Visits",
-                  marker: { color: blacklistedColor, size: 8 },
-                },
-                // Conditionally render data for Total Counts
-                (selectedSeries === "all" ||
-                  selectedSeries === "totalVisits") && {
-                  x: scatterPlotData.map((d) => d.department),
-                  y: scatterPlotData.map((d) => d.totalVisits),
-                  mode: "markers",
-                  type: "scatter",
-                  name: "Total Counts (Detection)",
-                  marker: { color: totalCountsColor, size: 8 },
-                },
-              ].filter(Boolean)} // Filter out null traces if not selected
-              layout={{
-                title: {
-                  text: "Monthly URL Accesses by Department",
-                  font: { color: textColor3 },
-                },
-                xaxis: {
-                  title: { text: "Departments", font: { color: textColor } },
-                  tickvals: scatterPlotData.map((d) => d.department),
-                  ticktext: scatterPlotData.map((d) => d.department),
-                  showgrid: false,
-                  color: textColor,
-                },
-                yaxis: {
-                  title: {
-                    text: "URL Access Count",
+            <h2 className="text-center dark:text-[#F4F4F4]">
+              {selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)}{" "}
+              URL Accesses by Department
+            </h2>
+            {hasScatterData ? (
+              <Plot
+                className="w-full h-[400px]"
+                data={[
+                  // Conditionally render data for Phishing Visits
+                  (selectedSeries === "all" ||
+                    selectedSeries === "phishingVisits") && {
+                    x: scatterPlotData.map((d) => d.department),
+                    y: scatterPlotData.map((d) => d.phishingVisits),
+                    mode: "markers",
+                    type: "scatter",
+                    name: "Phishing Visits",
+                    marker: { color: phishingColor, size: 8 },
+                  },
+                  // Conditionally render data for Blacklisted Visits
+                  (selectedSeries === "all" ||
+                    selectedSeries === "blacklistedVisits") && {
+                    x: scatterPlotData.map((d) => d.department),
+                    y: scatterPlotData.map((d) => d.blacklistedVisits),
+                    mode: "markers",
+                    type: "scatter",
+                    name: "Blacklisted Visits",
+                    marker: { color: blacklistedColor, size: 8 },
+                  },
+                  // Conditionally render data for Total Counts
+                  (selectedSeries === "all" ||
+                    selectedSeries === "totalVisits") && {
+                    x: scatterPlotData.map((d) => d.department),
+                    y: scatterPlotData.map((d) => d.totalVisits),
+                    mode: "markers",
+                    type: "scatter",
+                    name: "Total Counts (Detection)",
+                    marker: { color: totalCountsColor, size: 8 },
+                  },
+                ].filter(Boolean)} // Filter out null traces if not selected
+                layout={{
+                  xaxis: {
+                    title: { text: "Departments", font: { color: textColor } },
+                    tickvals: scatterPlotData.map((d) => d.department),
+                    ticktext: scatterPlotData.map((d) => d.department),
+                    showgrid: false,
+                    color: textColor,
+                  },
+                  yaxis: {
+                    title: {
+                      text: "URL Access Count",
+                      font: { color: textColor },
+                    },
+                    range: [
+                      0,
+                      Math.max(
+                        ...scatterPlotData.map((d) => d.totalVisits || 0)
+                      ) + 5,
+                    ],
+                    color: textColor2,
+                    gridcolor: gridColor,
+                  },
+                  shapes: scatterPlotData.map((dept, index) => ({
+                    type: "line",
+                    x0: index + 0.5,
+                    x1: index + 0.5,
+                    y0: 0,
+                    y1:
+                      Math.max(
+                        ...scatterPlotData.map((d) => d.totalVisits || 0)
+                      ) + 5,
+                    line: {
+                      color: gridColor,
+                      width: 1,
+                      dash: "dot",
+                    },
+                  })),
+                  paper_bgcolor: backgroundColor,
+                  plot_bgcolor: backgroundColor,
+                  height: 400,
+                  showlegend: true,
+                  legend: {
                     font: { color: textColor },
                   },
-                  range: [
-                    0,
-                    Math.max(
-                      ...scatterPlotData.map((d) => d.totalVisits || 0),
-                    ) + 5,
-                  ],
-                  color: textColor2,
-                  gridcolor: gridColor,
-                },
-                shapes: scatterPlotData.map((dept, index) => ({
-                  type: "line",
-                  x0: index + 0.5,
-                  x1: index + 0.5,
-                  y0: 0,
-                  y1:
-                    Math.max(
-                      ...scatterPlotData.map((d) => d.totalVisits || 0),
-                    ) + 5,
-                  line: {
-                    color: gridColor,
-                    width: 1,
-                    dash: "dot",
-                  },
-                })),
-                paper_bgcolor: backgroundColor,
-                plot_bgcolor: backgroundColor,
-                height: 400,
-                showlegend: true,
-                legend: {
-                  font: { color: textColor },
-                },
-                margin: { l: 50, r: 50, t: 50, b: 50 },
-              }}
-              config={{ responsive: true }}
-            />
+                  margin: { l: 50, r: 50, t: 50, b: 50 },
+                }}
+                config={{ responsive: true }}
+              />
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-300 mt-4">
+                No scatter plot data available for the selected timeframe.
+              </p>
+            )}
           </div>
         </div>
         <div className="w-full p-2 rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40]">
-          <h2 className="text-center dark:text-[#F4F4F4]">
-            URL Category Heatmap
+          <h2 className="text-center dark:text-[#F4F4F4] mb-4">
+            {`${
+              selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)
+            } URL Category Heatmap`}
           </h2>
-          <Chart
-            options={{
-              chart: {
-                type: "heatmap",
-                toolbar: { show: false },
-                background: isDarkMode ? "#001C40" : "#ffffff", // Set background based on theme
-              },
-              plotOptions: {
-                heatmap: {
-                  colorScale: {
-                    ranges: [
-                      { from: 0, to: 5, color: "#a9d5ff" },
-                      { from: 6, to: 10, color: "#57aeff" },
-                      { from: 11, to: 20, color: "#0687ff" },
-                      { from: 21, to: 30, color: "#005cb3" },
-                      { from: 31, to: 40, color: "#003A70" },
-                    ],
+
+          {hasHeatmapData ? (
+            <Chart
+              options={{
+                chart: {
+                  type: "heatmap",
+                  toolbar: { show: false },
+                  background: isDarkMode ? "#001C40" : "#ffffff", // Set background based on theme
+                },
+                plotOptions: {
+                  heatmap: {
+                    colorScale: {
+                      ranges: [
+                        { from: 0, to: 5, color: "#a9d5ff" },
+                        { from: 6, to: 10, color: "#57aeff" },
+                        { from: 11, to: 20, color: "#0687ff" },
+                        { from: 21, to: 30, color: "#005cb3" },
+                        { from: 31, to: 40, color: "#003A70" },
+                      ],
+                    },
                   },
                 },
-              },
-              dataLabels: {
-                enabled: false,
-              },
-              xaxis: {
-                type: "category",
-                labels: { style: { colors: textColor } },
-                title: { text: "Date", style: { color: textColor } },
-              },
-              yaxis: {
-                labels: { style: { colors: textColor } },
-                title: { text: "Categories", style: { color: textColor } },
-              },
-              legend: { labels: { colors: textColor } },
-              theme: { mode: isDarkMode ? "dark" : "light" },
-            }}
-            series={heatmapData}
-            type="heatmap"
-            height={350}
-          />
+                dataLabels: {
+                  enabled: false,
+                },
+                xaxis: {
+                  type: "category",
+                  labels: { style: { colors: textColor } },
+                  title: { text: "Date", style: { color: textColor } },
+                },
+                yaxis: {
+                  labels: { style: { colors: textColor } },
+                  title: { text: "Categories", style: { color: textColor } },
+                },
+                legend: { labels: { colors: textColor } },
+                theme: { mode: isDarkMode ? "dark" : "light" },
+              }}
+              series={heatmapData}
+              type="heatmap"
+              height={350}
+            />
+          ) : (
+            <p className="text-center text-gray-500 dark:text-gray-300 mt-4">
+              No heatmap data available for the selected timeframe.
+            </p>
+          )}
         </div>
         <div className="flex justify-center gap-5 dark:text-[#f4f4f4]">
           <BrowsingProfileTable

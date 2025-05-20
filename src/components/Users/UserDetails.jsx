@@ -34,6 +34,7 @@ import {
   fetchAssignedCourses,
   removeCourse,
 } from "../../features/UserCourse/userCourseSlice";
+import BarChartMultiVerticalTooltip from "../Charts/BarChart/BarChartMultiVerticalTooltip";
 
 const UserDetails = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -61,6 +62,7 @@ const UserDetails = () => {
   const [operationType, setOperationType] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedSeries, setSelectedSeries] = useState("all");
+  const [rosenBarChartData, setRosenBarChartData] = useState([]);
   const [barGraphData, setBarGraphData] = useState({
     labels: [],
     totalVisits: [],
@@ -79,9 +81,8 @@ const UserDetails = () => {
   const [isCourseSectionVisible, setIsCourseSectionVisible] = useState(false);
 
   const { courses, courseLoading, courseError } = useSelector(
-    (state) => state.userCourses,
+    (state) => state.userCourses
   );
-  console.log(courses);
 
   const theme = useSelector((state) => state.theme);
 
@@ -190,7 +191,7 @@ const UserDetails = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -199,8 +200,6 @@ const UserDetails = () => {
 
       const data = await response.json();
       console.log("📊 Full API Response:", data); // ✅ Debugging API response
-      console.log("🟢 Malware Hosted Visits:", data.malwareHostedVisits);
-      console.log("📅 Bar Graph Data (Before Mapping):", data.barGraphData);
 
       const allDatesInMonth = generateAllDatesInMonth(year, month - 1);
       const mergedBarGraphData = allDatesInMonth.map((date) => {
@@ -215,21 +214,16 @@ const UserDetails = () => {
         };
       });
 
-      console.log(
-        "🛠️ Mapped Bar Graph Data (Before SetState):",
-        mergedBarGraphData,
-      );
-
-      // ✅ Ensure Malware Hosted Data is properly updated
       setBarGraphData({
         labels: mergedBarGraphData.map((item) => item.label),
         totalVisits: mergedBarGraphData.map((item) => item.totalVisits),
         malwareHostedVisits: mergedBarGraphData.map(
-          (item) => item.malwareHostedVisits,
+          (item) => item.malwareHostedVisits
         ),
         phishingVisits: mergedBarGraphData.map((item) => item.phishingVisits),
       });
 
+      setRosenBarChartData(data.rosenUserBarGraphData);
       setActivityCounts(data);
       clearTimeout(loadingTimer);
       setShowLoading(false);
@@ -256,7 +250,7 @@ const UserDetails = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -378,25 +372,90 @@ const UserDetails = () => {
     }
   };
 
-  const chartStyles =
-    theme === "dark"
-      ? {
-          textColor: "#f4f4f4",
-          gridColor: "#444444",
+  const formatRosenChartData = (dataArray) => {
+    console.log("dataArray", dataArray);
+
+    return dataArray.map((item) => {
+      const [day, month, year] = item.key.split("/");
+      const date = new Date(`${year}-${month}-${day}`);
+      const formattedKey = `${parseInt(day)} ${date.toLocaleString("default", {
+        month: "short",
+      })}`;
+
+      return {
+        key: formattedKey,
+        values: item.values,
+      };
+    });
+  };
+
+  // Usage
+  const chartData = Array.isArray(rosenBarChartData)
+    ? formatRosenChartData(rosenBarChartData)
+    : rosenBarChartData?.labels?.map((label, index) => {
+        const [day, month, year] = label.split("/");
+        const date = new Date(`${year}-${month}-${day}`);
+        const formattedKey = `${parseInt(day)} ${date.toLocaleString(
+          "default",
+          {
+            month: "short",
+          }
+        )}`;
+
+        const detection = rosenBarChartData.totalVisits?.[index] || 0;
+        const phishing = rosenBarChartData.phishingVisits?.[index] || 0;
+        const malwareHosted =
+          rosenBarChartData.malwareHostedVisits?.[index] || 0;
+
+        let values;
+        switch (selectedSeries) {
+          case "totalVisits":
+            values = [detection];
+            break;
+          case "phishingVisits":
+            values = [phishing];
+            break;
+          case "malwareHostedVisits":
+            values = [malwareHosted];
+            break;
+          case "all":
+          default:
+            values = [detection, phishing, malwareHosted];
         }
-      : {
-          textColor: "#000000",
-          gridColor: "#E0E0E0",
+
+        return {
+          key: formattedKey,
+          values,
         };
+      }) || [];
 
-  const chartData = barGraphData.labels.map((label, index) => ({
-    name: label,
-    detection: barGraphData.totalVisits[index] || 0,
-    phishing: barGraphData.phishingVisits[index] || 0,
-    malwareHostedVisits: barGraphData.malwareHostedVisits[index] || 0, // ✅ Fix Mapping Here
-  }));
+  // Check if there is any non-zero data in the chart
+  const hasValidData = chartData?.some((entry) =>
+    selectedSeries === "all"
+      ? entry.values.some((v) => v !== 0)
+      : entry.values[0] !== 0
+  );
 
-  console.log("📊 Final Chart Data (Before Rendering):", chartData);
+  const legendItems =
+    {
+      all: [
+        { label: "Detection", color: "#B89DFB" },
+        { label: "Phishing", color: "#DAA6FF" },
+        { label: "Blacklisted", color: "#e7deff" },
+      ],
+      totalVisits: [{ label: "Detection", color: "#B89DFB" }],
+      phishingVisits: [{ label: "Phishing", color: "#DAA6FF" }],
+      malwareHostedVisits: [{ label: "Malware Hosted", color: "#e7deff" }],
+    }[selectedSeries] || [];
+
+  const chartColors =
+    selectedSeries === "all"
+      ? ["#B89DFB", "#DAA6FF", "#e7deff"] // Detection, Phishing, Malware Hosted
+      : selectedSeries === "totalVisits"
+      ? ["#B89DFB"]
+      : selectedSeries === "phishingVisits"
+      ? ["#DAA6FF"]
+      : ["#e7deff"];
 
   return (
     <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
@@ -409,11 +468,11 @@ const UserDetails = () => {
       />
 
       <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
-        <div>
-          <h1 className="text-2xl font-medium tracking-tight mb-5">
-            User Details
-          </h1>
-        </div>
+          <div>
+            <h1 className="text-2xl font-medium tracking-tight mb-5">
+              User Details
+            </h1>
+          </div>
         <div className="flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-x-5">
             {user.img ? (
@@ -499,8 +558,8 @@ const UserDetails = () => {
                     user.status === "active"
                       ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
                       : user.status === "not initialized"
-                        ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
-                        : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
+                      ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                      : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
                   }`}
                 >
                   {user.status}
@@ -510,12 +569,20 @@ const UserDetails = () => {
           </div>
           <div className="flex flex-col gap-5">
             <button
-              className={`${heartbeatStatus.status === "active" ? "text-red-600" : "text-gray-600"} p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors flex items-center justify-center gap-2`}
+              className={`${
+                heartbeatStatus.status === "active"
+                  ? "text-red-600"
+                  : "text-gray-600"
+              } p-2 w-[200px] h-[50px] font-medium rounded-lg transition-colors flex items-center justify-center gap-2`}
               title={`Extension status: ${heartbeatStatus.status}\nClick to view History`}
               onClick={scrollToHeartbeatSection}
             >
               <div
-                className={`h-5 w-5 rounded-full ${heartbeatStatus.status === "active" ? "bg-red-600 animation-pulse" : "bg-gray-600"}`}
+                className={`h-5 w-5 rounded-full ${
+                  heartbeatStatus.status === "active"
+                    ? "bg-red-600 animation-pulse"
+                    : "bg-gray-600"
+                }`}
               ></div>
             </button>
             <button
@@ -571,65 +638,35 @@ const UserDetails = () => {
               <option value="all">All</option>
               <option value="totalVisits">Detection</option>
               <option value="phishingVisits">Phishing Visits</option>
-              <option value="blacklistedVisits">Malware Hosted Visits</option>
+              <option value="malwareHostedVisits">Malware Hosted Visits</option>
             </select>
           </div>
           <h2 className="text-center dark:text-[#F4F4F4]">
             Monthly URL Access
           </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={chartData}
-              margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 5,
-              }}
-            >
-              {/* <CartesianGrid stroke={chartStyles.gridColor} /> */}
-
-              <XAxis
-                dataKey="name"
-                stroke={chartStyles.textColor}
-                tickFormatter={(tick) => tick.split("/")[0]} // Extracts and displays the day part of the date
+          <div className="flex justify-center gap-4 mb-4 mt-3">
+            {legendItems.map(({ label, color }, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div
+                  className="w-[4px] h-[15px] rounded"
+                  style={{ backgroundColor: color }}
+                ></div>
+                <p>{label}</p>
+              </div>
+            ))}
+          </div>
+          {hasValidData ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChartMultiVerticalTooltip
+                data={chartData}
+                colors={chartColors}
               />
-
-              <YAxis stroke={chartStyles.textColor} />
-              <Tooltip cursor={{ fill: chartStyles.gridColor }} />
-              <Legend
-                verticalAlign="top"
-                wrapperStyle={{ color: chartStyles.textColor }}
-              />
-
-              {/* Conditionally render bars based on the selected series */}
-              {selectedSeries === "all" || selectedSeries === "totalVisits" ? (
-                <Bar
-                  dataKey="detection"
-                  fill="#82ca9d"
-                  radius={[10, 10, 0, 0]}
-                />
-              ) : null}
-
-              {selectedSeries === "all" ||
-              selectedSeries === "phishingVisits" ? (
-                <Bar
-                  dataKey="phishing"
-                  fill="#8884d8"
-                  radius={[10, 10, 0, 0]}
-                />
-              ) : null}
-
-              {selectedSeries === "all" ||
-              selectedSeries === "malwareHostedVisits" ? (
-                <Bar
-                  dataKey="malwareHostedVisits"
-                  fill="#ff4d4f"
-                  radius={[10, 10, 0, 0]}
-                /> // ✅ Now correctly included
-              ) : null}
-            </BarChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-center text-gray-500 dark:text-gray-300 mt-4">
+              No data available for the selected data.
+            </p>
+          )}
         </div>
         <div
           className={`rounded-lg shadow border-2 border-gray-100 dark:bg-[#001C40] dark:shadow-none dark:border-[#001C40] w-full p-5 overflow-hidden transition-all duration-500 ease-in-out ${
@@ -647,8 +684,8 @@ const UserDetails = () => {
                 heartbeatStatus.status === "active"
                   ? "bg-green-100 text-green-800 dark:bg-[rgba(187,247,208,0.1)] dark:text-green-400"
                   : heartbeatStatus.status === "not initialized"
-                    ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
-                    : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
+                  ? "bg-yellow-100 text-yellow-800 dark:bg-[rgba(238,247,187,0.1)] dark:text-yellow-400"
+                  : "bg-red-100 text-red-800 dark:bg-[rgba(254,202,202,0.1)] dark:text-red-400"
               }`}
             >
               {heartbeatStatus.status}
@@ -771,7 +808,7 @@ const UserDetails = () => {
                         onClick={() =>
                           handlePasswordModalOpen(
                             [course.userId, course.courseId._id],
-                            "unassignCourse",
+                            "unassignCourse"
                           )
                         }
                       >
