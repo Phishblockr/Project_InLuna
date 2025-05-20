@@ -10,6 +10,8 @@ import bcrypt from "bcryptjs";
 import { generateUsername } from "../utils/generateUsername.js";
 import { generatePasswordSetupLink } from "../utils/generatePasswordSetupLink.js";
 import { sendPasswordSetupEmail } from "../utils/sendPasswordSetupEmail.js";
+import { getTenantSubscriptionModel } from "../models/paymentModels/subscriptionModel.js";
+import { format } from "date-fns";
 
 // Logger setup
 const logger = winston.createLogger({
@@ -60,7 +62,7 @@ export const getAllOrganizations = async (req, res) => {
             totalPages: Math.ceil(count / limit),
             currentPage: page,
           }
-        : { error: "Organizations not found" },
+        : { error: "Organizations not found" }
     );
   } catch (error) {
     logger.error(error.message);
@@ -167,14 +169,14 @@ export const createOrganization = asyncHandler(async (req, res) => {
         adminEmail,
         "Welcome To InLuna 🙏🏻 - Password Setup",
         emailContent,
-        newUser,
+        newUser
       );
     } else {
       await sendOnboardingEmail(
         adminEmail,
         "Welcome To InLuna 🙏🏻",
         orgId,
-        newUser,
+        newUser
       );
     }
 
@@ -236,7 +238,7 @@ export const deleteOrganization = asyncHandler(async (req, res) => {
 
     // ✅ Remove the tenant database (Disconnect & Drop)
     const tenantConnection = mongoose.connections.find(
-      (conn) => conn.name === `tenant-${orgId}`,
+      (conn) => conn.name === `tenant-${orgId}`
     );
 
     if (tenantConnection) {
@@ -334,7 +336,7 @@ export const getOrgDetails = asyncHandler(async (req, res) => {
     const users = await User.find({ orgId: orgId });
 
     const userDetails = await User.find({ orgId: orgId }).select(
-      "name department userType role email createdAt",
+      "name department userType role email createdAt"
     );
 
     const departments = [...new Set(users.map((user) => user.department))];
@@ -354,4 +356,57 @@ export const getOrgDetails = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(500).send(error.message);
   }
+});
+
+export const getTransactionSettings = asyncHandler(async (req, res) => {
+  const { orgId } = req.user;
+  if (!orgId) {
+    return res.status(400).json({ message: "orgId is required." });
+  }
+
+  const OrgModel = await getOrgModel();
+  const organization = await OrgModel.findOne({ orgId });
+  if (!organization) {
+    return res.status(404).json({ message: "Organization not found." });
+  }
+  const User = await getUserModel(orgId);
+  const Subscription = await getTenantSubscriptionModel(orgId);
+
+  // Recently added users and users
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const currentUsers = await User.countDocuments();
+  const recentlyAddedUsers = await User.countDocuments({
+    createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+  });
+
+  const subscription = await Subscription.findOne().select(
+    "status trialEndsAt nextBillingDate amount cardType last4 paymentMode currency"
+  );
+
+  res.status(200).json({
+    organization: {
+      name: organization.name,
+      adminEmailIds: organization.adminEmailIds,
+      orgId: organization.orgId,
+    },
+    subscriptionDetails: subscription
+      ? {
+          amount: subscription.amount,
+          currency: subscription.currency,
+          status: subscription.status,
+          paymentMode: subscription.paymentMode,
+          cardType: subscription.cardType,
+          last4: subscription.last4,
+          nextBillingDate: format(subscription.nextBillingDate, "dd MMM yyyy"),
+          isRecurring: subscription.isRecurring,
+        }
+      : null,
+    users: {
+      current: currentUsers,
+      recentlyAdded: recentlyAddedUsers,
+    },
+  });
 });

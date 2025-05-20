@@ -90,10 +90,6 @@ const TransactionSchema = new Schema({
     type: String,
     default: null,
   },
-  source: {
-    type: String,
-    enum: ["user", "org"],
-  },
   // Full decrypted gateway response for reference/debugging
   gateway_response: {
     type: Object,

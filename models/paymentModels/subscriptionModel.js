@@ -1,27 +1,41 @@
-import { getTenantDB } from "../../tenantdb";
+import mongoose from "mongoose";
+import { getTenantDB } from "../../tenantdb.js";
 
 const SubscriptionSchema = new mongoose.Schema({
-  user_id: { type: String, default: null },
-  org_id: { type: String, default: null },
-  source: { type: String, enum: ["user", "org"] },
+  user_id: {
+    type: String,
+    default: null,
+    ref: "User",
+  },
+  org_id: {
+    type: String,
+    default: null,
+  },
 
-  plan_name: String,
+  currency: {
+    type: String,
+    default: "INR",
+  },
+
   status: {
     type: String,
     enum: ["ACTIVE", "TRIAL", "CANCELLED"],
     default: "TRIAL",
   },
-  trial_ends_at: Date,
+  trialEndsAt: Date,
 
-  is_recurring: { type: Boolean, default: false },
-  next_billing_date: Date,
+  isRecurring: {
+    type: Boolean,
+    default: false,
+  },
+  nextBillingDate: Date,
   amount: Number,
-  payment_mode: String,
+  paymentMode: String,
   last4: String,
-  card_type: String,
+  cardType: String,
 
-  coupon_code: String,
-  discount_amount: Number,
+  couponCode: String,
+  discountAmount: Number,
 
   created_at: { type: Date, default: Date.now },
 });

@@ -43,7 +43,6 @@ export const handlePaymentResponse = async (req, res) => {
       created_at: new Date(),
       user_id: merchant_param2 || null,
       org_id: merchant_param3 || null,
-      source: userId ? "user" : "org",
       gateway_response: parsed,
     };
 
@@ -79,55 +78,3 @@ export const getAllOrgTransactions = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-export const getTransactionSettings = asyncHandler(async (req, res) => {
-  const { orgId } = req.user;
-  if (!orgId) {
-    return res.status(400).json({ message: "orgId is required." });
-  }
-
-  const OrgModel = await getOrgModel();
-  const organization = await OrgModel.findOne({ orgId });
-  if (!organization) {
-    return res.status(404).json({ message: "Organization not forund." });
-  }
-  const User = await getUserModel(orgId);
-  const Transaction = await getTenantTransactionModel(orgId);
-
-  // Recently added users and users
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-  const currentUsers = await User.countDocuments();
-  const recentlyAddedUsers = await User.countDocuments({
-    createdAt: { $gte: startOfMonth, $lte: endOfMonth },
-  });
-
-  const latestTransaction = await Transaction.findOne({ org_id: orgId })
-    .sort({ created_at: -1 })
-    .lean();
-
-  res.status(200).json({
-    organization: {
-      name: organization.name,
-      adminEmailIds: organization.adminEmailIds,
-      orgId: organization.orgId,
-    },
-    transactionSettings: latestTransaction
-      ? {
-          amount: latestTransaction.amount,
-          currency: latestTransaction.currency,
-          paymentStatus: latestTransaction.payment_status,
-          card: latestTransaction.card_details,
-          nextBillingDate: latestTransaction.next_billing_date,
-          isRecurring: latestTransaction.is_recurring,
-          mandateStatus: latestTransaction.si_status,
-        }
-      : null,
-    users: {
-      current: currentUsers,
-      recentlyAdded: recentlyAddedUsers,
-    },
-  });
-});
