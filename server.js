@@ -34,8 +34,8 @@ import heartBeatRoutes from "./routes/heartBeatRoutes.js";
 
 import cookieParser from "cookie-parser";
 
-// import fetchAndSavePhishtankData from './cronJobs/phishtankJob.js';
-// import fetchAndSaveUrlhausData from './cronJobs/urlhausService.js';
+import fetchAndSavePhishtankData from "./cronJobs/phishtankJob.js";
+import fetchAndSaveUrlhausData from "./cronJobs/urlhausService.js";
 
 // Training Platform
 import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
@@ -120,7 +120,7 @@ app.use(
     },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "X-Extension-ID"],
-  }),
+  })
 );
 
 app.use(cookieParser());
@@ -232,7 +232,7 @@ app.use("/api/bookADemo", bookADemoRoutes);
 
 // app.use('/oidc', oidc.callback());
 
-// Start cron job
+// Start cron job (Testing only do not uncomment in production)
 // fetchAndSavePhishtankData();
 // fetchAndSaveUrlhausData();
 
