@@ -1,4 +1,5 @@
 // Custom version to store transactions into mongodb (replace ccavResponseHandler.js with this)
+import { format } from "date-fns";
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getOrgModel } from "../../models/organisationModel.js";
 import { getTenantTransactionModel } from "../../models/paymentModels/TransactionsModel.js";
@@ -71,8 +72,23 @@ export const getAllOrgTransactions = async (req, res) => {
       return res.status(404).json({ error: "Transaction model not found" });
     }
 
-    const transactions = await Transaction.find();
-    res.json(transactions);
+    const transactions = await Transaction.find().sort({ createdAt: -1 });
+    const formattedTransactions = transactions.map((tx) => ({
+      orderId: tx.order_id,
+      amount: tx.amount,
+      currency: tx.currency,
+      status: tx.payment_status,
+      paymentMode: tx.payment_mode,
+      cardType: tx.card_name || tx.card_type || null,
+      last4: tx.last4,
+      paymentDate: format(tx.created_at, "dd MMM yyyy"),
+      nextBillingDate: tx.next_billing_date
+        ? format(tx.next_billing_date, "dd MMM yyyy")
+        : null,
+      isRecurring: tx.is_recurring,
+    }));
+
+    res.status(200).json(formattedTransactions);
   } catch (error) {
     console.error("❌ Error fetching transactions:", error);
     res.status(500).json({ error: "Internal Server Error" });

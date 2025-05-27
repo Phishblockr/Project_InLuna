@@ -34,6 +34,8 @@ export const postRes = async (req, res) => {
       merchant_param1,
       merchant_param2,
       merchant_param3,
+      card_name,
+      trans_date,
     } = params;
 
     const userId = merchant_param2;
@@ -55,7 +57,8 @@ export const postRes = async (req, res) => {
       created_at: new Date(),
       user_id: merchant_param2 || null,
       org_id: merchant_param3 || null,
-      source: merchant_param2 ? "user" : "org",
+      card_type: card_name,
+      transaction_date_ca: trans_date,
       gateway_response: params,
     };
 

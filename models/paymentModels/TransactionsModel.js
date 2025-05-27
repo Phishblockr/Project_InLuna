@@ -16,28 +16,19 @@ const TransactionSchema = new Schema({
 
   payment_status: String,
   payment_mode: String, // Card / UPI / NetBanking
-  card_details: {
-    card_type: {
-      type: String, // e.g., VISA, MasterCard
-      default: null,
-    },
-    cardholder_name: {
-      type: String,
-      default: null,
-    },
-    last4: {
-      type: String, // Only store last 4 digits (e.g., "1234")
-      match: [/^\d{4}$/, "Must be last 4 digits of card"],
-      default: null,
-    },
-    issuer: {
-      type: String, // e.g., HDFC, SBI, etc.
-      default: null,
-    },
-    network: {
-      type: String, // Optional: e.g., Rupay, Amex
-      default: null,
-    },
+
+  card_type: {
+    type: String, // e.g., VISA, MasterCard
+    default: null,
+  },
+  cardholder_name: {
+    type: String,
+    default: null,
+  },
+  last4: {
+    type: String, // Only store last 4 digits (e.g., "1234")
+    match: [/^\d{4}$/, "Must be last 4 digits of card"],
+    default: null,
   },
 
   // Auto-Renewal (SI) specific fields:
@@ -93,6 +84,9 @@ const TransactionSchema = new Schema({
   // Full decrypted gateway response for reference/debugging
   gateway_response: {
     type: Object,
+  },
+  transaction_date_ca: {
+    type: String,
   },
   created_at: {
     type: Date,
