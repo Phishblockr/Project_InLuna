@@ -37,6 +37,8 @@ import IndividualTraining from "./components/Training/IndividualTraining.jsx";
 import PasswordResetDone from "./components/ForgotDetails/PasswordResetDone.jsx";
 import SetupPasswordDone from "./components/Users/SetupPasswordDone.jsx";
 import TransactionSettings from "./components/Transaction/TransactionSettings.jsx";
+import TransactionsHistory from "./components/Transaction/TransactionsHistory.jsx";
+import CancelMembership from "./components/Transaction/CancelMembership.jsx";
 // import RedirectToSubdomain from "./components/RedirectToSubdomain.jsx";
 
 function App() {
@@ -80,7 +82,6 @@ function App() {
                     {/* Protected Routes */}
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<Overview />} />
-
                       <Route path="/users" element={<Users />} />
                       <Route path="/users/adduser" element={<AddUser />} />
                       <Route
@@ -114,12 +115,18 @@ function App() {
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/report" element={<ReportBug />} />
                       <Route path="/faq" element={<Faqs />} />
-
                       <Route
                         path="/transactionSettings"
                         element={<TransactionSettings />}
                       />
-
+                      <Route
+                        path="/transactionsHistory"
+                        element={<TransactionsHistory />}
+                      />
+                      <Route
+                        path="/cancelMembership"
+                        element={<CancelMembership />}
+                      />
                       {/* Training Routes */}
                       <Route path="/training" element={<Training />} />
                       <Route

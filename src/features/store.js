@@ -12,6 +12,7 @@ import campaignSlice from "./Campaign/Campaign";
 import userCourseReducer from "./UserCourse/userCourseSlice";
 import userEmailReducer from "./UserEmail/userEmailSlice";
 import transactionsettingsSlice from "./TransactionSettigns/transactionSettingsSlice";
+import transactionHistorySlice from "./TransactionHistory/transactionHistorySlice";
 
 const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ const store = configureStore({
     userEmails: userEmailReducer,
     campaign: campaignSlice,
     transactionSettings: transactionsettingsSlice,
+    transactionHistory: transactionHistorySlice,
   },
 });
 
