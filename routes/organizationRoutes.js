@@ -15,7 +15,7 @@ import superDashboardMiddleware from "../middlewares/superDashboardMiddleware.js
 const router = express.Router();
 
 router.get("/all", superDashboardMiddleware, getAllOrganizations);
-router.post("/create", superDashboardMiddleware, createOrganization);
+router.post("/create", createOrganization);
 router.get("/search", superDashboardMiddleware, searchOrganizations);
 router.get("/get/:id", superDashboardMiddleware, getOrganization);
 router.delete("/delete/:id", superDashboardMiddleware, deleteOrganization);

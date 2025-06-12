@@ -77,7 +77,7 @@ export const createOrganization = asyncHandler(async (req, res) => {
     // Check for required fields (adminPassword is optional now)
     if (!name || !adminName || !totalUsers || !adminEmail) {
       return res.status(400).json({
-        error:
+        message:
           "All organization and admin details are required (except password, which is optional).",
       });
     }
@@ -186,8 +186,8 @@ export const createOrganization = asyncHandler(async (req, res) => {
       admin: newAdmin,
     });
   } catch (error) {
-    console.error("❌ Error creating organization:", error.message);
-    res.status(500).json({ error: "Server error", details: error.message });
+    console.error("❌ Error creating organization:", error);
+    res.status(500).json({ message: error });
   }
 });
 
