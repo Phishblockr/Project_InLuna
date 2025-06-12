@@ -20,8 +20,8 @@ export const sendOnboardingIndividualUsrEmail = async (to, subject, user) => {
       <p>Hi ${user.name}</p>
       <p>We are very excited to have you onboard. Here is your username: <span>${user.username}</span></p>
       <p>Get started with setting up your environment on InLuna extension:</p>
-      <p><a href="#" style="color: #0364BD; text-decoration: underline;">For Chrome</a></p>
-      <p><a href="#" style="color: #0364BD; text-decoration: underline;">For Firefox</a></p>
+      <p><a href="https://chromewebstore.google.com/detail/inluna-individual/blcmmmkhbjlminfjgdfgohbehagoclho" style="color: #0364BD; text-decoration: underline;">For Chrome</a></p>
+      <p><a href="https://addons.mozilla.org/en-US/firefox/addon/inluna-individual/" style="color: #0364BD; text-decoration: underline;">For Firefox</a></p>
       <p>Thank you for using our services 😊</p>
       <p>Sincerely yours,</p>
       <p>The InLuna team</p>
