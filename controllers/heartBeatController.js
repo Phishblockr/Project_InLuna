@@ -52,7 +52,7 @@ export const saveHeartBeat = asyncHandler(async (req, res) => {
             }
           : {},
       },
-      { upsert: true, new: true },
+      { upsert: true, new: true }
     );
 
     // ✅ Emit heartbeat event via WebSockets (if available)
@@ -116,7 +116,7 @@ export const fetchHeartBeat = asyncHandler(async (req, res) => {
     endOfToday.setHours(23, 59, 59, 999);
 
     const hasDowntimeToday = heartBeatData.downtime.some(
-      (dt) => dt.newTimestamp >= startOfToday && dt.newTimestamp <= endOfToday,
+      (dt) => dt.newTimestamp >= startOfToday && dt.newTimestamp <= endOfToday
     );
 
     // ✅ Determine the current status
@@ -129,7 +129,7 @@ export const fetchHeartBeat = asyncHandler(async (req, res) => {
 
     // ✅ Sort downtime records (newest first)
     const sortedDowntime = heartBeatData.downtime.sort(
-      (a, b) => b.newTimestamp - a.newTimestamp,
+      (a, b) => b.newTimestamp - a.newTimestamp
     );
 
     // ✅ Format downtime duration
@@ -137,7 +137,7 @@ export const fetchHeartBeat = asyncHandler(async (req, res) => {
       const durationInMs = dt.duration;
       const hours = Math.floor(durationInMs / (1000 * 60 * 60));
       const minutes = Math.floor(
-        (durationInMs % (1000 * 60 * 60)) / (1000 * 60),
+        (durationInMs % (1000 * 60 * 60)) / (1000 * 60)
       );
       const seconds = Math.floor((durationInMs % (1000 * 60)) / 1000);
 
