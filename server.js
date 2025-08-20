@@ -58,6 +58,7 @@ import SOverviewRoutes from "./routes/superAdmin/overview.js";
 import ccaRoutes from "./routes/paymentRoutes/ccaRoutes.js";
 import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
 import contactUsRoutes from "./routes/contactUsRoutes.js";
+import recaptchaRoutes from "./routes/recaptchaRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -244,6 +245,9 @@ app.use("/api/ccavenue", ccaRoutes);
 
 //Transaction Routes
 app.use("/api/transactions", TransactionRoutes);
+
+// reCAPTCHA verification (REST)
+app.use("/api/recaptcha", recaptchaRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
