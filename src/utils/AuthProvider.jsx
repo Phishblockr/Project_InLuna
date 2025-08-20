@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }) => {
         } else {
           console.error(
             "Failed to refresh token. Response status:",
-            response.status,
+            response.status
           );
         }
         throw new Error("Failed to refresh token.");
@@ -154,9 +154,12 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Login failed. Please check your credentials!",
-        );
+        // Surface backend reCAPTCHA or auth messages
+        const msg =
+          data.message ||
+          data.error ||
+          "Login failed. Please check your credentials!";
+        throw new Error(msg);
       }
 
       const decodedToken = jwtDecode(data.token);
@@ -165,16 +168,29 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("userType", decodedToken.userType);
 
+      // Use redirectUrl from backend if provided (takes precedence)
+      const redirectUrl = data.redirectUrl;
+      setIsAuthenticated(true);
+      scheduleTokenRefresh(data.token);
+      setAccessToken(data.token);
+
+      if (redirectUrl) {
+        toast.success("Login successful");
+        // Decide internal vs external redirect
+        const sameOrigin = redirectUrl.startsWith(window.location.origin);
+        if (sameOrigin) {
+          navigate(redirectUrl.replace(window.location.origin, ""));
+        } else {
+          window.location.href = redirectUrl;
+        }
+        return;
+      }
+
+      // Fallback to userType-based routing if no redirectUrl
       if (decodedToken.userType === userType) {
-        setIsAuthenticated(true);
-        scheduleTokenRefresh(data.token);
-        setAccessToken(data.token);
         toast.success("Admin Login successful");
         navigate("/");
       } else if (decodedToken.userType == userTypeUser) {
-        setIsAuthenticated(true);
-        scheduleTokenRefresh(data.token);
-        setAccessToken(data.token);
         toast.success("User Login successful");
         window.location.href = import.meta.env.VITE_TRAINING_URL;
       } else {
@@ -204,7 +220,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout failed:", error);
       clearAuthState(false);
       toast.error(
-        "Failed to logout completely, but you are logged out locally.",
+        "Failed to logout completely, but you are logged out locally."
       );
     }
   };

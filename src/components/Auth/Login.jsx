@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../utils/AuthProvider";
 import { Link } from "react-router-dom";
+import useRecaptcha from "../../utils/useRecaptcha";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -8,14 +9,27 @@ const Login = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem("orgId") || "");
   const [rememberMe, setRememberMe] = useState(false);
   const { login } = useAuth();
+  const { ready: recaptchaReady, execute: executeRecaptcha } = useRecaptcha();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    let recaptchaToken = null;
+    try {
+      if (recaptchaReady) {
+        // Must match backend expectedAction: "dashboard_login"
+        recaptchaToken = await executeRecaptcha("dashboard_login");
+      } else {
+        console.warn("reCAPTCHA not ready, proceeding without token");
+      }
+    } catch (e) {
+      console.error("reCAPTCHA error", e);
+    }
     const loginData = {
       orgId: orgId,
       username: username,
       password: password,
       rememberMe: rememberMe,
+      recaptchaToken,
     };
     try {
       await login(loginData);
