@@ -1,181 +1,205 @@
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getIndividualUserModel } from "../../models/individualModels/individualUserModel.js";
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { OAuth2Client } from 'google-auth-library';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 
 export const loginIndUser = asyncHandler(async (req, res) => {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ message: "username and password are required." });
-    }
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ message: "username and password are required." });
+  }
 
-    const User = await getIndividualUserModel();
-    const user = await User.findOne({ username });
+  const User = await getIndividualUserModel();
+  const user = await User.findOne({ username });
 
-    if (!user) {
-        return res.status(400).json({ message: "Invalid credentails." })
-    }
+  if (!user) {
+    return res.status(400).json({ message: "Invalid credentails." });
+  }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-        return res.status(401).json({ message: "Invalid credentails" })
-    }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid credentails" });
+  }
 
-    const payload = {
-        userId: user._id,
-    };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { algorithm: "HS256", expiresIn: "1h" });
-    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, { algorithm: "HS256", expiresIn: "30d" })
+  const payload = {
+    userId: user._id,
+  };
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    algorithm: "HS256",
+    expiresIn: "1h",
+  });
+  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, {
+    algorithm: "HS256",
+    expiresIn: "30d",
+  });
 
-    user.refreshToken = refreshToken;
-    await user.save();
+  user.refreshToken = refreshToken;
+  await user.save();
 
-    res.status(200).json({ token, refreshToken })
+  res.status(200).json({ token, refreshToken });
 });
 
 export const IndRefreshToken = asyncHandler(async (req, res) => {
-    const { refreshToken } = req.body;
+  const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-        return res.status(400).json({ message: "Refresh token is required" })
-    }
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token is required" });
+  }
 
-    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
+  const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
 
-    const { userId } = decoded
+  const { userId } = decoded;
 
-    if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-    }
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
 
-    const User = await getIndividualUserModel();
-    const user = await User.findById(userId);
+  const User = await getIndividualUserModel();
+  const user = await User.findById(userId);
 
-    if (!user || user.refreshToken !== refreshToken) {
-        return res.status(403).json({ message: "Invalid refresh token." });
-    }
+  if (!user || user.refreshToken !== refreshToken) {
+    return res.status(403).json({ message: "Invalid refresh token." });
+  }
 
-    const payload = { userId: user._id };
-    const newToken = jwt.sign(payload, process.env.JWT_SECRET, { algorithm: "HS256", expiresIn: "1h" });
-    const newRefreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, { algorithm: "HS256", expiresIn: "30d" });
+  const payload = { userId: user._id };
+  const newToken = jwt.sign(payload, process.env.JWT_SECRET, {
+    algorithm: "HS256",
+    expiresIn: "1h",
+  });
+  const newRefreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, {
+    algorithm: "HS256",
+    expiresIn: "30d",
+  });
 
-    user.refreshToken = newRefreshToken;
-    await user.save();
+  user.refreshToken = newRefreshToken;
+  await user.save();
 
-    res.json({ token: newToken, refreshToken: newRefreshToken })
+  res.json({ token: newToken, refreshToken: newRefreshToken });
 });
 
 export const logoutIndUser = asyncHandler(async (req, res) => {
-    const { refreshToken } = req.body;
+  const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-        return res.status(400).json({ message: "Refresh token is required" })
-    }
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token is required" });
+  }
 
-    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
+  const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
 
-    const { userId } = decoded
+  const { userId } = decoded;
 
-    if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-    }
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
 
-    const User = await getIndividualUserModel();
-    const user = await User.findById(userId);
+  const User = await getIndividualUserModel();
+  const user = await User.findById(userId);
 
-    user.refreshToken = null;
-    await user.save();
+  user.refreshToken = null;
+  await user.save();
 
-    res.status(200).json({ message: "User logged out successfully" });
-})
+  res.status(200).json({ message: "User logged out successfully" });
+});
 
 export const findAccount = async (ctx, id) => {
-    const User = await getIndividualUserModel();
+  const User = await getIndividualUserModel();
 
-    let user;
-    try {
-        // Convert the id to a MongoDB ObjectId (if it isn't already) and query
-        user = await User.findById(new mongoose.Types.ObjectId(id));
-    } catch (err) {
-        console.error("findAccount error:", err);
-        return undefined;
-    }
+  let user;
+  try {
+    // Convert the id to a MongoDB ObjectId (if it isn't already) and query
+    user = await User.findById(new mongoose.Types.ObjectId(id));
+  } catch (err) {
+    console.error("findAccount error:", err);
+    return undefined;
+  }
 
-    if (!user) return undefined;
+  if (!user) return undefined;
 
-    // Return an object with the accountId and a claims function.
-    return {
-        accountId: id,
-        async claims(use, scope) {
-            // Return a claims object. You can customize which claims are returned
-            return {
-                sub: id,
-                name: user.name,
-                email: user.email,
-                // Add additional claims as needed
-            };
-        }
-    };
+  // Return an object with the accountId and a claims function.
+  return {
+    accountId: id,
+    async claims(use, scope) {
+      // Return a claims object. You can customize which claims are returned
+      return {
+        sub: id,
+        name: user.name,
+        email: user.email,
+        // Add additional claims as needed
+      };
+    },
+  };
 };
 
 // Google OAuth
 
-
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export const loginWithGoogle = asyncHandler(async (req, res) => {
-    const { idToken } = req.body;
-    if (!idToken) {
-        return res.status(400).json({ message: 'ID token is required.' });
-    }
+  const { idToken } = req.body;
+  if (!idToken) {
+    return res.status(400).json({ message: "ID token is required." });
+  }
 
-    const ticket = await client.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+
+  const { email, name, sub: googleId, picture } = payload;
+
+  if (!email || !name) {
+    return res
+      .status(400)
+      .json({ message: "Required user details are missing from token." });
+  }
+
+  const User = await getIndividualUserModel();
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    user = new User({
+      name,
+      email,
+      googleId,
+      img: picture,
+      userType: process.env.INDIVIDUAL,
     });
-    const payload = ticket.getPayload();
-
-
-    const { email, name, sub: googleId, picture } = payload;
-
-    if (!email || !name) {
-        return res.status(400).json({ message: 'Required user details are missing from token.' });
-    }
-
-    const User = await getIndividualUserModel();
-    let user = await User.findOne({ email });
-
-    if (!user) {
-        user = new User({
-            name,
-            email,
-            googleId,
-            img: picture,
-            userType: process.env.INDIVIDUAL,
+    user = await user.save();
+  } else {
+    if (!user.googleId) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "This email is already registered using traditional login. Please use that method to login.",
         });
-        user = await user.save();
-    } else {
-        if (!user.googleId) {
-            return res.status(400).json({ message: "This email is already registered using traditional login. Please use that method to login." });
-        }
-
-        user.googleId = googleId;
-        user.img = picture;
-        user = await user.save();
     }
 
-    const tokenPayload = {
-        userId: user._id,
-        email: user.email,
-    };
+    user.googleId = googleId;
+    user.img = picture;
+    user = await user.save();
+  }
 
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { algorithm: "HS256", expiresIn: "1h" });
-    const refreshToken = jwt.sign(tokenPayload, process.env.JWT_SECRET_REFRESH, { algorithm: "HS256", expiresIn: "30d" });
+  const tokenPayload = {
+    userId: user._id,
+    email: user.email,
+  };
 
-    user.refreshToken = refreshToken;
-    await user.save();
+  const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
+    algorithm: "HS256",
+    expiresIn: "1h",
+  });
+  const refreshToken = jwt.sign(tokenPayload, process.env.JWT_SECRET_REFRESH, {
+    algorithm: "HS256",
+    expiresIn: "30d",
+  });
 
-    res.status(200).json({ token, refreshToken });
+  user.refreshToken = refreshToken;
+  await user.save();
 
-})
+  res.status(200).json({ token, refreshToken });
+});

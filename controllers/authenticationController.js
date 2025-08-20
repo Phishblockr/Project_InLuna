@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { decrypt, encrypt } from "../utils/tokenEncryption.js";
 import { getUserModel } from "../tenantdb.js";
 import { getSuperAdminModel } from "../models/superAdmin/superAdminModel.js";
+import { verifyRecaptchaToken } from "../utils/recaptcha.js";
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ const logger = winston.createLogger({
 
 // Login user
 export const loginUser = asyncHandler(async (req, res) => {
-  const { orgId, username, password } = req.body;
+  const { orgId, username, password, recaptchaToken } = req.body;
 
   if (!orgId || !username || !password) {
     return res
@@ -31,6 +32,30 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   try {
+    if (process.env.RECAPTCHA_ENABLED === "true") {
+      const verification = await verifyRecaptchaToken({
+        token: recaptchaToken,
+        expectedAction: "tenant_login",
+      });
+      if (!verification.valid) {
+        return res
+          .status(400)
+          .json({
+            message: "reCAPTCHA verification failed",
+            reasons: verification.reasons,
+            error: verification.error,
+          });
+      }
+      const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
+      if (verification.score !== null && verification.score < minScore) {
+        return res
+          .status(403)
+          .json({
+            message: "Suspicious activity detected (low reCAPTCHA score)",
+            score: verification.score,
+          });
+      }
+    }
     // Get the tenant-specific User model
     const User = await getUserModel(orgId);
 
@@ -126,14 +151,12 @@ export const refreshTokenExt = asyncHandler(async (req, res) => {
 
 // Login admin (dashboard)
 export const loginAdmin = asyncHandler(async (req, res) => {
-  const { orgId, username, password, rememberMe } = req.body;
+  const { orgId, username, password, rememberMe, recaptchaToken } = req.body;
 
   if (!orgId || !username || !password) {
-    return res
-      .status(400)
-      .json({
-        message: "Organization ID, username, and password are required.",
-      });
+    return res.status(400).json({
+      message: "Organization ID, username, and password are required.",
+    });
   }
 
   const cookieOptions = {
@@ -147,6 +170,30 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   }
 
   try {
+    if (process.env.RECAPTCHA_ENABLED === "true") {
+      const verification = await verifyRecaptchaToken({
+        token: recaptchaToken,
+        expectedAction: "dashboard_login",
+      });
+      if (!verification.valid) {
+        return res
+          .status(400)
+          .json({
+            message: "reCAPTCHA verification failed",
+            reasons: verification.reasons,
+            error: verification.error,
+          });
+      }
+      const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
+      if (verification.score !== null && verification.score < minScore) {
+        return res
+          .status(403)
+          .json({
+            message: "Suspicious activity detected (low reCAPTCHA score)",
+            score: verification.score,
+          });
+      }
+    }
     // Get the tenant-specific User model
     const User = await getUserModel(orgId);
 
@@ -205,7 +252,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
 
 // Login on Super Dashboard (only super admin)
 export const loginSuperAdm = asyncHandler(async (req, res) => {
-  const { username, password, rememberMe } = req.body;
+  const { username, password, rememberMe, recaptchaToken } = req.body;
 
   if (!username || !password) {
     return res
@@ -224,6 +271,30 @@ export const loginSuperAdm = asyncHandler(async (req, res) => {
   }
 
   try {
+    if (process.env.RECAPTCHA_ENABLED === "true") {
+      const verification = await verifyRecaptchaToken({
+        token: recaptchaToken,
+        expectedAction: "super_login",
+      });
+      if (!verification.valid) {
+        return res
+          .status(400)
+          .json({
+            message: "reCAPTCHA verification failed",
+            reasons: verification.reasons,
+            error: verification.error,
+          });
+      }
+      const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
+      if (verification.score !== null && verification.score < minScore) {
+        return res
+          .status(403)
+          .json({
+            message: "Suspicious activity detected (low reCAPTCHA score)",
+            score: verification.score,
+          });
+      }
+    }
     // Get the Super Admin model from admindb
     const SuperAdmin = await getSuperAdminModel();
 
@@ -338,7 +409,7 @@ export const refreshTokenDas = asyncHandler(async (req, res) => {
       {
         algorithm: "HS256",
         expiresIn: "7d",
-      },
+      }
     );
 
     // Encrypt and store new refresh token

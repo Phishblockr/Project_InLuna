@@ -13,6 +13,7 @@ import { getAdminLogsModel } from "../models/adminlogsModel.js";
 import { sendPasswordSetupEmail } from "../utils/sendPasswordSetupEmail.js";
 import { getOrgModel } from "../models/organisationModel.js";
 import { generatePasswordSetupLink } from "../utils/generatePasswordSetupLink.js";
+import { isDisposableEmail } from "../utils/isDisposableEmail.js";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -91,7 +92,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
     const usersWithHeartBeatStatus = users.map((user) => {
       const heartBeat = heartBeats.find(
-        (hb) => hb.userId.toString() === user._id.toString(),
+        (hb) => hb.userId.toString() === user._id.toString()
       );
 
       let heartBeatStatus = "not initialized";
@@ -198,6 +199,14 @@ export const createUser = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: "Organization ID is required." });
     }
 
+    // Block disposable / temporary email domains
+    if (email && isDisposableEmail(email)) {
+      return res.status(400).json({
+        message:
+          "Disposable / temporary email addresses are not allowed. Please use a valid permanent email.",
+      });
+    }
+
     // Get the admin database model (Organizations)
     const OrgModel = await getOrgModel();
 
@@ -257,7 +266,7 @@ export const createUser = asyncHandler(async (req, res) => {
             }
           : {}),
       },
-      { new: true }, // Return updated document
+      { new: true } // Return updated document
     );
 
     if (!updatedOrg) {
@@ -272,7 +281,7 @@ export const createUser = asyncHandler(async (req, res) => {
       email,
       "InLuna Dashboard - Password Setup",
       emailContent,
-      addedUser,
+      addedUser
     );
 
     // Emit real-time event (if using WebSockets)
@@ -310,6 +319,14 @@ export const createAdmin = asyncHandler(async (req, res) => {
 
     if (!orgId) {
       return res.status(400).json({ message: "Organization ID is required." });
+    }
+
+    // Block disposable / temporary email domains
+    if (email && isDisposableEmail(email)) {
+      return res.status(400).json({
+        message:
+          "Disposable / temporary email addresses are not allowed. Please use a valid permanent email.",
+      });
     }
 
     // Get the admin database model (Organizations)
@@ -557,7 +574,7 @@ export const updateAdminDetails = asyncHandler(async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { name, email, recoveryEmail, role, department, img },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     );
 
     if (!updatedUser) {
@@ -635,7 +652,9 @@ export const updateAdminPwd = asyncHandler(async (req, res) => {
       await AdminLogs.create({
         userId,
         operationType: "update",
-        operationsPerformed: `Admin password updated: ${user.name || "Unknown"}`,
+        operationsPerformed: `Admin password updated: ${
+          user.name || "Unknown"
+        }`,
         orgId,
         entityId: userId,
         entityType: "user",
@@ -744,7 +763,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
         $inc: { usersCount: -1 }, // Decrement usersCount
         ...updateOrgQuery, // Apply admin removal if applicable
       },
-      { new: true },
+      { new: true }
     );
 
     // Delete user
@@ -888,12 +907,12 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
             user.email,
             "InLuna Dashboard - Password Setup",
             emailContent,
-            user,
+            user
           );
         } catch (emailError) {
           console.error(
             `Failed to send email to ${user.email}:`,
-            emailError.message,
+            emailError.message
           );
         }
 
@@ -917,7 +936,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
       await OrgModel.findOneAndUpdate(
         { orgId },
         { $inc: { usersCount: insertedUsers.length } }, // Increase by number of inserted users
-        { new: true },
+        { new: true }
       );
 
       res.status(200).json({ message: "Users added successfully." });
@@ -948,7 +967,7 @@ export const fetchProfile = asyncHandler(async (req, res) => {
 
     // Find the user profile within the tenant DB
     const user = await User.findById(userId).select(
-      "img name username email recoveryEmail role department status",
+      "img name username email recoveryEmail role department status"
     );
 
     if (!user) {
