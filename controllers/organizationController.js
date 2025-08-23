@@ -12,6 +12,9 @@ import { generatePasswordSetupLink } from "../utils/generatePasswordSetupLink.js
 import { sendPasswordSetupEmail } from "../utils/sendPasswordSetupEmail.js";
 import { getTenantSubscriptionModel } from "../models/paymentModels/subscriptionModel.js";
 import { format } from "date-fns";
+import crypto from "crypto";
+import { getPendingOrgModel } from "../models/pendingOrganizationModel.js";
+import { sendOrgVerificationEmail } from "../utils/sendOrgVerificationEmail.js";
 
 // Logger setup
 const logger = winston.createLogger({
@@ -188,6 +191,210 @@ export const createOrganization = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("❌ Error creating organization:", error);
     res.status(500).json({ message: error });
+  }
+});
+
+// Step 1: initiate organization creation (send verification email)
+export const initiateOrganizationCreation = asyncHandler(async (req, res) => {
+  const { name, adminName, totalUsers, adminEmail, adminPassword } = req.body;
+  console.log(name)
+
+  if (!name || !adminName || !totalUsers || !adminEmail) {
+    return res.status(400).json({
+      message: "name, adminName, totalUsers, adminEmail are required.",
+    });
+  }
+
+  // Ensure organization does not already exist
+  const OrgModel = await getOrgModel();
+  const existingOrg = await OrgModel.findOne({ adminEmailIds: adminEmail });
+  if (existingOrg) {
+    return res
+      .status(400)
+      .json({ message: "Organization with this email already exists." });
+  }
+
+  const PendingModel = await getPendingOrgModel();
+  // Remove previous pending entries for same email
+  await PendingModel.deleteMany({ adminEmail });
+
+  let passwordHash = "";
+  let passwordProvided = false;
+  if (adminPassword && adminPassword.trim()) {
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+    if (!passwordRegex.test(adminPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 6 characters and contain letters & numbers.",
+      });
+    }
+    const salt = await bcrypt.genSalt(10);
+    passwordHash = await bcrypt.hash(adminPassword, salt);
+    passwordProvided = true;
+  }
+
+  try {
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+    const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await PendingModel.create({
+      name,
+      adminName,
+      totalUsers,
+      adminEmail,
+      passwordHash,
+      passwordProvided,
+      tokenHash,
+      tokenExpiresAt,
+    });
+
+    const frontendBase = process.env.FRONT_END_URL;
+    if (!frontendBase) {
+      logger.error("FRONT_END_URL env var missing");
+      return res.status(500).json({
+        message: "Configuration error: FRONT_END_URL not set.",
+      });
+    }
+    const verifyLink = `${frontendBase}/verify-organization?token=${rawToken}&email=${encodeURIComponent(
+      adminEmail
+    )}`;
+
+    // Temporary test log (remove or guard in production)
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[TEST] Organization verification link:", verifyLink);
+    }
+
+    try {
+      await sendOrgVerificationEmail(adminEmail, verifyLink, name);
+    } catch (e) {
+      logger.error(
+        "Send verification email failed: " +
+          e.message +
+          (e.response?.body ? " | details: " + JSON.stringify(e.response.body) : "")
+      );
+      return res.status(500).json({
+        message: "Failed to send verification email.",
+        hint:
+          process.env.NODE_ENV === "development"
+            ? "Check server logs for SendGrid response details."
+            : undefined,
+      });
+    }
+
+    return res.status(202).json({
+      message: "Verification email sent. Please verify within 24 hours.",
+    });
+  } catch (e) {
+    logger.error("Initiate org error: " + e.message);
+    return res.status(500).json({ message: "Server error initiating." });
+  }
+});
+
+// Step 2: verify email and create organization
+export const verifyOrganizationEmail = asyncHandler(async (req, res) => {
+  const { token, email } = req.query;
+  if (!token || !email) {
+    return res.status(400).json({ message: "token and email are required." });
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const PendingModel = await getPendingOrgModel();
+  const pending = await PendingModel.findOne({
+    adminEmail: email,
+    tokenHash,
+    tokenExpiresAt: { $gt: new Date() },
+  });
+
+  if (!pending) {
+    return res
+      .status(400)
+      .json({ message: "Invalid or expired verification token." });
+  }
+
+  try {
+    const TenantModel = await getOrgModel();
+    const duplicate = await TenantModel.findOne({
+      adminEmailIds: pending.adminEmail,
+    });
+    if (duplicate) {
+      await pending.deleteOne();
+      return res
+        .status(409)
+        .json({ message: "Organization already created with this email." });
+    }
+
+    const orgId = await generateUniqueOrgId(TenantModel);
+    const newOrg = new TenantModel({
+      orgId,
+      name: pending.name,
+      adminName: pending.adminName,
+      totalUsers: pending.totalUsers,
+      adminEmailIds: [pending.adminEmail],
+    });
+    await newOrg.save();
+
+    const tenantDb = await getTenantDB(orgId);
+    if (!tenantDb) {
+      await newOrg.deleteOne();
+      return res
+        .status(500)
+        .json({ message: "Failed to initialize tenant database." });
+    }
+
+    if (!tenantDb.models.AdminLogs) {
+      tenantDb.model("AdminLogs", adminLogsSchema);
+    }
+    if (!tenantDb.models.HeartBeat) {
+      tenantDb.model("HeartBeat", heartbeatSchema);
+    }
+
+    const User = await getUserModel(orgId);
+    const username = generateUsername(pending.adminEmail, 0);
+    const newAdmin = new User({
+      username,
+      name: pending.adminName,
+      email: pending.adminEmail,
+      password: pending.passwordProvided ? pending.passwordHash : "",
+      orgId,
+      userType: process.env.ADMIN,
+    });
+    const savedAdmin = await newAdmin.save();
+
+    newOrg.adminIds = [savedAdmin._id];
+    newOrg.usersCount = Number(newOrg.usersCount) + 1;
+    newOrg.markModified("adminIds");
+    await newOrg.save();
+
+    if (!pending.passwordProvided) {
+      const emailContent = await generatePasswordSetupLink(savedAdmin, orgId);
+      await sendPasswordSetupEmail(
+        pending.adminEmail,
+        "Welcome To InLuna 🙏🏻 - Password Setup",
+        emailContent,
+        savedAdmin
+      );
+    } else {
+      await sendOnboardingEmail(
+        pending.adminEmail,
+        "Welcome To InLuna 🙏🏻",
+        orgId,
+        savedAdmin
+      );
+    }
+
+    await pending.deleteOne();
+
+    return res.status(201).json({
+      message: "Organization verified and created successfully.",
+      organization: { orgId: newOrg.orgId, name: newOrg.name },
+    });
+  } catch (err) {
+    logger.error("Verification create org error:", err);
+    return res.status(500).json({ message: "Server error." });
   }
 });
 
