@@ -40,6 +40,7 @@ import TransactionSettings from "./components/Transaction/TransactionSettings.js
 import TransactionsHistory from "./components/Transaction/TransactionsHistory.jsx";
 import CancelMembership from "./components/Transaction/CancelMembership.jsx";
 // import RedirectToSubdomain from "./components/RedirectToSubdomain.jsx";
+import VerifyOrganization from "./pages/VerifyOrganization.jsx";
 
 function App() {
   const theme = useSelector((state) => state.theme);
@@ -56,6 +57,10 @@ function App() {
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/logout" element={<Logout />} />
+                  <Route
+                    path="/verify-organization"
+                    element={<VerifyOrganization />}
+                  />
 
                   <Route path="/forgotDetails" element={<ForgotDetails />} />
                   <Route
