@@ -7,6 +7,7 @@ import winston from "winston";
 
 import authenticationRoutes from "./routes/authenticationRoutes.js";
 import indAuthRoutes from "./routes/IndividualRoutes/indAuthRoutes.js";
+import indRegistrationRoutes from "./routes/IndividualRoutes/indRegistrationRoutes.js";
 
 import organizationRoutes from "./routes/organizationRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -165,6 +166,7 @@ app.use("/api/org", organizationRoutes);
 app.use("/api/auth", authenticationRoutes);
 
 app.use("/api/indAuth", indAuthRoutes);
+app.use("/api/indRegister", indRegistrationRoutes);
 
 // Users Routes
 // Individual middleware to added specific routes for user
