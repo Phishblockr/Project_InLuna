@@ -12,10 +12,15 @@ export const useRecaptcha = (
   siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY,
   enterpriseFlag = import.meta.env.VITE_RECAPTCHA_ENTERPRISE === "true"
 ) => {
-  const [ready, setReady] = useState(false);
+  const devBypass = import.meta.env.VITE_DEV === "true"; // When true, we skip network calls and return a fixed token
+  const [ready, setReady] = useState(devBypass ? true : false);
   const [isEnterprise, setIsEnterprise] = useState(enterpriseFlag);
 
   useEffect(() => {
+    if (devBypass) {
+      // In dev bypass mode we don't load any script, reCAPTCHA always 'ready'.
+      return;
+    }
     if (!siteKey) {
       console.warn("reCAPTCHA site key missing: VITE_RECAPTCHA_SITE_KEY");
       return;
@@ -56,6 +61,9 @@ export const useRecaptcha = (
 
   const execute = useCallback(
     async (action) => {
+      if (devBypass) {
+        return "dev-bypass"; // Explicit marker that backend can trust only in dev
+      }
       if (!siteKey) return null;
       if (!window.grecaptcha || !ready) {
         console.warn("reCAPTCHA not ready yet");
@@ -63,9 +71,7 @@ export const useRecaptcha = (
       }
       try {
         if (isEnterprise && window.grecaptcha.enterprise?.execute) {
-          return await window.grecaptcha.enterprise.execute(siteKey, {
-            action,
-          });
+          return await window.grecaptcha.enterprise.execute(siteKey, { action });
         }
         return await window.grecaptcha.execute(siteKey, { action });
       } catch (err) {
@@ -73,10 +79,10 @@ export const useRecaptcha = (
         return null;
       }
     },
-    [ready, siteKey, isEnterprise]
+    [ready, siteKey, isEnterprise, devBypass]
   );
 
-  return { ready, execute, siteKey, isEnterprise };
+  return { ready, execute, siteKey, isEnterprise, devBypass };
 };
 
 export default useRecaptcha;

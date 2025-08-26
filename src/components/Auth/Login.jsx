@@ -18,6 +18,7 @@ const Login = () => {
       if (recaptchaReady) {
         // Must match backend expectedAction: "dashboard_login"
         recaptchaToken = await executeRecaptcha("dashboard_login");
+        console.log(recaptchaToken)
       } else {
         console.warn("reCAPTCHA not ready, proceeding without token");
       }

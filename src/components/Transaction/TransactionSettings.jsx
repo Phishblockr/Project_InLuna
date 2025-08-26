@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RiArrowRightSLine, RiMastercardFill } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../../utils/AuthProvider";
@@ -9,6 +9,12 @@ import { RiVisaLine } from "react-icons/ri";
 import { GrAmex } from "react-icons/gr";
 import { FaRegCreditCard } from "react-icons/fa";
 import { Link } from "react-router-dom";
+// Razorpay per-member billing imports
+import { createOrder, verifyPayment } from "../../api/razorpayClient";
+import { useRazorpayCheckout } from "../../hooks/useRazorpayCheckout";
+import PayNowButton from "../PayNowButton";
+import PaymentSummary from "../PaymentSummary";
+import { formatInrFromPaise } from "../../utils/currency";
 
 const TransactionSettings = () => {
   const [dataLoading, setDataLoading] = useState(true);
@@ -21,6 +27,17 @@ const TransactionSettings = () => {
   const { data, loading, error } = useSelector(
     (state) => state.transactionSettings
   );
+
+  // === Billing (Razorpay) state ===
+  const { ready: rzpReady, openCheckout } = useRazorpayCheckout();
+  const [perMemberPriceInPaise, setPerMemberPriceInPaise] = useState(null);
+  const [perMemberPriceInRupees, setPerMemberPriceInRupees] = useState("");
+  const [usersCount, setUsersCount] = useState(null);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [billingError, setBillingError] = useState("");
+  const [lastPayment, setLastPayment] = useState(null);
+  const [prefetched, setPrefetched] = useState(false);
 
   useEffect(() => {
     setDataLoading(true);
@@ -35,6 +52,75 @@ const TransactionSettings = () => {
         setDataLoading(false);
       });
   }, [dispatch]);
+
+  // Prefetch order to show pricing (server should no-op unpaid orders or treat as preview)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!token) return;
+      try {
+        const order = await createOrder(token);
+        if (cancelled) return;
+        setUsersCount(order.usersCount);
+        setPerMemberPriceInPaise(order.perMemberPriceInPaise);
+        setPerMemberPriceInRupees((order.perMemberPriceInPaise / 100).toFixed(2));
+        setPrefetched(true);
+      } catch (e) {
+        if (!cancelled) setBillingError(e.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
+
+  const initiatePayment = useCallback(async () => {
+    if (!token || creatingOrder || verifying) return;
+    setBillingError("");
+    setCreatingOrder(true);
+    try {
+      const order = await createOrder(token);
+      setUsersCount(order.usersCount);
+      setPerMemberPriceInPaise(order.perMemberPriceInPaise);
+      setPerMemberPriceInRupees((order.perMemberPriceInPaise / 100).toFixed(2));
+      openCheckout({
+        key: order.keyId,
+        order_id: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "InLuna",
+        description: "Member Billing",
+        handler: async (resp) => {
+          setVerifying(true);
+          try {
+            await verifyPayment(token, {
+              razorpay_order_id: resp.razorpay_order_id,
+              razorpay_payment_id: resp.razorpay_payment_id,
+              razorpay_signature: resp.razorpay_signature,
+            });
+            setLastPayment({
+              amountInPaise: order.amount,
+              usersCount: order.usersCount,
+              perMemberPriceInPaise: order.perMemberPriceInPaise,
+              paymentId: resp.razorpay_payment_id,
+              orderId: resp.razorpay_order_id,
+            });
+          } catch (e) {
+            setBillingError(e.message || "Payment verification failed");
+          } finally {
+            setVerifying(false);
+          }
+        },
+        theme: { color: "#0364bd" },
+      });
+    } catch (e) {
+      setBillingError(e.message);
+    } finally {
+      setCreatingOrder(false);
+    }
+  }, [token, creatingOrder, verifying, openCheckout]);
+
+  const totalPaise = usersCount != null && perMemberPriceInPaise != null
+    ? usersCount * perMemberPriceInPaise
+    : null;
 
   if (!data.organization) {
     return <LoadingOverlay loading={true} />;
@@ -72,7 +158,7 @@ const TransactionSettings = () => {
             Manage and view your transactions
           </span>
         </div>
-        <div className="flex flex-col gap-5">
+  <div className="flex flex-col gap-5">
           <div className="bg-gray-100 rounded-xl dark:bg-[#001c40]">
             <div className="p-5 flex flex-col">
               <span className="mb-2">Account Details</span>
@@ -167,6 +253,34 @@ const TransactionSettings = () => {
                 <span>Recently Onboarded</span>
               </div>
             </div>
+          </div>
+          {/* Per-Member Billing Section (integrated) */}
+          <div className="bg-gray-100 rounded-xl p-5 flex flex-col dark:bg-[#001c40]">
+            <div className="flex flex-row items-center justify-between mb-2">
+              <span className="font-medium">Per-Member Billing</span>
+              {!rzpReady && <span className="text-[10px] text-gray-500">Loading payment lib…</span>}
+            </div>
+            {billingError && (
+              <div className="mb-3 p-2 text-xs rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">
+                {billingError}
+              </div>
+            )}
+            <div className="text-sm flex flex-col gap-1 mb-3">
+              <span>Per-Member Price: {perMemberPriceInRupees ? `₹${perMemberPriceInRupees}` : "—"}</span>
+              <span>Users Count (for billing): {usersCount != null ? usersCount : "—"}</span>
+              <span>Total: {totalPaise != null ? `₹${formatInrFromPaise(totalPaise)}` : "—"}</span>
+            </div>
+            <PayNowButton
+              disabled={!rzpReady || !usersCount || !perMemberPriceInPaise}
+              onClick={initiatePayment}
+              totalPaise={totalPaise}
+              usersCount={usersCount}
+              perMemberPriceInPaise={perMemberPriceInPaise}
+              loading={creatingOrder || verifying}
+            />
+            {(creatingOrder || verifying) && <div className="spinner mt-4" aria-label="Loading" />}
+            <PaymentSummary result={lastPayment} />
+            <p className="mt-4 text-[10px] text-gray-400">Prefetched order: {prefetched ? "yes" : "no"}</p>
           </div>
         </div>
       </div>
