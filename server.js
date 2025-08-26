@@ -58,6 +58,7 @@ import SOverviewRoutes from "./routes/superAdmin/overview.js";
 
 import ccaRoutes from "./routes/paymentRoutes/ccaRoutes.js";
 import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
+import razorpayRoutes from "./routes/paymentRoutes/razorpayRoutes.js";
 import contactUsRoutes from "./routes/contactUsRoutes.js";
 import recaptchaRoutes from "./routes/recaptchaRoutes.js";
 
@@ -244,6 +245,8 @@ app.use("/api/contactUs", contactUsRoutes);
 
 // CCA
 app.use("/api/ccavenue", ccaRoutes);
+// Razorpay
+app.use("/api/razorpay", razorpayRoutes);
 
 //Transaction Routes
 app.use("/api/transactions", TransactionRoutes);

@@ -33,27 +33,35 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   try {
     if (process.env.RECAPTCHA_ENABLED === "true") {
-      const verification = await verifyRecaptchaToken({
-        token: recaptchaToken,
-        expectedAction: "tenant_login",
-      });
-      if (!verification.valid) {
-        return res
-          .status(400)
-          .json({
+      if (
+        process.env.RECAPTCHA_BYPASS_TOKEN &&
+        recaptchaToken === process.env.RECAPTCHA_BYPASS_TOKEN
+      ) {
+        if (process.env.RECAPTCHA_DEBUG === "true") {
+          console.log("[reCAPTCHA] Bypass token accepted for tenant_login");
+        }
+      } else {
+        const verification = await verifyRecaptchaToken({
+          token: recaptchaToken,
+          expectedAction: "tenant_login",
+        });
+        if (process.env.RECAPTCHA_DEBUG === "true") {
+          console.log("[reCAPTCHA] tenant_login verification result:", verification);
+        }
+        if (!verification.valid) {
+          return res.status(400).json({
             message: "reCAPTCHA verification failed",
             reasons: verification.reasons,
             error: verification.error,
           });
-      }
-      const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
-      if (verification.score !== null && verification.score < minScore) {
-        return res
-          .status(403)
-          .json({
+        }
+        const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
+        if (verification.score !== null && verification.score < minScore) {
+          return res.status(403).json({
             message: "Suspicious activity detected (low reCAPTCHA score)",
             score: verification.score,
           });
+        }
       }
     }
     // Get the tenant-specific User model
@@ -171,27 +179,35 @@ export const loginAdmin = asyncHandler(async (req, res) => {
 
   try {
     if (process.env.RECAPTCHA_ENABLED === "true") {
-      const verification = await verifyRecaptchaToken({
-        token: recaptchaToken,
-        expectedAction: "dashboard_login",
-      });
-      if (!verification.valid) {
-        return res
-          .status(400)
-          .json({
+      if (
+        process.env.RECAPTCHA_BYPASS_TOKEN &&
+        recaptchaToken === process.env.RECAPTCHA_BYPASS_TOKEN
+      ) {
+        if (process.env.RECAPTCHA_DEBUG === "true") {
+          console.log("[reCAPTCHA] Bypass token accepted for dashboard_login");
+        }
+      } else {
+        const verification = await verifyRecaptchaToken({
+          token: recaptchaToken,
+          expectedAction: "dashboard_login",
+        });
+        if (process.env.RECAPTCHA_DEBUG === "true") {
+          console.log("[reCAPTCHA] dashboard_login verification result:", verification);
+        }
+        if (!verification.valid) {
+          return res.status(400).json({
             message: "reCAPTCHA verification failed",
             reasons: verification.reasons,
             error: verification.error,
           });
-      }
-      const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
-      if (verification.score !== null && verification.score < minScore) {
-        return res
-          .status(403)
-          .json({
+        }
+        const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
+        if (verification.score !== null && verification.score < minScore) {
+          return res.status(403).json({
             message: "Suspicious activity detected (low reCAPTCHA score)",
             score: verification.score,
           });
+        }
       }
     }
     // Get the tenant-specific User model
@@ -272,27 +288,36 @@ export const loginSuperAdm = asyncHandler(async (req, res) => {
 
   try {
     if (process.env.RECAPTCHA_ENABLED === "true") {
-      const verification = await verifyRecaptchaToken({
-        token: recaptchaToken,
-        expectedAction: "super_login",
-      });
-      if (!verification.valid) {
-        return res
-          .status(400)
-          .json({
+      // Optional bypass for local/dev testing
+      if (
+        process.env.RECAPTCHA_BYPASS_TOKEN &&
+        recaptchaToken === process.env.RECAPTCHA_BYPASS_TOKEN
+      ) {
+        if (process.env.RECAPTCHA_DEBUG === "true") {
+          console.log("[reCAPTCHA] Bypass token accepted for super_login");
+        }
+      } else {
+        const verification = await verifyRecaptchaToken({
+          token: recaptchaToken,
+          expectedAction: "super_login",
+        });
+        if (process.env.RECAPTCHA_DEBUG === "true") {
+          console.log("[reCAPTCHA] super_login verification result:", verification);
+        }
+        if (!verification.valid) {
+          return res.status(400).json({
             message: "reCAPTCHA verification failed",
             reasons: verification.reasons,
             error: verification.error,
           });
-      }
-      const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
-      if (verification.score !== null && verification.score < minScore) {
-        return res
-          .status(403)
-          .json({
+        }
+        const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
+        if (verification.score !== null && verification.score < minScore) {
+          return res.status(403).json({
             message: "Suspicious activity detected (low reCAPTCHA score)",
             score: verification.score,
           });
+        }
       }
     }
     // Get the Super Admin model from admindb

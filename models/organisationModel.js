@@ -51,6 +51,11 @@ const organizationSchema = new Schema({
         type: String,
         default: "freemium"
     },
+    // Price per member (stored in paise to avoid floating point errors)
+    perMemberPriceInPaise: {
+        type: Number,
+        default: null // e.g. 10000 = INR 100.00 per member
+    },
 });
 
 export default organizationSchema;

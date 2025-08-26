@@ -17,7 +17,6 @@ import {
 } from "../controllers/userController.js";
 import multer from "multer";
 import authenticateToken from "../middlewares/authenticateToken.js";
-import { createindividualUser } from "../controllers/individual/registration.js";
 import { loginRateLimiter } from "../middlewares/rateLimiters.js";
 
 const router = express.Router();
@@ -50,6 +49,5 @@ router.post(
   addUsersFromCsv
 );
 router.post("/setupPassword/:token", setupPassword);
-router.post("/register", loginRateLimiter, createindividualUser);
 
 export default router;
