@@ -22,6 +22,7 @@ import ListAppointments from './components/Appointments/ListAppointments.jsx';
 import AddOrganisations from './components/Organisation/AddOrganisations.jsx';
 import OrgLayout from './components/Organisation/OrgLayout.jsx';
 import UserDetails from './components/Users/UserDetails.jsx';
+import Settings from './components/Organisation/Settings.jsx';
 
 function App() {
   const theme = useSelector((state) => state.theme);
@@ -58,6 +59,7 @@ function App() {
                             <Route path="/organisations" element={<ListOrganisations/>}></Route>
                             <Route path='/organisations/:orgName' element={<OrgLayout/>}></Route>
                             <Route path='/organisations/:orgName/userDetails/:userId' element={<UserDetails/>}></Route>
+                            <Route path='/organisations/:orgName/settings' element={<Settings/>}></Route>
                             <Route path="/organisations/addOrganisation" element={<AddOrganisations/>}></Route>
                           </Route>
                         </Route>

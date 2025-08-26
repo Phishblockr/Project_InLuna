@@ -1,27 +1,49 @@
 import React, { useState } from "react";
 import { useAuth } from '../../utils/AuthProvider';
 import { Link } from "react-router-dom";
+import useRecaptcha from '../../utils/useRecaptcha';
 
 const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [orgId, setOrgId] = useState(localStorage.getItem("orgId") || "");
     const [rememberMe, setRememberMe] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
     const { login } = useAuth();
     const appName = import.meta.env.VITE_APP_NAME
     const subName = import.meta.env.VITE_SUB_NAME
+    const { ready, execute } = useRecaptcha();
+
     const handleSubmit = async (event) => {
         event.preventDefault();
+        setErrorMsg("");
+        if (submitting) return; // guard double submit
+        setSubmitting(true);
+        let recaptchaToken = null;
+        if (ready) {
+            recaptchaToken = await execute('dashboard_login');
+            console.log(recaptchaToken)
+        } else {
+            console.warn('reCAPTCHA not ready; continuing without token');
+        }
         const loginData = {
             orgId: "8131120110",
             username: username,
             password: password,
             rememberMe: rememberMe,
+            recaptchaToken,
         };
         try {
-        await login(loginData);
+        const result = await login(loginData);
+        if (!result?.success) {
+            setErrorMsg(result?.message || 'Login failed.');
+        }
     } catch (error) {
-        console.error("Login failed:", error)
+        console.error("Login failed:", error);
+        setErrorMsg(error?.message || 'Unexpected error during login.');
+    } finally {
+        setSubmitting(false);
     }
     };
 
@@ -82,11 +104,17 @@ const Login = () => {
                             type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} />
                             <label htmlFor="rememberMe"> Remember Me </label>
                         </div>
+                        {errorMsg && (
+                            <div className="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+                                {errorMsg}
+                            </div>
+                        )}
                         <button
                             type="submit"
-                            className="w-full bg-[#0364BD] text-[#f4f4f4] py-2 rounded-md hover:bg-[#003A70] transition-colors font-medium"
+                            disabled={submitting}
+                            className="w-full bg-[#0364BD] text-[#f4f4f4] py-2 rounded-md hover:bg-[#003A70] transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            Login
+                            {submitting ? 'Signing in...' : 'Login'}
                         </button>
                         <div className="mt-4 text-center">
                             <Link

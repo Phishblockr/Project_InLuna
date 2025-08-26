@@ -134,37 +134,84 @@ export const AuthProvider = ({ children }) => {
     };
 
     const login = async (loginData) => {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        let payload = null;
         try {
-            const apiUrl = import.meta.env.VITE_API_URL;
             const response = await fetch(`${apiUrl}/auth/loginSuperAdm`, {
                 method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                },
+                headers: { "content-type": "application/json" },
                 body: JSON.stringify(loginData),
                 credentials: "include",
             });
 
-            if (!response.ok) {
-                throw new Error("Login failed. Please check your credentials!");
+            try {
+                payload = await response.json();
+            } catch (_) {
+                // ignore JSON parse errors
             }
 
-            const data = await response.json();
-            const decodedToken = jwtDecode(data.token);
+            if (!response.ok) {
+                // Map common status codes to clearer messages.
+                let message = payload?.error || payload?.message;
+                if (!message) {
+                    switch (response.status) {
+                        case 400:
+                            message = "Invalid request. Please check the submitted data."; break;
+                        case 401:
+                            message = "Incorrect username or password."; break;
+                        case 403:
+                            message = "Access denied. Your account is not permitted here."; break;
+                        case 404:
+                            message = "Login endpoint not found (404)."; break;
+                        case 429:
+                            message = "Too many attempts. Please wait and try again."; break;
+                        case 500:
+                            message = "Server error while logging in. Please try again."; break;
+                        default:
+                            message = `Login failed (status ${response.status}).`;
+                    }
+                }
+                // Special hint if reCAPTCHA token was expected
+                if (message && /captcha/i.test(message) && !loginData.recaptchaToken) {
+                    message += " (No reCAPTCHA token supplied.)";
+                }
+                toast.error(message);
+                return { success: false, status: response.status, message, code: payload?.code };
+            }
+
+            if (!payload?.token) {
+                const msg = "Login response missing token.";
+                toast.error(msg);
+                return { success: false, status: 500, message: msg };
+            }
+
+            const decodedToken = (() => {
+                try { return jwtDecode(payload.token); } catch { return null; }
+            })();
             const userType = import.meta.env.VITE_USERTYPE;
 
-            if (decodedToken.userType === userType) {
+            if (!decodedToken) {
+                const msg = "Received invalid token.";
+                toast.error(msg);
+                return { success: false, status: 500, message: msg };
+            }
 
+            if (decodedToken.userType === userType) {
                 setIsAuthenticated(true);
-                scheduleTokenRefresh(data.token);
-                setAccessToken(data.token)
+                scheduleTokenRefresh(payload.token);
+                setAccessToken(payload.token);
                 toast.success("Login successful");
                 navigate("/");
+                return { success: true };
             } else {
-                toast.error("Unauthorized");
+                const msg = "Unauthorized user type.";
+                toast.error(msg);
+                return { success: false, status: 403, message: msg };
             }
         } catch (error) {
-            toast.error(error.message || "Something went wrong!");
+            const msg = error?.message || "Unexpected network error during login.";
+            toast.error(msg);
+            return { success: false, status: 0, message: msg };
         }
     };
 

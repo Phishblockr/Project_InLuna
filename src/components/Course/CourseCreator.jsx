@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
-import "react-quill/dist/quill.snow.css";
-import ReactQuill, { Quill } from "react-quill";
+// React Quill v2 uses quill core styles; ensure stylesheet path matches installed version.
+import "react-quill/dist/quill.snow.css"; // If build fails, ensure package installed; v2 keeps this path.
+import ReactQuill from "react-quill";
 import DOMPurify from "dompurify";
 import { RiArrowDownSFill } from "react-icons/ri";
 import LoadingOverlay from "../../utils/LoadingOverlay";
