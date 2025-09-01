@@ -71,7 +71,12 @@ export const getAllUsers = asyncHandler(async (req, res) => {
         ? {}
         : { status: { $regex: `^${status}$`, $options: "i" } };
 
-    const queryFilter = { orgId, ...searchFilter, ...statusFilter };
+    const queryFilter = {
+      orgId,
+      removedAt: null,
+      ...searchFilter,
+      ...statusFilter,
+    };
 
     const users = await User.find(queryFilter)
       .select("-password")
@@ -251,23 +256,46 @@ export const createUser = asyncHandler(async (req, res) => {
       userType: UserTypeCode,
     });
 
-    const addedUser = await newUser.save();
-
-    const updatedOrg = await OrgModel.findOneAndUpdate(
-      { orgId },
-      {
-        $inc: { usersCount: 1 }, // Increment usersCount atomically
-        ...(addedUser.userType === process.env.ADMIN
-          ? {
-              $push: {
-                adminEmailIds: addedUser.email,
-                adminIds: addedUser._id,
-              }, // Add admin details
-            }
-          : {}),
-      },
-      { new: true } // Return updated document
-    );
+    // Transaction for user creation + seat delta + org counters
+    const mongoose = (await import("mongoose")).default;
+    const session = await mongoose.startSession();
+    let addedUser;
+    let updatedOrg;
+    await session.withTransaction(async () => {
+      addedUser = await newUser.save({ session });
+      const { applySeatDeltaOnce } = await import(
+        "../models/seatChangeModel.js"
+      );
+      const { applySeatDelta } = await import("../services/seats.js");
+      const at = new Date();
+      // Seat metering (+1) idempotent inside transaction
+      await applySeatDeltaOnce({
+        orgId,
+        memberId: addedUser._id,
+        delta: +1,
+        at,
+        applySeatDeltaFn: (sess) => applySeatDelta(orgId, +1, at, sess),
+        session,
+      });
+      // Update organization counters/admin arrays
+      updatedOrg = await OrgModel.findOneAndUpdate(
+        { orgId },
+        {
+          $inc: { usersCount: 1 },
+          ...(addedUser.userType === process.env.ADMIN
+            ? {
+                $push: {
+                  adminEmailIds: addedUser.email,
+                  adminIds: addedUser._id,
+                },
+              }
+            : {}),
+        },
+        { new: true, session }
+      );
+      if (!updatedOrg) throw new Error("Failed org update in transaction");
+    });
+    session.endSession();
 
     if (!updatedOrg) {
       return res
@@ -383,12 +411,40 @@ export const createAdmin = asyncHandler(async (req, res) => {
       orgId,
       userType: process.env.ADMIN,
     });
-
-    await newUser.save();
+    // Transaction for admin creation + seat delta + org counters
+    const mongoose = (await import("mongoose")).default;
+    const session = await mongoose.startSession();
+    let addedAdmin;
+    await session.withTransaction(async () => {
+      addedAdmin = await newUser.save({ session });
+      const { applySeatDeltaOnce } = await import(
+        "../models/seatChangeModel.js"
+      );
+      const { applySeatDelta } = await import("../services/seats.js");
+      const at = new Date();
+      await applySeatDeltaOnce({
+        orgId,
+        memberId: addedAdmin._id,
+        delta: +1,
+        at,
+        applySeatDeltaFn: (sess) => applySeatDelta(orgId, +1, at, sess),
+        session,
+      });
+      // increment usersCount & add admin arrays
+      await OrgModel.findOneAndUpdate(
+        { orgId },
+        {
+          $inc: { usersCount: 1 },
+          $push: { adminEmailIds: addedAdmin.email, adminIds: addedAdmin._id },
+        },
+        { session }
+      );
+    });
+    session.endSession();
 
     res
       .status(201)
-      .json({ message: "Admin user created successfully", user: newUser });
+      .json({ message: "Admin user created successfully", user: addedAdmin });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -704,24 +760,17 @@ export const verifyAdminPassword = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { orgId, userId: adminId } = req.user; // Extract from authenticated user
-
   if (!orgId) {
     return res.status(400).json({ error: "Organization ID is required." });
   }
-
   try {
-    // Get the tenant-specific database connection
     const tenantDb = await getTenantDB(orgId);
     if (!tenantDb) {
       return res
         .status(500)
         .json({ message: "Failed to get tenant database." });
     }
-
-    // Get the correct User model for this tenant
     const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
-
-    // Get the correct AdminLogs model for this tenant
     const AdminLogs = getAdminLogsModel(tenantDb);
     if (!AdminLogs) {
       console.error("AdminLogs model is not available.");
@@ -729,75 +778,97 @@ export const deleteUser = asyncHandler(async (req, res) => {
         .status(500)
         .json({ message: "Failed to initialize logging model." });
     }
-
-    // Find the user in the tenant database
     const user = await User.findById(id).select("-password");
     if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
-
-    // Prevent an admin from deleting their own account
     if (user._id.toString() === adminId) {
       return res
         .status(403)
         .json({ error: "You cannot delete your own account." });
     }
-
-    const OrgModel = await getOrgModel();
-
-    // Remove the user from the organization if they are an admin
-    let updateOrgQuery = {};
-    if (user.userType === process.env.ADMIN) {
-      updateOrgQuery = {
-        $pull: {
-          adminIds: user._id, // Remove admin ID
-          adminEmailIds: user.email, // Remove admin email
-        },
-      };
+    if (user.removedAt) {
+      return res.status(400).json({ error: "User already removed." });
     }
+    const OrgModel = await getOrgModel();
+    // Soft delete: set removedAt timestamp and status -> inactive
+    const now = new Date();
+    // Clamp removedAt within current billing cycle window
+    try {
+      const { previewCycle } = await import("../services/billing.js");
+      const cycle = await previewCycle(orgId, now);
+      let removedAt = now;
+      if (removedAt < cycle.cycleStart) removedAt = new Date(cycle.cycleStart);
+      if (removedAt > cycle.cycleEnd) removedAt = new Date(cycle.cycleEnd);
+      user.removedAt = removedAt;
+    } catch (e) {
+      user.removedAt = now; // fallback
+    }
+    // Transaction: update org counters/admin arrays + user soft-delete + seat delta
+    const mongoose = (await import("mongoose")).default;
+    const session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      user.status = "inactive";
+      await user.save({ session });
+      // org update
+      let updateOrgQuery = {};
+      if (user.userType === process.env.ADMIN) {
+        updateOrgQuery = {
+          $pull: { adminIds: user._id, adminEmailIds: user.email },
+        };
+      }
+      await OrgModel.findOneAndUpdate(
+        { orgId },
+        { $inc: { usersCount: -1 }, ...updateOrgQuery },
+        { session }
+      );
+      // seat delta idempotent
+      try {
+        const { applySeatDeltaOnce } = await import(
+          "../models/seatChangeModel.js"
+        );
+        const { applySeatDelta } = await import("../services/seats.js");
+        const at = user.removedAt;
+        await applySeatDeltaOnce({
+          orgId,
+          memberId: user._id,
+          delta: -1,
+          at,
+          applySeatDeltaFn: (sess) => applySeatDelta(orgId, -1, at, sess),
+          session,
+        });
+      } catch (e) {
+        console.error("Seat -1 metering failed (deleteUser):", e.message);
+      }
+    });
+    session.endSession();
 
-    // Atomically update the organization: decrement usersCount and remove admin if needed
-    await OrgModel.findOneAndUpdate(
-      { orgId },
-      {
-        $inc: { usersCount: -1 }, // Decrement usersCount
-        ...updateOrgQuery, // Apply admin removal if applicable
-      },
-      { new: true }
-    );
-
-    // Delete user
-    await User.findByIdAndDelete(id);
-
-    // Emit WebSocket Event if available
     const io = req.app.get("socketio");
     if (io) {
       io.emit("userDeleted", user._id);
     }
-
-    // Add Log Entry in the Correct Tenant Database
     try {
       await AdminLogs.create({
         userId: adminId,
         operationType: "delete",
-        operationsPerformed: `User deleted: ${user.email}`,
+        operationsPerformed: `User soft-deleted: ${user.email}`,
         orgId: orgId,
         entityId: id,
         entityType: "user",
         entityDetails: {
           identifier: user.email,
           status: user.status,
+          removedAt: user.removedAt,
           extraInfo: `Department: ${user.department}`,
         },
       });
-      console.log("Log entry created successfully in tenant DB:", orgId);
     } catch (logError) {
       console.error("Failed to create log in tenant DB:", logError.message);
     }
-
-    res
-      .status(200)
-      .json({ message: `User ${user.email} removed successfully.` });
+    res.status(200).json({
+      message: `User ${user.email} removed successfully.`,
+      removedAt: user.removedAt,
+    });
   } catch (error) {
     console.error("Error deleting user:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -890,7 +961,43 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
 
     // Insert users into the tenant database
     if (users.length > 0) {
-      const insertedUsers = await User.insertMany(users);
+      // Use a transaction for bulk insert + org usersCount increment + seat deltas
+      const mongoose = (await import("mongoose")).default;
+      const session = await mongoose.startSession();
+      let insertedUsers = [];
+      await session.withTransaction(async () => {
+        insertedUsers = await User.insertMany(users, { session });
+        const OrgModel = await getOrgModel();
+        await OrgModel.findOneAndUpdate(
+          { orgId },
+          { $inc: { usersCount: insertedUsers.length } },
+          { session }
+        );
+        // Seat deltas inside transaction
+        for (let user of insertedUsers) {
+          try {
+            const { applySeatDeltaOnce } = await import(
+              "../models/seatChangeModel.js"
+            );
+            const { applySeatDelta } = await import("../services/seats.js");
+            const at = new Date();
+            await applySeatDeltaOnce({
+              orgId,
+              memberId: user._id,
+              delta: +1,
+              at,
+              applySeatDeltaFn: (sess) => applySeatDelta(orgId, +1, at, sess),
+              session,
+            });
+          } catch (meterErr) {
+            console.error(
+              "Seat +1 metering failed (CSV import - in tx):",
+              meterErr.message
+            );
+          }
+        }
+      });
+      session.endSession();
 
       // Emit WebSocket Event if available
       const io = req.app.get("socketio");
@@ -916,6 +1023,8 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
           );
         }
 
+        // Seat delta already applied inside transaction; no action here
+
         // Add Log Entry in the Correct Tenant Database
         try {
           await AdminLogs.create({
@@ -932,12 +1041,7 @@ export const addUsersFromCsv = asyncHandler(async (req, res) => {
         }
       }
 
-      const OrgModel = await getOrgModel();
-      await OrgModel.findOneAndUpdate(
-        { orgId },
-        { $inc: { usersCount: insertedUsers.length } }, // Increase by number of inserted users
-        { new: true }
-      );
+      // Org usersCount increment already applied in transaction
 
       res.status(200).json({ message: "Users added successfully." });
     } else {
@@ -978,5 +1082,78 @@ export const fetchProfile = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("Error fetching profile:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Restore a soft-deleted user
+export const restoreUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { orgId, userId: adminId } = req.user;
+  if (!orgId)
+    return res.status(400).json({ error: "Organization ID is required." });
+  try {
+    const tenantDb = await getTenantDB(orgId);
+    if (!tenantDb)
+      return res.status(500).json({ error: "Failed to get tenant database." });
+    const User = tenantDb.models.User || tenantDb.model("User", UserSchema);
+    const AdminLogs = getAdminLogsModel(tenantDb);
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ error: "User not found." });
+    if (user.removedAt === null)
+      return res.status(400).json({ error: "User is not removed." });
+
+    const OrgModel = await getOrgModel();
+    const mongoose = (await import("mongoose")).default;
+    const session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      user.removedAt = null;
+      if (user.status === "inactive") user.status = "active";
+      await user.save({ session });
+      await OrgModel.findOneAndUpdate(
+        { orgId },
+        { $inc: { usersCount: 1 } },
+        { session }
+      );
+      try {
+        const { applySeatDeltaOnce } = await import(
+          "../models/seatChangeModel.js"
+        );
+        const { applySeatDelta } = await import("../services/seats.js");
+        const at = new Date();
+        await applySeatDeltaOnce({
+          orgId,
+          memberId: user._id,
+          delta: +1,
+          at,
+          applySeatDeltaFn: (sess) => applySeatDelta(orgId, +1, at, sess),
+          session,
+        });
+      } catch (meterErr) {
+        console.error(
+          "Seat +1 metering failed (restoreUser):",
+          meterErr.message
+        );
+      }
+    });
+    session.endSession();
+
+    try {
+      await AdminLogs.create({
+        userId: adminId,
+        operationType: "update",
+        operationsPerformed: `User restored: ${user.email}`,
+        orgId,
+        entityId: user._id,
+        entityType: "user",
+        entityDetails: { identifier: user.email },
+      });
+    } catch (e) {
+      console.error("Restore log failed", e.message);
+    }
+
+    res.status(200).json({ message: "User restored successfully." });
+  } catch (e) {
+    console.error("Error restoring user:", e.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });

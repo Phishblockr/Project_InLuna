@@ -197,7 +197,7 @@ export const createOrganization = asyncHandler(async (req, res) => {
 // Step 1: initiate organization creation (send verification email)
 export const initiateOrganizationCreation = asyncHandler(async (req, res) => {
   const { name, adminName, totalUsers, adminEmail, adminPassword } = req.body;
-  console.log(name)
+  console.log(name);
 
   if (!name || !adminName || !totalUsers || !adminEmail) {
     return res.status(400).json({
@@ -274,7 +274,9 @@ export const initiateOrganizationCreation = asyncHandler(async (req, res) => {
       logger.error(
         "Send verification email failed: " +
           e.message +
-          (e.response?.body ? " | details: " + JSON.stringify(e.response.body) : "")
+          (e.response?.body
+            ? " | details: " + JSON.stringify(e.response.body)
+            : "")
       );
       return res.status(500).json({
         message: "Failed to send verification email.",
@@ -540,11 +542,12 @@ export const getOrgDetails = asyncHandler(async (req, res) => {
 
   try {
     const User = await getUserModel(orgId);
-    const users = await User.find({ orgId: orgId });
+    const users = await User.find({ orgId: orgId, removedAt: null });
 
-    const userDetails = await User.find({ orgId: orgId }).select(
-      "name department userType role email createdAt"
-    );
+    const userDetails = await User.find({
+      orgId: orgId,
+      removedAt: null,
+    }).select("name department userType role email createdAt");
 
     const departments = [...new Set(users.map((user) => user.department))];
 

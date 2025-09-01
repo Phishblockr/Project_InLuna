@@ -322,7 +322,7 @@ export const fetchOrgMetrics = async (req, res) => {
     // Browsing Profile Classification
     const INACTIVITY_THRESHOLD = 2 * 24 * 60 * 60 * 1000; // 2 days
     const cutoffDate = new Date(Date.now() - INACTIVITY_THRESHOLD);
-    const users = await User.find({ orgId: orgId });
+    const users = await User.find({ orgId: orgId, removedAt: null });
     const goodBrowsingProfile = [];
     const badBrowsingProfile = [];
 

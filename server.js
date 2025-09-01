@@ -37,6 +37,7 @@ import cookieParser from "cookie-parser";
 
 import fetchAndSavePhishtankData from "./cronJobs/phishtankJob.js";
 import fetchAndSaveUrlhausData from "./cronJobs/urlhausService.js";
+import runMonthlyUserPurge from "./cronJobs/userCleanupJob.js";
 
 // Training Platform
 import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
@@ -61,6 +62,7 @@ import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
 import razorpayRoutes from "./routes/paymentRoutes/razorpayRoutes.js";
 import contactUsRoutes from "./routes/contactUsRoutes.js";
 import recaptchaRoutes from "./routes/recaptchaRoutes.js";
+import billingRoutes from "./routes/billingRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -239,6 +241,7 @@ app.use("/api/bookADemo", bookADemoRoutes);
 // Start cron job (Testing only do not uncomment in production)
 // fetchAndSavePhishtankData();
 // fetchAndSaveUrlhausData();
+// runMonthlyUserPurge(); // Uncomment to test immediately
 
 // Contact Users
 app.use("/api/contactUs", contactUsRoutes);
@@ -253,6 +256,7 @@ app.use("/api/transactions", TransactionRoutes);
 
 // reCAPTCHA verification (REST)
 app.use("/api/recaptcha", recaptchaRoutes);
+app.use("/api/billing", billingRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

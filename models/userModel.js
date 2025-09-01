@@ -81,9 +81,15 @@ const userSchema = new Schema({
   googleId: {
     type: String,
   },
+  removedAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
 });
 
 userSchema.index({ orgId: 1 });
+userSchema.index({ removedAt: 1, orgId: 1 });
 export default userSchema;
 
 export const getUserModel = async (tenantId) => {

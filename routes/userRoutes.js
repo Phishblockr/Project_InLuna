@@ -14,6 +14,7 @@ import {
   fetchProfile,
   addUsersFromCsv,
   setupPassword,
+  restoreUser,
 } from "../controllers/userController.js";
 import multer from "multer";
 import authenticateToken from "../middlewares/authenticateToken.js";
@@ -49,5 +50,6 @@ router.post(
   addUsersFromCsv
 );
 router.post("/setupPassword/:token", setupPassword);
+router.route("/restore/:id").put(dashboardAdminMiddleware, restoreUser);
 
 export default router;
