@@ -42,6 +42,7 @@ import CancelMembership from "./components/Transaction/CancelMembership.jsx";
 // import RedirectToSubdomain from "./components/RedirectToSubdomain.jsx";
 import VerifyOrganization from "./pages/VerifyOrganization.jsx";
 import VerifyIndividual from "./pages/VerifyIndividual.jsx";
+import OrgBilling from "./pages/OrgBilling.jsx";
 
 function App() {
   const theme = useSelector((state) => state.theme);
@@ -137,6 +138,7 @@ function App() {
                         path="/cancelMembership"
                         element={<CancelMembership />}
                       />
+                      <Route path="/billing" element={<OrgBilling />} />
                       {/* Training Routes */}
                       <Route path="/training" element={<Training />} />
                       <Route
