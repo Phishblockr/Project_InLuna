@@ -206,22 +206,86 @@ router.post("/subscribe", async (req, res, next) => {
 router.patch("/sync-quantity", async (req, res, next) => {
   try {
     const Orgs = await getOrgModel();
-    const { orgId, schedule = "now" } = req.body || {};
+    const { orgId, schedule = "now", proRate = false } = req.body || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
     const org = await Orgs.findOne({ orgId });
     if (!org?.subscriptionId)
       return res.status(400).json({ error: "No subscription attached" });
 
-    const newQty = org.seatMeter?.currentSeats ?? org.usersCount ?? 0;
     const client = getRazorpay();
-    const updated = await rzpWrap(
-      client.subscriptions.update(org.subscriptionId, {
-        quantity: newQty,
-        schedule_change_at: schedule === "cycle_end" ? "cycle_end" : "now",
-      })
+    // Fetch current subscription to know existing quantity & cycle bounds
+    const current = await rzpWrap(
+      client.subscriptions.fetch(org.subscriptionId)
     );
 
-    res.json({ ok: true, subscription: updated });
+    const prevQty = current.quantity;
+    const newQty = org.seatMeter?.currentSeats ?? org.usersCount ?? 0;
+    const delta = newQty - prevQty;
+    let proratedAddon = null;
+
+    // Only attempt pro-rata if increasing seats, immediate schedule, and proRate flag true
+    if (proRate && delta > 0 && schedule !== "cycle_end") {
+      // Determine remaining fraction of current period
+      const nowSec = Math.floor(Date.now() / 1000);
+      const periodStart = current.current_start || nowSec;
+      const periodEnd = current.current_end || nowSec;
+      const total = Math.max(1, periodEnd - periodStart);
+      const remaining = Math.max(0, periodEnd - nowSec);
+      const remainingFraction = Math.min(1, remaining / total);
+      // Use org.perMemberPriceInPaise as seat price (already monthly amount)
+      const seatPrice = org.perMemberPriceInPaise || current.plan?.item?.amount;
+      if (seatPrice && remainingFraction > 0) {
+        const raw = delta * seatPrice * remainingFraction;
+        const proratedAmountPaise = Math.max(1, Math.round(raw));
+        try {
+          proratedAddon = await rzpWrap(
+            client.subscriptions.addon.create(org.subscriptionId, {
+              item: {
+                name: `Prorated +${delta} seat(s)`,
+                amount: proratedAmountPaise,
+                currency: org.currency || "INR",
+                description: `Delta ${delta} seats for remaining ${(
+                  remainingFraction * 100
+                ).toFixed(2)}% of cycle`,
+              },
+              quantity: 1,
+            })
+          );
+        } catch (addonErr) {
+          console.warn(
+            "[rzp.sync-quantity] prorated addon failed",
+            addonErr.message
+          );
+        }
+      }
+    }
+
+    // Update subscription quantity (after add-on so addon references old quantity context is fine)
+    let updated;
+    try {
+      updated = await rzpWrap(
+        client.subscriptions.update(org.subscriptionId, {
+          quantity: newQty,
+          schedule_change_at: schedule === "cycle_end" ? "cycle_end" : "now",
+        })
+      );
+    } catch (updErr) {
+      const msg = (updErr.message || "").toLowerCase();
+      if (/payment mode is upi/.test(msg)) {
+        return res.status(422).json({
+          error:
+            "Cannot change subscription quantity: current payment mode is UPI.",
+          reason:
+            "Razorpay does not allow modifying mandate-based fields for UPI subscriptions.",
+          workaround:
+            "Ask the customer to create a new subscription using a card / netbanking / e-mandate payment method, then cancel the UPI subscription.",
+          subscriptionId: org.subscriptionId,
+        });
+      }
+      throw updErr;
+    }
+
+    res.json({ ok: true, subscription: updated, proratedAddon });
   } catch (e) {
     next(e);
   }
@@ -245,12 +309,28 @@ router.post("/bill/close", async (req, res, next) => {
     // 2) Align quantity for next cycle baseline
     const nextQty = org.seatMeter?.currentSeats ?? org.usersCount ?? 0;
     const client = getRazorpay();
-    await rzpWrap(
-      client.subscriptions.update(org.subscriptionId, {
-        quantity: nextQty,
-        schedule_change_at: "now",
-      })
-    );
+    try {
+      await rzpWrap(
+        client.subscriptions.update(org.subscriptionId, {
+          quantity: nextQty,
+          schedule_change_at: "now",
+        })
+      );
+    } catch (updErr) {
+      const msg = (updErr.message || "").toLowerCase();
+      if (/payment mode is upi/.test(msg)) {
+        return res.status(422).json({
+          error:
+            "Cannot finalize cycle & sync quantity: subscription locked by UPI payment mode.",
+          reason:
+            "Razorpay blocks quantity updates for UPI-based subscriptions.",
+          recommendation:
+            "Continue internal cycle close (done) but create a new subscription with supported payment method for seat adjustments.",
+          subscriptionId: org.subscriptionId,
+        });
+      }
+      throw updErr;
+    }
 
     // 3) Create one-time usage add-on for closed cycle
     await rzpWrap(
@@ -308,16 +388,88 @@ router.get("/subscription-status", async (req, res) => {
         : null,
       nextChargeAt: sub.charge_at ? new Date(sub.charge_at * 1000) : null,
       customerId: sub.customer_id,
+      displayPeriodStart: sub.current_start
+        ? new Date(sub.current_start * 1000)
+        : null,
+      displayPeriodEndInclusive: sub.current_end
+        ? new Date(sub.current_end * 1000 - 1000)
+        : null,
     };
+
+    // Add shifted (-1 month) variants if requested by frontend; does not mutate originals.
+    if (response.displayPeriodStart) {
+      const shiftedStart = new Date(response.displayPeriodStart);
+      shiftedStart.setMonth(shiftedStart.getMonth() - 1);
+      response.displayPeriodStartMinusOneMonth = shiftedStart;
+    }
+    if (response.displayPeriodEndInclusive) {
+      const shiftedEnd = new Date(response.displayPeriodEndInclusive);
+      shiftedEnd.setMonth(shiftedEnd.getMonth() - 1);
+      response.displayPeriodEndInclusiveMinusOneMonth = shiftedEnd;
+    }
     res.json(response);
   } catch (e) {
     console.error("[rzp.subscription-status] failure", e.message);
-    res
-      .status(502)
-      .json({
-        error: e.message || "Failed to fetch subscription",
-        stage: "fetch",
+    res.status(502).json({
+      error: e.message || "Failed to fetch subscription",
+      stage: "fetch",
+    });
+  }
+});
+
+// GET /api/rzp/payment-history?orgId=1234&limit=20
+// Returns recent subscription invoices (each represents a billing event/payment) for history display.
+router.get("/payment-history", async (req, res) => {
+  try {
+    const { orgId, limit } = req.query || {};
+    if (!orgId) return res.status(400).json({ error: "orgId required" });
+    const Orgs = await getOrgModel();
+    const org = await Orgs.findOne({ orgId });
+    if (!org) return res.status(404).json({ error: "Org not found" });
+    if (!org.subscriptionId)
+      return res
+        .status(404)
+        .json({ error: "No subscription attached", orgId: org.orgId });
+
+    const client = getRazorpay();
+    const count = Math.min(100, Math.max(1, parseInt(limit || "25", 10)));
+    let invoicesRaw;
+    try {
+      invoicesRaw = await rzpWrap(
+        client.invoices.all({ subscription_id: org.subscriptionId, count })
+      );
+    } catch (invErr) {
+      return res.status(502).json({
+        error: invErr.message || "Failed to fetch invoices",
+        hint: "Ensure subscription has generated invoices. For a just-created subscription you may only have the initial invoice after first payment.",
       });
+    }
+
+    const invoices = (invoicesRaw.items || []).map((inv) => ({
+      id: inv.id,
+      status: inv.status,
+      amountPaise: inv.amount,
+      amountPaidPaise: inv.amount_paid,
+      amountDuePaise: inv.amount_due,
+      currency: inv.currency,
+      issuedAt: inv.date ? new Date(inv.date * 1000) : null,
+      paidAt: inv.paid_at ? new Date(inv.paid_at * 1000) : null,
+      periodStart: inv.period_start ? new Date(inv.period_start * 1000) : null,
+      periodEnd: inv.period_end ? new Date(inv.period_end * 1000) : null,
+      shortUrl: inv.short_url || null,
+      receipt: inv.receipt || null,
+      description: inv.description || null,
+    }));
+
+    res.json({
+      orgId: org.orgId,
+      subscriptionId: org.subscriptionId,
+      count: invoices.length,
+      invoices,
+    });
+  } catch (e) {
+    console.error("[rzp.payment-history] failure", e.message);
+    res.status(500).json({ error: e.message || "Payment history error" });
   }
 });
 

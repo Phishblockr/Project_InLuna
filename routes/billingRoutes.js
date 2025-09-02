@@ -5,6 +5,7 @@ import {
   closeCycleAndCompute,
   updatePerMemberPrice,
 } from "../services/billing.js";
+import { cycleBounds } from "../lib/billingMath.js";
 
 const router = express.Router();
 
@@ -38,6 +39,18 @@ router.get("/summary", dashboardAdminMiddleware, async (req, res) => {
       projectedBaseMonthlyPaise = pricePaise * currentSeats;
     }
 
+    // Compute display cycle (end exclusive -> convert to inclusive by subtracting 1 second)
+    let displayCycleStart = null;
+    let displayCycleEndInclusive = null;
+    try {
+      const anchor = org.billingCycleAnchor || org.createdAt;
+      const { start, end } = cycleBounds(anchor, new Date());
+      displayCycleStart = start;
+      displayCycleEndInclusive = new Date(end.getTime() - 1000);
+    } catch (err) {
+      // ignore display error
+    }
+
     res.json({
       orgId: org.orgId,
       name: org.name,
@@ -53,6 +66,22 @@ router.get("/summary", dashboardAdminMiddleware, async (req, res) => {
         ? (projectedBaseMonthlyPaise / 100).toFixed(2)
         : null,
       currency: org.currency || "INR",
+      displayCycleStart,
+      displayCycleEndInclusive,
+      displayCycleStartMinusOneMonth: displayCycleStart
+        ? (() => {
+            const d = new Date(displayCycleStart);
+            d.setMonth(d.getMonth() - 1);
+            return d;
+          })()
+        : null,
+      displayCycleEndInclusiveMinusOneMonth: displayCycleEndInclusive
+        ? (() => {
+            const d = new Date(displayCycleEndInclusive);
+            d.setMonth(d.getMonth() - 1);
+            return d;
+          })()
+        : null,
     });
   } catch (e) {
     res.status(400).json({ error: e.message });
