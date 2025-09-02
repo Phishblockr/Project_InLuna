@@ -34,6 +34,25 @@ export async function applySeatDelta(
     return org;
   }
 
+  // Rollover: if stored meter cycleStartAt is from a previous cycle, roll forward.
+  // This occurs when no seat changes happened for multiple cycles, so we never closed the previous cycle.
+  // We conservatively drop historical unclosed usage (should normally be captured via an explicit close),
+  // but we DO seed seatMillis with usage from the current cycle start up to the changeTime so previews are accurate.
+  const { start: currentCycleStart } = cycleBounds(
+    org.billingCycleAnchor || org.createdAt,
+    changeTime
+  );
+  const storedStart = new Date(org.seatMeter.cycleStartAt);
+  if (storedStart.getTime() !== currentCycleStart.getTime()) {
+    // Seed seatMillis with occupancy so far this cycle BEFORE applying the delta
+    const occupancyMillis =
+      (org.seatMeter.currentSeats || 0) * (changeTime - currentCycleStart);
+    org.seatMeter.cycleStartAt = currentCycleStart;
+    org.seatMeter.lastMeasureAt = changeTime;
+    org.seatMeter.seatMillis = Math.max(0, occupancyMillis);
+    // keep currentSeats as-is for delta application below
+  }
+
   // Accumulate seat-milliseconds since last measurement
   const elapsed =
     changeTime.getTime() - new Date(org.seatMeter.lastMeasureAt).getTime();

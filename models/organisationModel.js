@@ -58,6 +58,12 @@ const organizationSchema = new Schema({
   perMemberPriceInPaise: { type: Number, default: null }, // e.g. 10000 = INR 100.00
   subscriptionId: { type: String }, // External subscription ref (e.g., Razorpay)
   planId: { type: String },
+  razorpayCustomerId: { type: String },
+  billingStatus: {
+    type: String,
+    enum: ["active", "past_due", "canceled", "trialing", "inactive"],
+    default: "inactive",
+  },
   currency: { type: String, default: "INR" },
   billingCycleAnchor: {
     type: Date,

@@ -63,6 +63,8 @@ import razorpayRoutes from "./routes/paymentRoutes/razorpayRoutes.js";
 import contactUsRoutes from "./routes/contactUsRoutes.js";
 import recaptchaRoutes from "./routes/recaptchaRoutes.js";
 import billingRoutes from "./routes/billingRoutes.js";
+import rzpWebhook from "./routes/rzp-webhook.js";
+import rzpRoutes from "./routes/rzp.js";
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -70,6 +72,8 @@ dotenv.config({ override: true });
 import "./utils/tokenEncryption.js";
 
 const app = express();
+// Mount Razorpay webhook BEFORE body parsers (needs raw body)
+app.use("/api/rzp", rzpWebhook);
 // Increase the size limit for JSON and URL-encoded bodies
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
@@ -257,6 +261,7 @@ app.use("/api/transactions", TransactionRoutes);
 // reCAPTCHA verification (REST)
 app.use("/api/recaptcha", recaptchaRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/rzp", rzpRoutes); // subscription & sync routes (JSON parsed)
 
 // Error handling middleware
 app.use(errorHandler);
