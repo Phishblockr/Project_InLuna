@@ -102,6 +102,13 @@ export const billingClient = {
     request(`/rzp/subscription-status?orgId=${encodeURIComponent(orgId)}`, {
       token,
     }),
+
+  // Payment / invoice history
+  paymentHistory: (token, orgId, limit = 20) =>
+    request(
+      `/rzp/payment-history?orgId=${encodeURIComponent(orgId)}&limit=${limit}`,
+      { token }
+    ),
 };
 
 export default billingClient;

@@ -1,7 +1,7 @@
 import React from "react";
 import { formatPaise, formatDateUTC } from "./formatters.js";
 
-export function UsageSummaryCard({ org, preview }) {
+export function UsageSummaryCard({ org, preview, liveSub }) {
   if (!org) return null;
   const currency = org.currency || "INR";
   const currentSeats = org.seatMeter?.currentSeats ?? org.usersCount;
@@ -12,6 +12,10 @@ export function UsageSummaryCard({ org, preview }) {
   const usagePaise = preview?.amountPaise ?? null;
   const projectedTotal = (basePricePaise ?? 0) + (usagePaise ?? 0);
 
+  // Prefer live subscription status current period if available
+  const cycleStartRaw = liveSub?.displayPeriodStartMinusOneMonth;
+  const cycleEndRaw = liveSub?.displayPeriodEndInclusiveMinusOneMonth;
+
   return (
     <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-[#0F172A] text-sm space-y-2">
       <div className="flex items-center justify-between">
@@ -19,8 +23,7 @@ export function UsageSummaryCard({ org, preview }) {
           Current Cycle
         </h3>
         <p className="text-xs text-gray-500">
-          {formatDateUTC(preview?.cycleStart || org.seatMeter?.cycleStartAt)} →{" "}
-          {formatDateUTC(preview?.cycleEnd)}
+          {formatDateUTC(cycleStartRaw)} → {formatDateUTC(cycleEndRaw)}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">

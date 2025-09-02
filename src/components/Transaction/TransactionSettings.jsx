@@ -15,6 +15,38 @@ import { useRazorpayCheckout } from "../../hooks/useRazorpayCheckout";
 import PayNowButton from "../PayNowButton";
 import PaymentSummary from "../PaymentSummary";
 import { formatInrFromPaise } from "../../utils/currency";
+// Lightweight access to unified billing data (org, subscription status)
+import useBilling from "../../hooks/useBilling";
+import { formatPaise } from "../Billing/formatters";
+import BillingStatusBadge from "../Billing/BillingStatusBadge.jsx";
+
+// Lightweight toast component (scoped to this page)
+function Toast({ notice, onClose }) {
+  if (!notice) return null;
+  const { message, type = "info" } = notice;
+  const cls =
+    type === "success"
+      ? "bg-green-600"
+      : type === "error"
+      ? "bg-red-600"
+      : "bg-gray-800";
+  return (
+    <div
+      className={`${cls} fixed bottom-4 right-4 text-white px-3 py-2 rounded shadow text-xs flex items-start gap-3 z-50`}
+    >
+      <span className="leading-snug whitespace-pre-line max-w-xs">
+        {message}
+      </span>
+      <button
+        onClick={onClose}
+        className="opacity-70 hover:opacity-100 focus:outline-none"
+        aria-label="Dismiss"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
 
 const TransactionSettings = () => {
   const [dataLoading, setDataLoading] = useState(true);
@@ -28,9 +60,14 @@ const TransactionSettings = () => {
     (state) => state.transactionSettings
   );
 
+  // New unified billing subscription context (SWR based)
+  const { org, liveSubStatus, subscribing, subscribe, pollingSubStatus } =
+    useBilling();
+  const [toast, setToast] = useState(null);
+
   // === Billing (Razorpay) state ===
   const { ready: rzpReady, openCheckout } = useRazorpayCheckout();
-  const [perMemberPriceInPaise, setPerMemberPriceInPaise] = useState(null);
+  const [seatPricePaiseState, setSeatPricePaiseState] = useState(null);
   const [perMemberPriceInRupees, setPerMemberPriceInRupees] = useState("");
   const [usersCount, setUsersCount] = useState(null);
   const [creatingOrder, setCreatingOrder] = useState(false);
@@ -62,14 +99,18 @@ const TransactionSettings = () => {
         const order = await createOrder(token);
         if (cancelled) return;
         setUsersCount(order.usersCount);
-        setPerMemberPriceInPaise(order.perMemberPriceInPaise);
-        setPerMemberPriceInRupees((order.perMemberPriceInPaise / 100).toFixed(2));
+        setSeatPricePaiseState(order.perMemberPriceInPaise);
+        setPerMemberPriceInRupees(
+          (order.perMemberPriceInPaise / 100).toFixed(2)
+        );
         setPrefetched(true);
       } catch (e) {
         if (!cancelled) setBillingError(e.message);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   const initiatePayment = useCallback(async () => {
@@ -79,7 +120,7 @@ const TransactionSettings = () => {
     try {
       const order = await createOrder(token);
       setUsersCount(order.usersCount);
-      setPerMemberPriceInPaise(order.perMemberPriceInPaise);
+      setSeatPricePaiseState(order.perMemberPriceInPaise);
       setPerMemberPriceInRupees((order.perMemberPriceInPaise / 100).toFixed(2));
       openCheckout({
         key: order.keyId,
@@ -118,9 +159,10 @@ const TransactionSettings = () => {
     }
   }, [token, creatingOrder, verifying, openCheckout]);
 
-  const totalPaise = usersCount != null && perMemberPriceInPaise != null
-    ? usersCount * perMemberPriceInPaise
-    : null;
+  const totalPaise =
+    usersCount != null && seatPricePaiseState != null
+      ? usersCount * seatPricePaiseState
+      : null;
 
   if (!data.organization) {
     return <LoadingOverlay loading={true} />;
@@ -147,6 +189,49 @@ const TransactionSettings = () => {
   const currency = data.subscriptionDetails?.currency || "INR";
   const currencySymbol = currencySymbols[currency] || currency;
 
+  // Derive unified subscription metrics (prefer liveSubStatus when present)
+  const sub = liveSubStatus || {};
+  const subscriptionId = org?.subscriptionId || sub.subscriptionId;
+  const billingStatus = sub.status || org?.billingStatus;
+  const perMemberPriceInPaise =
+    org?.perMemberPriceInPaise != null
+      ? Number(org.perMemberPriceInPaise)
+      : sub.perMemberPriceInPaise ?? seatPricePaiseState;
+  const currentSeats =
+    org?.seatMeter?.currentSeats ||
+    org?.currentSeats ||
+    sub.quantity ||
+    data?.users?.current;
+  const baseMonthlyPaise =
+    perMemberPriceInPaise != null && currentSeats != null
+      ? perMemberPriceInPaise * currentSeats
+      : null;
+  const periodStart = sub.displayPeriodStartMinusOneMonth;
+  const periodEnd = sub.displayPeriodEndInclusiveMinusOneMonth;
+  const nextDue = sub.displayPeriodEndInclusiveMinusOneMonth || periodEnd;
+  const manageLink = sub.link || sub.shortUrl || sub.short_url;
+  // Days remaining (inclusive end boundary treated as end of previous day; simple diff)
+  let daysRemaining = null;
+  if (periodEnd) {
+    const endMs = new Date(periodEnd).getTime();
+    const nowMs = Date.now();
+    const diff = Math.ceil((endMs - nowMs) / (1000 * 60 * 60 * 24));
+    if (Number.isFinite(diff)) daysRemaining = diff;
+  }
+
+  const handleActivate = async () => {
+    try {
+      await subscribe();
+      setToast({
+        message:
+          "Subscription activation started. Complete payment if required.",
+        type: "success",
+      });
+    } catch (e) {
+      setToast({ message: e.message || "Activation failed", type: "error" });
+    }
+  };
+
   return (
     <div className="z-1 h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
       <div className="z-1 relative w-full bg-white rounded-xl shadow-xl p-6 h-full dark:bg-[#002451] dark:text-white">
@@ -158,7 +243,7 @@ const TransactionSettings = () => {
             Manage and view your transactions
           </span>
         </div>
-  <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <div className="bg-gray-100 rounded-xl dark:bg-[#001c40]">
             <div className="p-5 flex flex-col">
               <span className="mb-2">Account Details</span>
@@ -166,6 +251,135 @@ const TransactionSettings = () => {
               <span className="text-gray-500 dark:text-gray-400">
                 {data.organization.adminEmailIds[0]}
               </span>
+            </div>
+          </div>
+          <div className="bg-gray-100 rounded-xl dark:bg-[#001c40]">
+            <div className="p-5 flex flex-col gap-3">
+              <span className="mb-1">Subscription Details</span>
+              {!subscriptionId && (
+                <div className="text-xs text-amber-600 dark:text-amber-400">
+                  No active subscription. {subscribing ? "Activating…" : ""}
+                </div>
+              )}
+              {subscriptionId && (
+                <div className="grid md:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      ID
+                    </p>
+                    <p className="font-mono text-xs break-all">
+                      {subscriptionId}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Status
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <BillingStatusBadge status={billingStatus} />
+                      {pollingSubStatus && billingStatus !== "active" && (
+                        <span className="animate-pulse text-[10px] text-gray-500">
+                          refreshing…
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Seats
+                    </p>
+                    <p>{currentSeats ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Price / Seat
+                    </p>
+                    <p>
+                      {perMemberPriceInPaise != null
+                        ? formatPaise(
+                            perMemberPriceInPaise,
+                            org?.currency || "INR"
+                          )
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Base Monthly
+                    </p>
+                    <p>
+                      {baseMonthlyPaise != null
+                        ? formatPaise(baseMonthlyPaise, org?.currency || "INR")
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Period
+                    </p>
+                    <p>
+                      {(periodStart &&
+                        new Date(periodStart).toLocaleDateString()) ||
+                        "?"}{" "}
+                      →{" "}
+                      {(periodEnd &&
+                        new Date(periodEnd).toLocaleDateString()) ||
+                        "?"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Time Left
+                    </p>
+                    <p>
+                      {daysRemaining != null
+                        ? daysRemaining > 0
+                          ? `${daysRemaining} day${
+                              daysRemaining === 1 ? "" : "s"
+                            } left`
+                          : daysRemaining === 0
+                          ? "Ends today"
+                          : "Ended"
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Next Due
+                    </p>
+                    <p>
+                      {nextDue ? new Date(nextDue).toLocaleDateString() : "—"}
+                    </p>
+                  </div>
+                  {manageLink && (
+                    <div className="md:col-span-2 flex flex-wrap gap-4 items-center text-xs">
+                      <a
+                        href={manageLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline text-indigo-600 dark:text-indigo-400"
+                      >
+                        Manage / Pay
+                      </a>
+                      <a
+                        href="/transactionsHistory"
+                        className="underline text-indigo-600 dark:text-indigo-400"
+                      >
+                        Invoice History
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!subscriptionId && org?.perMemberPriceInPaise != null && (
+                <button
+                  onClick={handleActivate}
+                  disabled={subscribing}
+                  className="mt-3 self-start px-3 py-1.5 rounded bg-emerald-600 text-white text-xs disabled:opacity-50"
+                >
+                  {subscribing ? "Activating…" : "Activate Subscription"}
+                </button>
+              )}
             </div>
           </div>
           <div className="bg-gray-100 rounded-xl dark:bg-[#001c40]">
@@ -254,36 +468,9 @@ const TransactionSettings = () => {
               </div>
             </div>
           </div>
-          {/* Per-Member Billing Section (integrated) */}
-          <div className="bg-gray-100 rounded-xl p-5 flex flex-col dark:bg-[#001c40]">
-            <div className="flex flex-row items-center justify-between mb-2">
-              <span className="font-medium">Per-Member Billing</span>
-              {!rzpReady && <span className="text-[10px] text-gray-500">Loading payment lib…</span>}
-            </div>
-            {billingError && (
-              <div className="mb-3 p-2 text-xs rounded bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">
-                {billingError}
-              </div>
-            )}
-            <div className="text-sm flex flex-col gap-1 mb-3">
-              <span>Per-Member Price: {perMemberPriceInRupees ? `₹${perMemberPriceInRupees}` : "—"}</span>
-              <span>Users Count (for billing): {usersCount != null ? usersCount : "—"}</span>
-              <span>Total: {totalPaise != null ? `₹${formatInrFromPaise(totalPaise)}` : "—"}</span>
-            </div>
-            <PayNowButton
-              disabled={!rzpReady || !usersCount || !perMemberPriceInPaise}
-              onClick={initiatePayment}
-              totalPaise={totalPaise}
-              usersCount={usersCount}
-              perMemberPriceInPaise={perMemberPriceInPaise}
-              loading={creatingOrder || verifying}
-            />
-            {(creatingOrder || verifying) && <div className="spinner mt-4" aria-label="Loading" />}
-            <PaymentSummary result={lastPayment} />
-            <p className="mt-4 text-[10px] text-gray-400">Prefetched order: {prefetched ? "yes" : "no"}</p>
-          </div>
         </div>
       </div>
+      <Toast notice={toast} onClose={() => setToast(null)} />
     </div>
   );
 };

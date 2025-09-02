@@ -75,11 +75,11 @@ export default function OrgBilling() {
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <UsageSummaryCard org={org} preview={preview} />
-          {/* Placeholder for SeatsChart future */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-[#0F172A] text-xs text-gray-500">
-            Seats chart coming soon
-          </div>
+          <UsageSummaryCard
+            org={org}
+            preview={preview}
+            liveSub={liveSubStatus}
+          />
         </div>
         <div className="space-y-6">
           <SubscriptionStatusPanel

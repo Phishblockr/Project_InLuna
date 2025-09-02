@@ -5,14 +5,13 @@ export default function SubscriptionStatusPanel({ org, live, polling }) {
   if (!org?.subscriptionId) return null;
   const status = live?.status || org?.billingStatus;
   const quantity = live?.quantity ?? org?.currentSeats;
-  const start =
-    live?.currentStartAt ||
-    live?.periodStart ||
-    live?.start_at ||
-    live?.startAt;
-  const end =
-    live?.currentEndAt || live?.periodEnd || live?.end_at || live?.endAt;
-  const link = live?.shortUrl || live?.short_url || live?.link;
+  // Support multiple key variants coming from backend / Razorpay
+  const start = live?.displayPeriodStartMinusOneMonth;
+  console.log(live);
+  const end = live?.displayPeriodEndInclusiveMinusOneMonth;
+
+  const link =
+    live?.link || live?.shortUrl || live?.short_url || live?.nextChargeAt;
   const currency = org?.currency || "INR";
   return (
     <div className="p-4 border rounded bg-white dark:bg-[#0F172A] text-xs space-y-2">
