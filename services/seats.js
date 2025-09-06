@@ -8,7 +8,8 @@ export async function applySeatDelta(
   session
 ) {
   const Orgs = await getOrgModel();
-  const query = { _id: orgId };
+  // Use orgId string, not _id ObjectId
+  const query = { orgId };
   const org = session
     ? await Orgs.findOne(query).session(session)
     : await Orgs.findOne(query);

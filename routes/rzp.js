@@ -395,6 +395,18 @@ router.get("/subscription-status", async (req, res) => {
         ? new Date(sub.current_end * 1000 - 1000)
         : null,
     };
+    // Add canActivate flag for frontend logic
+    const inactiveStates = [
+      "cancelled",
+      "halted",
+      "inactive",
+      "expired",
+      "completed",
+      "paused",
+    ];
+    response.canActivate = inactiveStates.includes(
+      (sub.status || "").toLowerCase()
+    );
 
     // Add shifted (-1 month) variants if requested by frontend; does not mutate originals.
     if (response.displayPeriodStart) {

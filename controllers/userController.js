@@ -197,7 +197,7 @@ export const setupPassword = async (req, res) => {
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
   try {
-    const { orgId } = req.user;
+    const { orgId, userId: adminId } = req.user;
     const { name, email, role, department, userType, img, status } = req.body;
 
     if (!orgId) {
@@ -256,45 +256,57 @@ export const createUser = asyncHandler(async (req, res) => {
       userType: UserTypeCode,
     });
 
-    // Transaction for user creation + seat delta + org counters
-    const mongoose = (await import("mongoose")).default;
-    const session = await mongoose.startSession();
-    let addedUser;
+    // Create the user first in the tenant DB (no cross-DB session)
+    let addedUser = await newUser.save();
+
+    // Start a session from the admin DB connection and wrap admin writes atomically
+    const adminConn = (await getOrgModel()).db; // same connection used by OrgModel & seat models
+    const session = await adminConn.startSession();
     let updatedOrg;
-    await session.withTransaction(async () => {
-      addedUser = await newUser.save({ session });
-      const { applySeatDeltaOnce } = await import(
-        "../models/seatChangeModel.js"
-      );
-      const { applySeatDelta } = await import("../services/seats.js");
-      const at = new Date();
-      // Seat metering (+1) idempotent inside transaction
-      await applySeatDeltaOnce({
-        orgId,
-        memberId: addedUser._id,
-        delta: +1,
-        at,
-        applySeatDeltaFn: (sess) => applySeatDelta(orgId, +1, at, sess),
-        session,
+    try {
+      await session.withTransaction(async () => {
+        const { applySeatDeltaOnce } = await import(
+          "../models/seatChangeModel.js"
+        );
+        const { applySeatDelta } = await import("../services/seats.js");
+        const at = new Date();
+        // Seat metering (+1) idempotent inside transaction (admin DB only)
+        await applySeatDeltaOnce({
+          orgId,
+          memberId: addedUser._id,
+          delta: +1,
+          at,
+          applySeatDeltaFn: (sess) => applySeatDelta(orgId, +1, at, sess),
+          session,
+        });
+        // Update organization counters/admin arrays (admin DB)
+        updatedOrg = await OrgModel.findOneAndUpdate(
+          { orgId },
+          {
+            $inc: { usersCount: 1 },
+            ...(addedUser.userType === process.env.ADMIN
+              ? {
+                  $push: {
+                    adminEmailIds: addedUser.email,
+                    adminIds: addedUser._id,
+                  },
+                }
+              : {}),
+          },
+          { new: true, session }
+        );
+        if (!updatedOrg) throw new Error("Failed org update in transaction");
       });
-      // Update organization counters/admin arrays
-      updatedOrg = await OrgModel.findOneAndUpdate(
-        { orgId },
-        {
-          $inc: { usersCount: 1 },
-          ...(addedUser.userType === process.env.ADMIN
-            ? {
-                $push: {
-                  adminEmailIds: addedUser.email,
-                  adminIds: addedUser._id,
-                },
-              }
-            : {}),
-        },
-        { new: true, session }
-      );
-      if (!updatedOrg) throw new Error("Failed org update in transaction");
-    });
+    } catch (txErr) {
+      // Attempt to roll back the created tenant user to keep consistency
+      try {
+        await (
+          tenantDb.models.User || tenantDb.model("User", UserSchema)
+        ).findByIdAndDelete(addedUser._id);
+      } catch (_) {}
+      session.endSession();
+      throw txErr;
+    }
     session.endSession();
 
     if (!updatedOrg) {
@@ -318,19 +330,40 @@ export const createUser = asyncHandler(async (req, res) => {
       io.emit("userCreated", addedUser);
     }
 
-    // Add Log Entry in the Correct Tenant Database
+    // Automatically trigger Razorpay seat sync for this org
     try {
-      await AdminLogs.create({
-        userId: req.user.userId,
-        operationType: "add",
-        operationsPerformed: `User created: ${name} with userType ${UserTypeCode}`,
-        orgId,
-        entityId: addedUser._id,
-        entityType: "user",
+      const fetch = (await import("node-fetch")).default;
+      await fetch("http://localhost:5000/api/rzp/sync-quantity", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgId }),
       });
-      console.log("Log entry created successfully in tenant DB:", orgId);
-    } catch (logError) {
-      console.error("Failed to create log in tenant DB:", logError.message);
+    } catch (syncErr) {
+      console.error(
+        "Failed to sync Razorpay seats after user creation:",
+        syncErr.message
+      );
+    }
+
+    // Add Log Entry in the Correct Tenant Database
+    if (adminId) {
+      try {
+        await AdminLogs.create({
+          userId: adminId,
+          operationType: "add",
+          operationsPerformed: `User created: ${name} with userType ${UserTypeCode}`,
+          orgId,
+          entityId: addedUser._id,
+          entityType: "user",
+        });
+        console.log("Log entry created successfully in tenant DB:", orgId);
+      } catch (logError) {
+        console.error("Failed to create log in tenant DB:", logError.message);
+      }
+    } else {
+      console.warn(
+        "No adminId found in req.user; skipping log entry for user creation."
+      );
     }
 
     res.status(201).json(addedUser);
@@ -793,54 +826,64 @@ export const deleteUser = asyncHandler(async (req, res) => {
     const OrgModel = await getOrgModel();
     // Soft delete: set removedAt timestamp and status -> inactive
     const now = new Date();
-    // Clamp removedAt within current billing cycle window
     try {
       const { previewCycle } = await import("../services/billing.js");
       const cycle = await previewCycle(orgId, now);
-      let removedAt = now;
-      if (removedAt < cycle.cycleStart) removedAt = new Date(cycle.cycleStart);
-      if (removedAt > cycle.cycleEnd) removedAt = new Date(cycle.cycleEnd);
-      user.removedAt = removedAt;
+      // Always set removedAt to the END of the current billing cycle
+      user.removedAt = new Date(cycle.cycleEnd);
     } catch (e) {
       user.removedAt = now; // fallback
     }
-    // Transaction: update org counters/admin arrays + user soft-delete + seat delta
-    const mongoose = (await import("mongoose")).default;
-    const session = await mongoose.startSession();
-    await session.withTransaction(async () => {
-      user.status = "inactive";
-      await user.save({ session });
-      // org update
-      let updateOrgQuery = {};
-      if (user.userType === process.env.ADMIN) {
-        updateOrgQuery = {
-          $pull: { adminIds: user._id, adminEmailIds: user.email },
-        };
-      }
-      await OrgModel.findOneAndUpdate(
-        { orgId },
-        { $inc: { usersCount: -1 }, ...updateOrgQuery },
-        { session }
-      );
-      // seat delta idempotent
-      try {
-        const { applySeatDeltaOnce } = await import(
-          "../models/seatChangeModel.js"
+    // First update tenant user (no cross-DB session)
+    user.status = "inactive";
+    await user.save();
+
+    // Start a session from the admin DB connection and wrap admin writes atomically
+    const adminConn = (await getOrgModel()).db;
+    const session = await adminConn.startSession();
+    try {
+      await session.withTransaction(async () => {
+        // org update
+        let updateOrgQuery = {};
+        if (user.userType === process.env.ADMIN) {
+          updateOrgQuery = {
+            $pull: { adminIds: user._id, adminEmailIds: user.email },
+          };
+        }
+        await OrgModel.findOneAndUpdate(
+          { orgId },
+          { $inc: { usersCount: -1 }, ...updateOrgQuery },
+          { session }
         );
-        const { applySeatDelta } = await import("../services/seats.js");
-        const at = user.removedAt;
-        await applySeatDeltaOnce({
-          orgId,
-          memberId: user._id,
-          delta: -1,
-          at,
-          applySeatDeltaFn: (sess) => applySeatDelta(orgId, -1, at, sess),
-          session,
-        });
-      } catch (e) {
-        console.error("Seat -1 metering failed (deleteUser):", e.message);
-      }
-    });
+        // seat delta idempotent
+        try {
+          const { applySeatDeltaOnce } = await import(
+            "../models/seatChangeModel.js"
+          );
+          const { applySeatDelta } = await import("../services/seats.js");
+          const at = user.removedAt;
+          await applySeatDeltaOnce({
+            orgId,
+            memberId: user._id,
+            delta: -1,
+            at,
+            applySeatDeltaFn: (sess) => applySeatDelta(orgId, -1, at, sess),
+            session,
+          });
+        } catch (e) {
+          console.error("Seat -1 metering failed (deleteUser):", e.message);
+        }
+      });
+    } catch (txErr) {
+      // Attempt to roll back the tenant user status if admin transaction fails
+      try {
+        user.status = "active";
+        user.removedAt = null;
+        await user.save();
+      } catch (_) {}
+      session.endSession();
+      throw txErr;
+    }
     session.endSession();
 
     const io = req.app.get("socketio");
@@ -865,8 +908,23 @@ export const deleteUser = asyncHandler(async (req, res) => {
     } catch (logError) {
       console.error("Failed to create log in tenant DB:", logError.message);
     }
+    // Automatically trigger Razorpay seat sync for this org
+    try {
+      const fetch = (await import("node-fetch")).default;
+      await fetch("http://localhost:5000/api/rzp/sync-quantity", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgId }),
+      });
+    } catch (syncErr) {
+      console.error(
+        "Failed to sync Razorpay seats after user deletion:",
+        syncErr.message
+      );
+    }
+
     res.status(200).json({
-      message: `User ${user.email} removed successfully.`,
+      message: `User ${user.email} removed successfully and seat sync triggered.`,
       removedAt: user.removedAt,
     });
   } catch (error) {
