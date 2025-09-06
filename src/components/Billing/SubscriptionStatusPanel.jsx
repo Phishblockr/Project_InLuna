@@ -5,10 +5,11 @@ export default function SubscriptionStatusPanel({ org, live, polling }) {
   if (!org?.subscriptionId) return null;
   const status = live?.status || org?.billingStatus;
   const quantity = live?.quantity ?? org?.currentSeats;
-  // Support multiple key variants coming from backend / Razorpay
-  const start = live?.displayPeriodStartMinusOneMonth;
   console.log(live);
-  const end = live?.displayPeriodEndInclusiveMinusOneMonth;
+  // Support multiple key variants coming from backend / Razorpay
+  const start = live?.currentPeriodStart;
+  console.log(live);
+  const end = live?.currentPeriodEnd;
 
   const link =
     live?.link || live?.shortUrl || live?.short_url || live?.nextChargeAt;

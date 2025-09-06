@@ -1,5 +1,5 @@
 import React from "react";
-import { formatPaise, formatDateUTC } from "./formatters.js";
+import { formatPaise } from "./formatters.js";
 
 export function UsageSummaryCard({ org, preview, liveSub }) {
   if (!org) return null;
@@ -13,8 +13,19 @@ export function UsageSummaryCard({ org, preview, liveSub }) {
   const projectedTotal = (basePricePaise ?? 0) + (usagePaise ?? 0);
 
   // Prefer live subscription status current period if available
-  const cycleStartRaw = liveSub?.displayPeriodStartMinusOneMonth;
-  const cycleEndRaw = liveSub?.displayPeriodEndInclusiveMinusOneMonth;
+  const cycleStartRaw = liveSub?.currentPeriodStart;
+  const cycleEndRaw = liveSub?.currentPeriodEnd;
+
+  // Format date as dd/mm/yyyy
+  function formatDateDMY(dateStr) {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d)) return "—";
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
   return (
     <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-[#0F172A] text-sm space-y-2">
@@ -23,7 +34,7 @@ export function UsageSummaryCard({ org, preview, liveSub }) {
           Current Cycle
         </h3>
         <p className="text-xs text-gray-500">
-          {formatDateUTC(cycleStartRaw)} → {formatDateUTC(cycleEndRaw)}
+          {formatDateDMY(cycleStartRaw)} → {formatDateDMY(cycleEndRaw)}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">

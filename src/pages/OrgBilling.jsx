@@ -7,6 +7,7 @@ import CloseCycleModal from "../components/Billing/CloseCycleModal.jsx";
 import SubscriptionActivationPanel from "../components/Billing/SubscriptionActivationPanel.jsx";
 import SubscriptionStatusPanel from "../components/Billing/SubscriptionStatusPanel.jsx";
 import { formatPaise } from "../components/Billing/formatters.js";
+import SubscriptionPayment from "../components/Billing/SubscriptionPayment.jsx";
 
 export default function OrgBilling() {
   const {
@@ -72,6 +73,18 @@ export default function OrgBilling() {
           activating={subscribing}
         />
       )}
+      {/* If backend indicates it canActivate, surface Razorpay checkout with UPI disabled */}
+      {org?.orgId &&
+        (org?.canActivate ||
+          (org?.billingStatus !== "active" &&
+            liveSubStatus?.status !== "active" &&
+            org?.perMemberPriceInPaise)) && (
+          <SubscriptionPayment
+            orgId={org.orgId}
+            userEmail={undefined}
+            userContact={undefined}
+          />
+        )}
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
