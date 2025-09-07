@@ -23,7 +23,7 @@ const logger = winston.createLogger({
 
 // Login user
 export const loginUser = asyncHandler(async (req, res) => {
-  const { orgId, username, password, recaptchaToken } = req.body;
+  const { orgId, username, password } = req.body;
 
   if (!orgId || !username || !password) {
     return res
@@ -32,38 +32,6 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   try {
-    if (process.env.RECAPTCHA_ENABLED === "true") {
-      if (
-        process.env.RECAPTCHA_BYPASS_TOKEN &&
-        recaptchaToken === process.env.RECAPTCHA_BYPASS_TOKEN
-      ) {
-        if (process.env.RECAPTCHA_DEBUG === "true") {
-          console.log("[reCAPTCHA] Bypass token accepted for tenant_login");
-        }
-      } else {
-        const verification = await verifyRecaptchaToken({
-          token: recaptchaToken,
-          expectedAction: "tenant_login",
-        });
-        if (process.env.RECAPTCHA_DEBUG === "true") {
-          console.log("[reCAPTCHA] tenant_login verification result:", verification);
-        }
-        if (!verification.valid) {
-          return res.status(400).json({
-            message: "reCAPTCHA verification failed",
-            reasons: verification.reasons,
-            error: verification.error,
-          });
-        }
-        const minScore = parseFloat(process.env.RECAPTCHA_MIN_SCORE || "0.5");
-        if (verification.score !== null && verification.score < minScore) {
-          return res.status(403).json({
-            message: "Suspicious activity detected (low reCAPTCHA score)",
-            score: verification.score,
-          });
-        }
-      }
-    }
     // Get the tenant-specific User model
     const User = await getUserModel(orgId);
 
@@ -192,7 +160,10 @@ export const loginAdmin = asyncHandler(async (req, res) => {
           expectedAction: "dashboard_login",
         });
         if (process.env.RECAPTCHA_DEBUG === "true") {
-          console.log("[reCAPTCHA] dashboard_login verification result:", verification);
+          console.log(
+            "[reCAPTCHA] dashboard_login verification result:",
+            verification
+          );
         }
         if (!verification.valid) {
           return res.status(400).json({
@@ -302,7 +273,10 @@ export const loginSuperAdm = asyncHandler(async (req, res) => {
           expectedAction: "super_login",
         });
         if (process.env.RECAPTCHA_DEBUG === "true") {
-          console.log("[reCAPTCHA] super_login verification result:", verification);
+          console.log(
+            "[reCAPTCHA] super_login verification result:",
+            verification
+          );
         }
         if (!verification.valid) {
           return res.status(400).json({

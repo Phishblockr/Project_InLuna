@@ -206,7 +206,7 @@ router.post("/subscribe", async (req, res, next) => {
 router.patch("/sync-quantity", async (req, res, next) => {
   try {
     const Orgs = await getOrgModel();
-    const { orgId, schedule = "now", proRate = false } = req.body || {};
+  const { orgId, schedule = "now", proRate = false } = req.body || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
     const org = await Orgs.findOne({ orgId });
     if (!org?.subscriptionId)
@@ -221,10 +221,15 @@ router.patch("/sync-quantity", async (req, res, next) => {
     const prevQty = current.quantity;
     const newQty = org.seatMeter?.currentSeats ?? org.usersCount ?? 0;
     const delta = newQty - prevQty;
+    // Never decrease quantity mid-cycle to avoid revenue leakage; force cycle_end
+    let effectiveSchedule = schedule;
+    if (delta < 0 && schedule !== "cycle_end") {
+      effectiveSchedule = "cycle_end";
+    }
     let proratedAddon = null;
 
     // Only attempt pro-rata if increasing seats, immediate schedule, and proRate flag true
-    if (proRate && delta > 0 && schedule !== "cycle_end") {
+  if (proRate && delta > 0 && effectiveSchedule !== "cycle_end") {
       // Determine remaining fraction of current period
       const nowSec = Math.floor(Date.now() / 1000);
       const periodStart = current.current_start || nowSec;
@@ -261,12 +266,12 @@ router.patch("/sync-quantity", async (req, res, next) => {
     }
 
     // Update subscription quantity (after add-on so addon references old quantity context is fine)
-    let updated;
+  let updated;
     try {
       updated = await rzpWrap(
         client.subscriptions.update(org.subscriptionId, {
-          quantity: newQty,
-          schedule_change_at: schedule === "cycle_end" ? "cycle_end" : "now",
+      quantity: newQty,
+      schedule_change_at: effectiveSchedule === "cycle_end" ? "cycle_end" : "now",
         })
       );
     } catch (updErr) {
@@ -285,7 +290,7 @@ router.patch("/sync-quantity", async (req, res, next) => {
       throw updErr;
     }
 
-    res.json({ ok: true, subscription: updated, proratedAddon });
+  res.json({ ok: true, subscription: updated, proratedAddon, effectiveSchedule });
   } catch (e) {
     next(e);
   }
