@@ -212,6 +212,8 @@ export const loginAdmin = asyncHandler(async (req, res) => {
       expiresIn: rememberMe ? "7d" : "1d",
     });
 
+    console.log(token);
+
     // Encrypt and store the refresh token
     const encryptedRefreshToken = await encrypt(refreshToken);
     user.refreshToken = encryptedRefreshToken;

@@ -164,12 +164,28 @@ export const setupPassword = async (req, res) => {
     const User = await getUserModel(orgId); // Get tenant-specific User model
     const tenantDb = await getTenantDB(orgId);
     const AdminLogs = await getAdminLogsModel(tenantDb);
-
-    const user = await User.findOne({
-      setupPasswordExpires: { $gt: Date.now() },
-    });
-
-    if (!user || !(await bcrypt.compare(token, user.setupPasswordToken))) {
+    // Find the correct user by comparing the provided token with all unexpired token hashes.
+    // Note: We can't query by bcrypt hash directly, so we scan eligible users and compare.
+    const emailLower = (req.body.email || "").toLowerCase().trim();
+    const now = Date.now();
+    const query = {
+      setupPasswordExpires: { $gt: now },
+      setupPasswordToken: { $exists: true, $ne: null },
+      ...(emailLower ? { email: emailLower } : {}),
+    };
+    const candidates = await User.find(query);
+    let user = null;
+    const rawToken = (token || "").trim();
+    for (const candidate of candidates) {
+      if (
+        candidate.setupPasswordToken &&
+        (await bcrypt.compare(rawToken, candidate.setupPasswordToken))
+      ) {
+        user = candidate;
+        break;
+      }
+    }
+    if (!user) {
       return res.status(400).json({ message: "Invalid or expired token." });
     }
 
@@ -298,14 +314,63 @@ export const createUser = asyncHandler(async (req, res) => {
         if (!updatedOrg) throw new Error("Failed org update in transaction");
       });
     } catch (txErr) {
-      // Attempt to roll back the created tenant user to keep consistency
-      try {
-        await (
-          tenantDb.models.User || tenantDb.model("User", UserSchema)
-        ).findByIdAndDelete(addedUser._id);
-      } catch (_) {}
-      session.endSession();
-      throw txErr;
+      const msg = (txErr && txErr.message) || "";
+      const notReplicaSet =
+        msg.includes("Transaction numbers are only allowed") ||
+        msg.toLowerCase().includes("replica set") ||
+        txErr.code === 20; // Code 20: IllegalOperation (standalone)
+      if (notReplicaSet) {
+        // Fallback: perform admin updates WITHOUT a transaction
+        try {
+          const { applySeatDeltaOnce } = await import(
+            "../models/seatChangeModel.js"
+          );
+          const { applySeatDelta } = await import("../services/seats.js");
+          const at = new Date();
+          await applySeatDeltaOnce({
+            orgId,
+            memberId: addedUser._id,
+            delta: +1,
+            at,
+            applySeatDeltaFn: (sess) => applySeatDelta(orgId, +1, at, sess),
+            // no session in fallback
+          });
+          updatedOrg = await OrgModel.findOneAndUpdate(
+            { orgId },
+            {
+              $inc: { usersCount: 1 },
+              ...(addedUser.userType === process.env.ADMIN
+                ? {
+                    $push: {
+                      adminEmailIds: addedUser.email,
+                      adminIds: addedUser._id,
+                    },
+                  }
+                : {}),
+            },
+            { new: true }
+          );
+          if (!updatedOrg) throw new Error("Failed org update (fallback)");
+        } catch (fallbackErr) {
+          // Fallback failed too — attempt to roll back tenant user
+          try {
+            await (
+              tenantDb.models.User || tenantDb.model("User", UserSchema)
+            ).findByIdAndDelete(addedUser._id);
+          } catch (_) {}
+          session.endSession();
+          throw fallbackErr;
+        }
+      } else {
+        // Unknown failure — roll back tenant user and rethrow
+        try {
+          await (
+            tenantDb.models.User || tenantDb.model("User", UserSchema)
+          ).findByIdAndDelete(addedUser._id);
+        } catch (_) {}
+        session.endSession();
+        throw txErr;
+      }
     }
     session.endSession();
 
@@ -323,6 +388,8 @@ export const createUser = asyncHandler(async (req, res) => {
       emailContent,
       addedUser
     );
+
+    // console.log(emailContent);
 
     // Emit real-time event (if using WebSockets)
     const io = req.app.get("socketio");
@@ -875,14 +942,67 @@ export const deleteUser = asyncHandler(async (req, res) => {
         }
       });
     } catch (txErr) {
-      // Attempt to roll back the tenant user status if admin transaction fails
-      try {
-        user.status = "active";
-        user.removedAt = null;
-        await user.save();
-      } catch (_) {}
-      session.endSession();
-      throw txErr;
+      const msg = (txErr && txErr.message) || "";
+      const notReplicaSet =
+        msg.includes("Transaction numbers are only allowed") ||
+        msg.toLowerCase().includes("replica set") ||
+        txErr.code === 20; // Code 20: IllegalOperation (standalone)
+      if (notReplicaSet) {
+        // Fallback: perform admin updates WITHOUT a transaction
+        try {
+          // org update without session
+          let updateOrgQuery = {};
+          if (user.userType === process.env.ADMIN) {
+            updateOrgQuery = {
+              $pull: { adminIds: user._id, adminEmailIds: user.email },
+            };
+          }
+          await OrgModel.findOneAndUpdate(
+            { orgId },
+            { $inc: { usersCount: -1 }, ...updateOrgQuery },
+            { new: true }
+          );
+          // seat delta without session
+          try {
+            const { applySeatDeltaOnce } = await import(
+              "../models/seatChangeModel.js"
+            );
+            const { applySeatDelta } = await import("../services/seats.js");
+            const at = user.removedAt;
+            await applySeatDeltaOnce({
+              orgId,
+              memberId: user._id,
+              delta: -1,
+              at,
+              applySeatDeltaFn: (sess) => applySeatDelta(orgId, -1, at, sess),
+              // no session
+            });
+          } catch (e) {
+            console.error(
+              "Seat -1 metering failed (deleteUser fallback):",
+              e.message
+            );
+          }
+        } catch (fallbackErr) {
+          // Fallback failed — attempt to roll back tenant user changes
+          try {
+            user.status = "active";
+            user.removedAt = null;
+            await user.save();
+          } catch (_) {}
+          session.endSession();
+          throw fallbackErr;
+        }
+      } else {
+        // Unknown failure — roll back tenant user and rethrow
+        try {
+          user.status = "active";
+          user.removedAt = null;
+          await user.save();
+        } catch (_) {}
+        session.endSession();
+        throw txErr;
+      }
     }
     session.endSession();
 

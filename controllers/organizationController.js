@@ -303,13 +303,14 @@ export const verifyOrganizationEmail = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "token and email are required." });
   }
 
-  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  // const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const PendingModel = await getPendingOrgModel();
   const pending = await PendingModel.findOne({
     adminEmail: email,
-    tokenHash,
+    tokenHash: token,
     tokenExpiresAt: { $gt: new Date() },
   });
+  console.log(pending);
 
   if (!pending) {
     return res
