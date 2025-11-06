@@ -19,6 +19,7 @@ import { formatInrFromPaise } from "../../utils/currency";
 import useBilling from "../../hooks/useBilling";
 import { formatPaise } from "../Billing/formatters";
 import BillingStatusBadge from "../Billing/BillingStatusBadge.jsx";
+import SubscriptionPayment from "../Billing/SubscriptionPayment.jsx";
 
 // Lightweight toast component (scoped to this page)
 function Toast({ notice, onClose }) {
@@ -61,8 +62,14 @@ const TransactionSettings = () => {
   );
 
   // New unified billing subscription context (SWR based)
-  const { org, liveSubStatus, subscribing, subscribe, pollingSubStatus } =
-    useBilling();
+  const {
+    org,
+    liveSubStatus,
+    subscribing,
+    subscribe,
+    pollingSubStatus,
+    preview,
+  } = useBilling();
   const [toast, setToast] = useState(null);
 
   // === Billing (Razorpay) state ===
@@ -75,6 +82,10 @@ const TransactionSettings = () => {
   const [billingError, setBillingError] = useState("");
   const [lastPayment, setLastPayment] = useState(null);
   const [prefetched, setPrefetched] = useState(false);
+
+  const status = liveSubStatus?.status || org?.billingStatus;
+  const noSubscription = !org?.subscriptionId || status === "canceled";
+  const disableSync = noSubscription; // can't sync without active subscription
 
   useEffect(() => {
     setDataLoading(true);
@@ -233,7 +244,7 @@ const TransactionSettings = () => {
   };
 
   return (
-    <div className="z-1 h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
+    <div className="z-1 flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
       <div className="z-1 relative w-full bg-white rounded-xl shadow-xl p-6 h-full dark:bg-[#002451] dark:text-white">
         <div className="mb-10">
           <h1 className="text-2xl font-medium dark:text-[#F4F4F4]">
@@ -371,6 +382,17 @@ const TransactionSettings = () => {
                   )}
                 </div>
               )}
+              {org?.orgId &&
+                (org?.canActivate ||
+                  (org?.billingStatus !== "active" &&
+                    liveSubStatus?.status !== "active" &&
+                    org?.perMemberPriceInPaise)) && (
+                  <SubscriptionPayment
+                    orgId={org.orgId}
+                    userEmail={undefined}
+                    userContact={undefined}
+                  />
+                )}
               {!subscriptionId && org?.perMemberPriceInPaise != null && (
                 <button
                   onClick={handleActivate}
@@ -385,25 +407,16 @@ const TransactionSettings = () => {
           <div className="bg-gray-100 rounded-xl dark:bg-[#001c40]">
             <div className="p-5 flex flex-col">
               <span className="mb-2">Billing Details</span>
-              {data.subscriptionDetails.last4 ? (
-                <div className="flex flex-row items-center gap-2 mb-5">
-                  {cardLogo}
-                  <span className="flex flex-row items-center gap-2">
-                    <span>•••• •••• ••••</span>
-                    <span className="text-3xl">
-                      {data.subscriptionDetails.last4}
-                    </span>
+              <div className="flex flex-row items-center gap-2 mb-5">
+                {cardLogo}
+                <span className="flex flex-row items-center gap-2">
+                  <span>•••• •••• ••••</span>
+                  <span className="text-3xl">
+                    {data?.subscriptionDetails?.last4 ?? "NA"}
                   </span>
-                </div>
-              ) : (
-                <div>
-                  <span className="mb-2">
-                    Set up payment method before the trial / due date ends to
-                    ensure you get seamless service.
-                  </span>
-                </div>
-              )}
-              {data.subscriptionDetails.status === "CANCELLED" ? (
+                </span>
+              </div>
+              {data?.subscriptionDetails?.status === "CANCELLED" ? (
                 <>
                   <span className="mb-5 text-red-500">
                     Your subscription has been cancelled.
@@ -416,21 +429,21 @@ const TransactionSettings = () => {
               ) : (
                 <>
                   <span className="mb-5">
-                    {data.subscriptionDetails.status === "TRIAL"
+                    {data?.subscriptionDetails?.status === "TRIAL"
                       ? "Your trial ends on: "
                       : "Your next billing date is: "}
                     <span className="text-2xl">
-                      {data.subscriptionDetails.nextBillingDate}
+                      {data?.subscriptionDetails?.nextBillingDate ?? "NA"}
                     </span>
                   </span>
                   <span>
-                    {data.subscriptionDetails.status === "TRIAL" ? (
+                    {data?.subscriptionDetails?.status === "TRIAL" ? (
                       "Your billable amount will be calculated after the trial ends."
                     ) : (
                       <span>
                         Total amount due: {currencySymbol}{" "}
                         <span className="text-2xl">
-                          {data.subscriptionDetails.amount}
+                          {data?.subscriptionDetails?.amount ?? "NA"}
                         </span>
                       </span>
                     )}
@@ -445,7 +458,7 @@ const TransactionSettings = () => {
                 <span>Payment History</span>{" "}
                 <RiArrowRightSLine className="text-2xl" />
               </Link>
-              {data.subscriptionDetails.status !== "CANCELLED" && (
+              {data?.subscriptionDetails?.status !== "CANCELLED" && (
                 <Link
                   className="mt-5 bg-white w-[200px] p-1 flex justify-center dark:bg-[#002451]"
                   to={"/cancelMembership"}
@@ -459,11 +472,13 @@ const TransactionSettings = () => {
             <span className="mb-2">Members</span>
             <div className="flex flex-row gap-5 justify-start items-center">
               <div className="flex flex-col items-center">
-                <span className="text-3xl">{data.users.current}</span>
+                <span className="text-3xl">{data?.users?.current ?? "—"}</span>
                 <span>Current Users</span>
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-3xl">{data.users.recentlyAdded}</span>
+                <span className="text-3xl">
+                  {data?.users?.recentlyAdded ?? "—"}
+                </span>
                 <span>Recently Onboarded</span>
               </div>
             </div>

@@ -62,16 +62,16 @@ export default function SubscriptionPayment({ orgId, userEmail, userContact }) {
   ]);
 
   return (
-    <div className="p-3 border border-dashed rounded bg-gray-50 dark:bg-gray-800/40 text-xs">
+    <div className="flex items-center justify-center text-xs">
       {error && (
         <div className="mb-2 text-red-600 dark:text-red-400">{error}</div>
       )}
       <button
         onClick={handleActivate}
         disabled={loading || !ready}
-        className="px-3 py-1.5 rounded bg-emerald-600 text-white disabled:opacity-50"
+        className="w-full px-3 py-1.5 rounded bg-emerald-600 text-white disabled:opacity-50"
       >
-        {loading ? "Processing…" : "Activate / Reactivate Subscription"}
+        {loading ? "Processing…" : "Add Payment Method"}
       </button>
       {!ready && (
         <div className="mt-2 text-[11px] text-gray-500">

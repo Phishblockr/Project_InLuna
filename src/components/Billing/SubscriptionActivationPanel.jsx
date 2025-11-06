@@ -15,7 +15,7 @@ export default function SubscriptionActivationPanel({
   const base = validPrice != null && seats != null ? validPrice * seats : null;
   const disabled = validPrice == null || activating;
   return (
-    <div className="p-5 border border-dashed border-emerald-400 rounded bg-emerald-50 dark:bg-emerald-900/10 text-sm space-y-3">
+    <div className="p-5 border rounded-lg border-dashed border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 text-sm space-y-3">
       <h3 className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">
         Activate Subscription
       </h3>
