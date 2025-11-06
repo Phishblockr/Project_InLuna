@@ -26,6 +26,29 @@ const OrgLayout = () => {
   const [perPage, setPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [newPrice, setNewPrice] = useState(0);
+
+  const handleSetPerSeatPrice = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/org/update/${orgId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ perMemberPriceInPaise: newPrice }),
+      });
+      const data = await res.json();
+      setOrgData((prev) => ({
+        ...prev,
+        perMemberPriceInPaise: newPrice,
+      }));
+      toast.success("Per seat price updated successfully");
+    } catch (error) {
+      toast.error("Error updating per seat price:", error.message);
+    }
+  };
+
   useEffect(() => {
     const fetchOrganisation = async ({ orgId, token }) => {
       if (!orgId) return;
@@ -39,6 +62,7 @@ const OrgLayout = () => {
         });
         const data = await res.json();
         setOrgData(data);
+        setNewPrice(data.perMemberPriceInPaise);
         console.log("Org Details", data);
       } catch (error) {
         toast.error("Error Fetching Organisation:", error.message);
@@ -142,6 +166,31 @@ const OrgLayout = () => {
           </div>
           <div>
             <OverviewCards data={orgMetric} />
+          </div>
+          <div className="mt-2 flex gap-2 items-center">
+            <label htmlFor="perSeatPaise">Per Seat Price:</label>
+            <input
+              type="number"
+              id="perSeatPaise"
+              className="border border-gray-300 rounded-lg p-2"
+              value={newPrice}
+              onChange={(e) => setNewPrice(Number(e.target.value))}
+            />
+            {orgData.perMemberPriceInPaise === newPrice ? (
+              <button
+                className="border border-gray-300 rounded-lg p-2 cursor-not-allowed opacity-50"
+                disabled
+              >
+                Update
+              </button>
+            ) : (
+              <button
+                onClick={handleSetPerSeatPrice}
+                className="border border-gray-300 rounded-lg p-2"
+              >
+                Update
+              </button>
+            )}
           </div>
         </div>
 
@@ -248,12 +297,15 @@ const OrgLayout = () => {
                           <td>
                             <button
                               onClick={() =>
-                                navigate(`/organisations/${orgData.name}/userDetails/${user._id}`,{
-                                  state:{
-                                    orgId: orgData._id,
-                                    userId: user._id,
+                                navigate(
+                                  `/organisations/${orgData.name}/userDetails/${user._id}`,
+                                  {
+                                    state: {
+                                      orgId: orgData._id,
+                                      userId: user._id,
+                                    },
                                   }
-                                })
+                                )
                               }
                               title="Click to view details"
                             >
