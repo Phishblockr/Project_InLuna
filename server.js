@@ -38,6 +38,7 @@ import cookieParser from "cookie-parser";
 import fetchAndSavePhishtankData from "./cronJobs/phishtankJob.js";
 import fetchAndSaveUrlhausData from "./cronJobs/urlhausService.js";
 import runMonthlyUserPurge from "./cronJobs/userCleanupJob.js";
+import runCreatePendingSubscriptions from "./cronJobs/createSubscriptionJob.js";
 
 // Training Platform
 import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
