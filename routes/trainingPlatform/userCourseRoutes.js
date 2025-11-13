@@ -1,24 +1,43 @@
 import express from "express";
-import { assignCourse, getCoursesForUser, removeCourseAssignment, getUserAssignedCourseDetails, updateVideoProgress, getUserCourseProgress, getAllAssignEmails } from "../../controllers/trainingPlatform/userCourseController.js";
+import {
+  assignCourse,
+  getCoursesForUser,
+  removeCourseAssignment,
+  getUserAssignedCourseDetails,
+  updateVideoProgress,
+  getUserCourseProgress,
+  getAllAssignEmails,
+} from "../../controllers/trainingPlatform/userCourseController.js";
 import authenticateToken from "../../middlewares/authenticateToken.js";
 import dashboardAdminMiddleware from "../../middlewares/dashboardAdminMiddleware.js";
 
 const router = express.Router();
 router.post("/assign", dashboardAdminMiddleware, assignCourse);
-router.get("/getAssigned/:userId",authenticateToken ,getCoursesForUser);
-router.delete("/deleteAssignment",dashboardAdminMiddleware ,removeCourseAssignment);
+router.get("/getAssigned/:userId", authenticateToken, getCoursesForUser);
+router.delete(
+  "/deleteAssignment",
+  dashboardAdminMiddleware,
+  removeCourseAssignment
+);
 
 // Fetch course details for a specific user
-router.get("/details/:courseId/:userId",authenticateToken, getUserAssignedCourseDetails)
+router.get(
+  "/details/:courseId/:userId",
+  authenticateToken,
+  getUserAssignedCourseDetails
+);
 
 // Update video progress
-router.post("/progress",authenticateToken,updateVideoProgress);
+router.post("/progress", authenticateToken, updateVideoProgress);
 
 // get user Course progress
-router.get("/progress/:courseId/:userId", authenticateToken, getUserCourseProgress);
+router.get(
+  "/getProgress/:courseId/:userId",
+  authenticateToken,
+  getUserCourseProgress
+);
 
 //get user Course Emails
-router.get("/getAssignedEmails/:userId",authenticateToken,getAllAssignEmails)
-
+router.get("/getAssignedEmails/:userId", authenticateToken, getAllAssignEmails);
 
 export default router;
