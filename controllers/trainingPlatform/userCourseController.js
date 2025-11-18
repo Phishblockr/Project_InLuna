@@ -3,6 +3,97 @@ import { getUserModel } from "../../models/userModel.js";
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { getCourseModel } from "../../admindb.js";
 import { getEmailTemplateModel } from "../../models/trainingPlatform/emailTemplateModel.js";
+import toUTCDateKey from "../../utils/UTCToDateKey.js";
+import mongoose from "mongoose";
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// Small helper (server-side) to format seconds to 'Hh Mm Ss' string
+function formatSecondsShort(secs) {
+  const s = Math.floor(secs || 0);
+  const hours = Math.floor(s / 3600);
+  const minutes = Math.floor((s % 3600) / 60);
+  const seconds = s % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  return parts.join(" ");
+}
+
+// Compute weeklySeconds and streakDays from a userCourse.watchStatus array
+function computeWeeklyAndStreakFromWatchStatus(watchStatusArray, opts = {}) {
+  // opts:
+  // - now (Date) optional, default new Date()
+  // - lookbackDays (int) optional for streak calculation, default 30
+  const now = opts.now || new Date();
+  const lookbackDays = opts.lookbackDays || 30;
+  const sevenDaysAgo = new Date(now.getTime() - 7 * MS_PER_DAY);
+  const lookbackAgo = new Date(now.getTime() - lookbackDays * MS_PER_DAY);
+
+  let weeklySeconds = 0;
+  const watchedDateKeys = new Set(); // for streak (YYYY-MM-DD strings)
+
+  if (!Array.isArray(watchStatusArray))
+    return { weeklySeconds: 0, streakDays: 0 };
+
+  for (const ws of watchStatusArray) {
+    if (!ws || !Array.isArray(ws.watchHistory)) continue;
+    for (const ev of ws.watchHistory) {
+      if (!ev) continue;
+      // support both shapes: { watchedDuration, watchedAt } or { seconds, ts }
+      const secs = Number(ev.watchedDuration ?? ev.seconds ?? 0);
+      const ts = ev.watchedAt
+        ? new Date(ev.watchedAt)
+        : ev.ts
+        ? new Date(ev.ts)
+        : null;
+      if (
+        !ts ||
+        Number.isNaN(ts.getTime()) ||
+        !Number.isFinite(secs) ||
+        secs <= 0
+      )
+        continue;
+
+      // weekly total (last 7 days)
+      if (ts >= sevenDaysAgo) weeklySeconds += secs;
+
+      // for streak: consider events inside lookback window
+      if (ts >= lookbackAgo && ts <= now) {
+        const key = toUTCDateKey(ts); // use UTC date key; change to user-timezone if required
+        watchedDateKeys.add(key);
+      }
+    }
+  }
+
+  // compute streak: count consecutive days backward from today (UTC)
+  let streakDays = 0;
+  for (let i = 0; i < lookbackDays; i++) {
+    const day = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    day.setUTCDate(day.getUTCDate() - i);
+    const key = day.toISOString().slice(0, 10);
+    if (watchedDateKeys.has(key)) streakDays++;
+    else break;
+  }
+
+  return { weeklySeconds, streakDays };
+}
+
+// Optional helper: compute user's weekly & streak across ALL assigned courses
+// (Accepts array of userCourse documents.)
+function computeUserWeeklyAndStreakAcrossCourses(userCoursesArray, opts = {}) {
+  // Combine all watchStatus entries
+  let combinedWatchStatus = [];
+  for (const uc of userCoursesArray || []) {
+    if (Array.isArray(uc.watchStatus)) {
+      combinedWatchStatus = combinedWatchStatus.concat(uc.watchStatus);
+    }
+  }
+  return computeWeeklyAndStreakFromWatchStatus(combinedWatchStatus, opts);
+}
 
 // assign course to a user
 export const assignCourse = asyncHandler(async (req, res) => {
@@ -53,12 +144,10 @@ export const assignCourse = asyncHandler(async (req, res) => {
 
   await newAssignment.save();
 
-  res
-    .status(201)
-    .json({
-      message: "Course assigned successfully",
-      assignment: newAssignment,
-    });
+  res.status(201).json({
+    message: "Course assigned successfully",
+    assignment: newAssignment,
+  });
 });
 
 export const getCoursesForUser = asyncHandler(async (req, res) => {
@@ -208,70 +297,152 @@ export const getUserAssignedCourseDetails = asyncHandler(async (req, res) => {
 
 // Update video progress
 export const updateVideoProgress = asyncHandler(async (req, res) => {
-  const { userId, courseId, videoId, watchedDuration } = req.body;
-  const orgId = req.user.orgId; // Assumes tenant's orgId is available on req.user
+  const {
+    userId,
+    courseId,
+    videoId,
+    watchedDuration = 0,
+    completed = false,
+  } = req.body;
+  const orgId = req.user.orgId;
 
-  // Retrieve the tenant-specific UserCourse model
   const UserCourse = await getUserCourseModel(orgId);
-
-  // Find the user's course assignment
   const userCourse = await UserCourse.findOne({ userId, courseId });
   if (!userCourse) {
-    return res.status(404).json({
-      success: false,
-      message: "Course not found for the user.",
-    });
+    return res
+      .status(404)
+      .json({ success: false, message: "Course not found for the user." });
   }
 
-  // Find the index of the video progress in the watchStatus array
+  // Ensure watchedDuration is a number
+  const incomingSecs = Number(watchedDuration || 0);
+  const MAX_HISTORY = 200;
+
+  // Find or create watchStatus entry for this video
   const videoIndex = userCourse.watchStatus.findIndex(
-    (v) => v.videoId.toString() === videoId
+    (v) => String(v.videoId) === String(videoId)
   );
 
   if (videoIndex >= 0) {
-    // Update the watched duration only if the new duration is greater
-    if (watchedDuration > userCourse.watchStatus[videoIndex].watchedDuration) {
-      userCourse.watchStatus[videoIndex].watchedDuration = watchedDuration;
+    const existing = userCourse.watchStatus[videoIndex];
+    const prev = Number(existing.watchedDuration || 0);
+    // Keep the max watchedDuration (never reduce)
+    existing.watchedDuration = Math.max(prev, incomingSecs);
+
+    // If watched duration increased, record delta in watchHistory and update lastWatchedAt
+    const delta = incomingSecs - prev;
+    if (delta > 0) {
+      existing.lastWatchedAt = new Date();
+      existing.watchHistory = existing.watchHistory || [];
+      existing.watchHistory.push({
+        watchedDuration: delta,
+        watchedAt: new Date(),
+      });
+
+      // cap history length
+      if (existing.watchHistory.length > MAX_HISTORY) {
+        existing.watchHistory = existing.watchHistory.slice(-MAX_HISTORY);
+      }
     }
+
+    // honor explicit completed flag from client
+    if (completed) existing.completed = true;
+    existing.completed = !!existing.completed;
   } else {
-    // Add a new video progress entry
-    userCourse.watchStatus.push({ videoId, watchedDuration });
+    // Add new entry with initial history event if incoming seconds > 0
+    const newEntry = {
+      videoId,
+      watchedDuration: incomingSecs,
+      completed: !!completed,
+      lastWatchedAt: incomingSecs > 0 ? new Date() : undefined,
+      watchHistory:
+        incomingSecs > 0
+          ? [{ watchedDuration: incomingSecs, watchedAt: new Date() }]
+          : [],
+    };
+    userCourse.watchStatus.push(newEntry);
   }
 
-  // Retrieve the admin Course model and fetch course details to calculate total videos
+  // The rest of your existing logic to compute progress remains valid.
+  // Get admin course to compute per-video thresholds (if available)
   const Course = await getCourseModel();
   const courseFromAdmin = await Course.findById(userCourse.courseId);
-  const totalVideos = courseFromAdmin ? courseFromAdmin.videos.length : 0;
+  const adminVideos = (courseFromAdmin && courseFromAdmin.videos) || [];
+  const totalVideos = adminVideos.length;
 
-  // Calculate how many videos are fully watched
-  const fullyWatchedVideos = userCourse.watchStatus.filter(
-    (v) => v.watchedDuration >= 90 // assuming 90 is the threshold for "fully watched"
-  ).length;
+  // Build a lookup of durations (in seconds) if admin stores them.
+  const durationLookup = {};
+  adminVideos.forEach((v) => {
+    const vidIdStr = String(v._id || v.id || "");
+    const dur = v.durationSeconds || v.duration || v.length || v.seconds || 0;
+    durationLookup[vidIdStr] = Number(dur) || 0;
+  });
 
-  // Update progress percentage and status
-  userCourse.progress = Math.round((fullyWatchedVideos / totalVideos) * 100);
+  const FULL_WATCH_RATIO = 0.9;
+  const FALLBACK_SECONDS = 90;
+
+  let fullyWatchedVideos = 0;
+  for (const adminVideo of adminVideos) {
+    const vidIdStr = String(adminVideo._id || adminVideo.id || "");
+    const userEntry = userCourse.watchStatus.find(
+      (x) => String(x.videoId) === vidIdStr
+    );
+
+    if (!userEntry) continue;
+    if (userEntry.completed) {
+      fullyWatchedVideos++;
+      continue;
+    }
+
+    const videoDur = durationLookup[vidIdStr] || 0;
+    if (videoDur > 0) {
+      if (
+        (userEntry.watchedDuration || 0) >=
+        Math.floor(videoDur * FULL_WATCH_RATIO)
+      ) {
+        fullyWatchedVideos++;
+      }
+    } else {
+      if ((userEntry.watchedDuration || 0) >= FALLBACK_SECONDS) {
+        fullyWatchedVideos++;
+      }
+    }
+  }
+
+  // If admin couldn't provide videos, fallback to counting entries with completed:true or duration >= fallback
+  if (totalVideos === 0) {
+    fullyWatchedVideos = userCourse.watchStatus.filter(
+      (v) => v.completed || (v.watchedDuration || 0) >= FALLBACK_SECONDS
+    ).length;
+  }
+
+  userCourse.progress =
+    totalVideos > 0 ? Math.round((fullyWatchedVideos / totalVideos) * 100) : 0;
   userCourse.status = userCourse.progress === 100 ? "completed" : "inprogress";
 
   await userCourse.save();
+
+  // Optionally compute this course's weekly/streak to return in response
+  const { weeklySeconds, streakDays } = computeWeeklyAndStreakFromWatchStatus(
+    userCourse.watchStatus
+  );
 
   res.json({
     success: true,
     message: "Video progress updated",
     progress: userCourse.progress,
+    watchStatus: userCourse.watchStatus,
+    weeklySeconds,
+    streakDays,
   });
 });
 
 // Get User Course Progress
 export const getUserCourseProgress = asyncHandler(async (req, res) => {
   const { userId, courseId } = req.params;
-  const orgId = req.user.orgId; // Ensure tenant's orgId is available on req.user
+  const orgId = req.user.orgId;
 
-  // Retrieve the tenant-specific UserCourse model
   const UserCourse = await getUserCourseModel(orgId);
-  // Retrieve the common Course model from adminDB
-  const Course = await getCourseModel();
-
-  // Find the course assignment for the user in the tenant DB
   const userCourse = await UserCourse.findOne({ userId, courseId });
 
   if (!userCourse) {
@@ -280,10 +451,26 @@ export const getUserCourseProgress = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Course not found" });
   }
 
+  // Normalize shape for client: ensure videoId is a string and include watchedDuration and completed
+  const normalizedWatchStatus = (userCourse.watchStatus || []).map((w) => ({
+    videoId:
+      (w.videoId && w.videoId.toString && w.videoId.toString()) ||
+      String(w.videoId || ""),
+    watchedDuration: w.watchedDuration || 0,
+    completed: !!w.completed,
+  }));
+
+  // Compute weeklySeconds and streakDays based on watchHistory
+  const { weeklySeconds, streakDays } = computeWeeklyAndStreakFromWatchStatus(
+    userCourse.watchStatus || []
+  );
+
   res.status(200).json({
     success: true,
     progress: userCourse.progress,
-    watchStatus: userCourse.watchStatus,
+    watchStatus: normalizedWatchStatus,
+    weeklySeconds,
+    streakDays,
   });
 });
 
@@ -331,12 +518,10 @@ export const getAllAssignEmails = asyncHandler(async (req, res) => {
     console.log("Extracted Email Groups:", emailGroups);
 
     if (emailGroups.length === 0) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "No email groups assigned to any videos in courses",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "No email groups assigned to any videos in courses",
+      });
     }
 
     // 3️⃣ Fetch email templates that match the extracted email groups
@@ -358,4 +543,91 @@ export const getAllAssignEmails = asyncHandler(async (req, res) => {
       .status(500)
       .json({ success: false, message: error.message || "Server Error" });
   }
+});
+
+export const getUserStats = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const orgId = req.user.orgId;
+
+  // Validate userId first
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ success: false, message: "Invalid userId" });
+  }
+
+  const mongoUserId = new mongoose.Types.ObjectId(userId);
+
+  const UserCourse = await getUserCourseModel(orgId);
+
+  // Boundaries
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // 1) Weekly seconds aggregation
+  const weeklyAgg = await UserCourse.aggregate([
+    { $match: { userId: mongoUserId } },
+    { $unwind: "$watchStatus" },
+    { $unwind: "$watchStatus.watchHistory" },
+    {
+      $match: { "watchStatus.watchHistory.watchedAt": { $gte: sevenDaysAgo } },
+    },
+    {
+      $group: {
+        _id: null,
+        totalSeconds: { $sum: "$watchStatus.watchHistory.watchedDuration" },
+      },
+    },
+  ]);
+
+  const weeklySeconds = (weeklyAgg[0] && weeklyAgg[0].totalSeconds) || 0;
+
+  // 2) Distinct watched dates (for streak) in last 30 days
+  const daysAgg = await UserCourse.aggregate([
+    { $match: { userId: mongoUserId } },
+    { $unwind: "$watchStatus" },
+    { $unwind: "$watchStatus.watchHistory" },
+    {
+      $match: { "watchStatus.watchHistory.watchedAt": { $gte: thirtyDaysAgo } },
+    },
+    {
+      $project: {
+        dateStr: {
+          $dateToString: {
+            format: "%Y-%m-%d",
+            date: "$watchStatus.watchHistory.watchedAt",
+            timezone: "UTC",
+          },
+        },
+      },
+    },
+    {
+      $group: { _id: "$dateStr" },
+    },
+    {
+      $sort: { _id: -1 },
+    },
+  ]);
+
+  // Build a Set of date strings (YYYY-MM-DD UTC)
+  const watchedDateSet = new Set((daysAgg || []).map((d) => d._id));
+
+  // Compute streak: count consecutive days backward from today (UTC) while date present
+  let streakDays = 0;
+  const todayUTC = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(todayUTC);
+    d.setUTCDate(d.getUTCDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (watchedDateSet.has(key)) streakDays++;
+    else break;
+  }
+
+  res.status(200).json({
+    success: true,
+    weeklySeconds,
+    weeklyFormatted: formatSecondsShort(weeklySeconds), // helper below
+    streakDays,
+  });
 });

@@ -7,6 +7,7 @@ import {
   updateVideoProgress,
   getUserCourseProgress,
   getAllAssignEmails,
+  getUserStats,
 } from "../../controllers/trainingPlatform/userCourseController.js";
 import authenticateToken from "../../middlewares/authenticateToken.js";
 import dashboardAdminMiddleware from "../../middlewares/dashboardAdminMiddleware.js";
@@ -39,5 +40,8 @@ router.get(
 
 //get user Course Emails
 router.get("/getAssignedEmails/:userId", authenticateToken, getAllAssignEmails);
+
+// get user stats (weekly watch time and streak)
+router.get("/getUserStats/:userId", authenticateToken, getUserStats);
 
 export default router;
