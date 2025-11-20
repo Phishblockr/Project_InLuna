@@ -318,6 +318,18 @@ export const updateVideoProgress = asyncHandler(async (req, res) => {
   const incomingSecs = Number(watchedDuration || 0);
   const MAX_HISTORY = 200;
 
+  // Pre-fetch admin course and build duration lookup so we can detect skips
+  const Course = await getCourseModel();
+  const courseFromAdmin = await Course.findById(userCourse.courseId);
+  const adminVideos = (courseFromAdmin && courseFromAdmin.videos) || [];
+  const totalVideos = adminVideos.length;
+  const durationLookup = {};
+  adminVideos.forEach((v) => {
+    const vidIdStr = String(v._id || v.id || "");
+    const dur = v.durationSeconds || v.duration || v.length || v.seconds || 0;
+    durationLookup[vidIdStr] = Number(dur) || 0;
+  });
+
   // Find or create watchStatus entry for this video
   const videoIndex = userCourse.watchStatus.findIndex(
     (v) => String(v.videoId) === String(videoId)
@@ -343,11 +355,53 @@ export const updateVideoProgress = asyncHandler(async (req, res) => {
       if (existing.watchHistory.length > MAX_HISTORY) {
         existing.watchHistory = existing.watchHistory.slice(-MAX_HISTORY);
       }
+      // set firstPlayedAt on first non-zero play
+      if (!existing.firstPlayedAt && incomingSecs > 0) {
+        existing.firstPlayedAt = existing.watchHistory[0]
+          ? new Date(existing.watchHistory[0].watchedAt)
+          : new Date();
+      }
+
+      // Skip detection: if the incoming duration jumps to near-complete within a short time window
+      try {
+        const vidIdStr = String(existing.videoId || "");
+        const videoDur = durationLookup[vidIdStr] || 0;
+        const FULL_WATCH_RATIO = 0.9;
+        const FALLBACK_SECONDS = 90;
+        const completionThreshold =
+          videoDur > 0 ? Math.floor(videoDur * FULL_WATCH_RATIO) : FALLBACK_SECONDS;
+        // threshold for quick jump: min 5s or 10% of duration
+        const skipThresholdSecs = Math.min(5, Math.max(1, Math.floor(videoDur * 0.1)));
+        const skipThresholdMs = skipThresholdSecs * 1000;
+
+        const now = new Date();
+        const firstTs = existing.firstPlayedAt
+          ? new Date(existing.firstPlayedAt)
+          : existing.watchHistory.length
+          ? new Date(existing.watchHistory[0].watchedAt)
+          : null;
+
+        const timeSinceFirstMs = firstTs ? now.getTime() - firstTs.getTime() : Infinity;
+
+        if (
+          incomingSecs >= completionThreshold &&
+          (existing.watchHistory.length <= 1 || timeSinceFirstMs <= skipThresholdMs)
+        ) {
+          existing.suspectedSkip = true;
+          existing.suspectedSkipAt = new Date();
+        }
+      } catch (e) {
+        // Non-fatal: if skip detection fails, continue without blocking update
+      }
     }
 
     // honor explicit completed flag from client
     if (completed) existing.completed = true;
     existing.completed = !!existing.completed;
+    // set completedAt if now completed and not already set
+    if (existing.completed && !existing.completedAt) {
+      existing.completedAt = new Date();
+    }
   } else {
     // Add new entry with initial history event if incoming seconds > 0
     const newEntry = {
@@ -360,23 +414,27 @@ export const updateVideoProgress = asyncHandler(async (req, res) => {
           ? [{ watchedDuration: incomingSecs, watchedAt: new Date() }]
           : [],
     };
+    // firstPlayedAt for new entry
+    if (incomingSecs > 0) newEntry.firstPlayedAt = newEntry.watchHistory[0].watchedAt;
+
+    // detect skip for new entries that start already near-complete
+    try {
+      const vidIdStr = String(videoId || "");
+      const videoDur = durationLookup[vidIdStr] || 0;
+      const FULL_WATCH_RATIO = 0.9;
+      const FALLBACK_SECONDS = 90;
+      const completionThreshold =
+        videoDur > 0 ? Math.floor(videoDur * FULL_WATCH_RATIO) : FALLBACK_SECONDS;
+      if (incomingSecs >= completionThreshold) {
+        // No prior history: consider this a suspected skip
+        newEntry.suspectedSkip = true;
+        newEntry.suspectedSkipAt = new Date();
+      }
+    } catch (e) {}
     userCourse.watchStatus.push(newEntry);
   }
 
   // The rest of your existing logic to compute progress remains valid.
-  // Get admin course to compute per-video thresholds (if available)
-  const Course = await getCourseModel();
-  const courseFromAdmin = await Course.findById(userCourse.courseId);
-  const adminVideos = (courseFromAdmin && courseFromAdmin.videos) || [];
-  const totalVideos = adminVideos.length;
-
-  // Build a lookup of durations (in seconds) if admin stores them.
-  const durationLookup = {};
-  adminVideos.forEach((v) => {
-    const vidIdStr = String(v._id || v.id || "");
-    const dur = v.durationSeconds || v.duration || v.length || v.seconds || 0;
-    durationLookup[vidIdStr] = Number(dur) || 0;
-  });
 
   const FULL_WATCH_RATIO = 0.9;
   const FALLBACK_SECONDS = 90;

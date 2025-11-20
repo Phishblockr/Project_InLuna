@@ -43,6 +43,27 @@ const userCourseSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
       },
+      // when the user first started playing this video
+      firstPlayedAt: {
+        type: Date,
+      },
+      // whether client/server considers this video completed
+      completed: {
+        type: Boolean,
+        default: false,
+      },
+      // when the video was marked completed
+      completedAt: {
+        type: Date,
+      },
+      // skip detection flag (for server-side analytics) + timestamp
+      suspectedSkip: {
+        type: Boolean,
+        default: false,
+      },
+      suspectedSkipAt: {
+        type: Date,
+      },
       watchHistory: [
         {
           watchedDuration: {
