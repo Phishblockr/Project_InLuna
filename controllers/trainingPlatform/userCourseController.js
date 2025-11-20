@@ -369,9 +369,14 @@ export const updateVideoProgress = asyncHandler(async (req, res) => {
         const FULL_WATCH_RATIO = 0.9;
         const FALLBACK_SECONDS = 90;
         const completionThreshold =
-          videoDur > 0 ? Math.floor(videoDur * FULL_WATCH_RATIO) : FALLBACK_SECONDS;
+          videoDur > 0
+            ? Math.floor(videoDur * FULL_WATCH_RATIO)
+            : FALLBACK_SECONDS;
         // threshold for quick jump: min 5s or 10% of duration
-        const skipThresholdSecs = Math.min(5, Math.max(1, Math.floor(videoDur * 0.1)));
+        const skipThresholdSecs = Math.min(
+          5,
+          Math.max(1, Math.floor(videoDur * 0.1))
+        );
         const skipThresholdMs = skipThresholdSecs * 1000;
 
         const now = new Date();
@@ -381,11 +386,14 @@ export const updateVideoProgress = asyncHandler(async (req, res) => {
           ? new Date(existing.watchHistory[0].watchedAt)
           : null;
 
-        const timeSinceFirstMs = firstTs ? now.getTime() - firstTs.getTime() : Infinity;
+        const timeSinceFirstMs = firstTs
+          ? now.getTime() - firstTs.getTime()
+          : Infinity;
 
         if (
           incomingSecs >= completionThreshold &&
-          (existing.watchHistory.length <= 1 || timeSinceFirstMs <= skipThresholdMs)
+          (existing.watchHistory.length <= 1 ||
+            timeSinceFirstMs <= skipThresholdMs)
         ) {
           existing.suspectedSkip = true;
           existing.suspectedSkipAt = new Date();
@@ -415,7 +423,8 @@ export const updateVideoProgress = asyncHandler(async (req, res) => {
           : [],
     };
     // firstPlayedAt for new entry
-    if (incomingSecs > 0) newEntry.firstPlayedAt = newEntry.watchHistory[0].watchedAt;
+    if (incomingSecs > 0)
+      newEntry.firstPlayedAt = newEntry.watchHistory[0].watchedAt;
 
     // detect skip for new entries that start already near-complete
     try {
@@ -424,7 +433,9 @@ export const updateVideoProgress = asyncHandler(async (req, res) => {
       const FULL_WATCH_RATIO = 0.9;
       const FALLBACK_SECONDS = 90;
       const completionThreshold =
-        videoDur > 0 ? Math.floor(videoDur * FULL_WATCH_RATIO) : FALLBACK_SECONDS;
+        videoDur > 0
+          ? Math.floor(videoDur * FULL_WATCH_RATIO)
+          : FALLBACK_SECONDS;
       if (incomingSecs >= completionThreshold) {
         // No prior history: consider this a suspected skip
         newEntry.suspectedSkip = true;
