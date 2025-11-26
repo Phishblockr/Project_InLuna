@@ -45,6 +45,7 @@ import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.j
 import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
 import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js";
 import userEmailRoutes from "./routes/trainingPlatform/userEmailRoutes.js";
+import quizRoutes from "./routes/trainingPlatform/quizRoutes.js";
 
 import tenantRoutes from "./routes/tenantRoutes.js";
 import superAdminRoutes from "./routes/superAdmin/superAdminRoutes.js";
@@ -63,6 +64,7 @@ import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
 import razorpayRoutes from "./routes/paymentRoutes/razorpayRoutes.js";
 import contactUsRoutes from "./routes/contactUsRoutes.js";
 import recaptchaRoutes from "./routes/recaptchaRoutes.js";
+import rolesDepartmentsRoutes from "./routes/rolesDepartmentsRoutes.js";
 import billingRoutes from "./routes/billingRoutes.js";
 import rzpWebhook from "./routes/rzp-webhook.js";
 import rzpRoutes from "./routes/rzp.js";
@@ -91,6 +93,7 @@ const allowedOrigins = isDevelopment
       "http://localhost:5177",
       "http://localhost:5137",
       "http://localhost:5000",
+      "http://127.0.0.1:5175",
       "https://test.ccavenue.com",
       /^https?:\/\/.*\.lvh\.me(?::\d+)?$/,
     ]
@@ -230,6 +233,8 @@ app.use("/api/userCourse", userCourseRoutes);
 
 app.use("/api/userEmail", userEmailRoutes);
 
+app.use("/api/quiz", quizRoutes);
+
 app.use("/api/tenant", tenantRoutes);
 
 app.use("/api/superadmin", superAdminRoutes);
@@ -261,6 +266,8 @@ app.use("/api/transactions", TransactionRoutes);
 
 // reCAPTCHA verification (REST)
 app.use("/api/recaptcha", recaptchaRoutes);
+// Roles & Departments (select options)
+app.use("/api/meta", rolesDepartmentsRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/rzp", rzpRoutes); // subscription & sync routes (JSON parsed)
 
