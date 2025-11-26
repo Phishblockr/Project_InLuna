@@ -3,22 +3,45 @@
 @tailwind utilities;
 
 body {
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
 }
 
 .quill-editor-container {
-    background-color: white; /* Set the background color */
-    height: 300px; /* Ensure the full container height is used */
-    display: flex;
-    flex-direction: column;
+  background-color: white; /* Set the background color */
+  height: 300px; /* Ensure the full container height is used */
+  display: flex;
+  flex-direction: column;
 }
 
 .quill-editor-container .ql-toolbar {
-    background-color: white; /* Optional: Match toolbar color */
+  background-color: white; /* Optional: Match toolbar color */
 }
 
 .quill-editor-container .ql-container {
-    flex: 1; /* Ensure the editor takes remaining space */
-    background-color: white; /* Ensure the editor matches */
+  flex: 1; /* Ensure the editor takes remaining space */
+  background-color: white; /* Ensure the editor matches */
+}
+
+/* TipTap / ProseMirror styling */
+.quill-editor-container .ProseMirror {
+  min-height: 200px;
+  padding: 0.75rem;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.quill-editor-container .ProseMirror:focus {
+  box-shadow: 0 0 0 3px rgba(3, 100, 189, 0.15);
+  border-radius: 4px;
+}
+
+/* Basic content styling inside the editor */
+.quill-editor-container .ProseMirror p {
+  margin: 0 0 0.75rem 0;
+}
+.quill-editor-container .ProseMirror h1,
+.quill-editor-container .ProseMirror h2,
+.quill-editor-container .ProseMirror h3 {
+  margin: 0 0 0.5rem 0;
 }

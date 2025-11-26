@@ -22,6 +22,7 @@ import CourseCreator from "./components/Course/CourseCreator.jsx";
 import CourseEditor from "./components/Course/CourseEditor";
 import ListOrganisations from "./components/Organisation/ListOrganisations.jsx";
 import Layout from "./layout/Layout";
+import QuizzesList from "./components/Quizzes/List.jsx";
 
 import ListAppointments from "./components/Appointments/ListAppointments.jsx";
 import AddOrganisations from "./components/Organisation/AddOrganisations.jsx";
@@ -94,6 +95,7 @@ function App() {
                               path="/organisations/:orgName/userDetails/:userId"
                               element={<UserDetails />}
                             ></Route>
+                            <Route path="/quizzes" element={<QuizzesList />} />
                             {/* <Route
                               path="/organisations/:orgName/settings"
                               element={<Settings />}
