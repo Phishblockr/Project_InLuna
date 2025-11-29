@@ -246,7 +246,12 @@ export const checkAnswers = asyncHandler(async (req, res) => {
     }
 
     totalScore += qScore;
-    detail.push({ questionId: qid, score: qScore, points: qPoints, status });
+    detail.push({
+      questionId: qid,
+      score: qScore,
+      points: qPoints,
+      status,
+    });
   }
 
   // round totalScore
@@ -332,9 +337,10 @@ export const importQuizfromJsonText = asyncHandler(async (req, res) => {
     await quiz.save();
     return res.status(201).json({ success: true, quiz });
   } catch (err) {
-    return res
-      .status(400)
-      .json({ success: false, message: err.message || "Invalid quiz JSON" });
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Invalid quiz JSON",
+    });
   }
 });
 
@@ -357,9 +363,10 @@ export const importQuizfromFile = asyncHandler(async (req, res) => {
     const text = req.file.buffer.toString("utf8");
     parsed = JSON.parse(text);
   } catch (err) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Uploaded file is not valid JSON" });
+    return res.status(400).json({
+      success: false,
+      message: "Uploaded file is not valid JSON",
+    });
   }
 
   try {
@@ -368,9 +375,10 @@ export const importQuizfromFile = asyncHandler(async (req, res) => {
     await quiz.save();
     return res.status(201).json({ success: true, quiz });
   } catch (err) {
-    return res
-      .status(400)
-      .json({ success: false, message: err.message || "Invalid quiz JSON" });
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Invalid quiz JSON",
+    });
   }
 });
 
@@ -412,4 +420,66 @@ export const updateQuiz = asyncHandler(async (req, res) => {
   await quiz.save();
 
   return res.status(200).json({ success: true, quiz });
+});
+
+export const getRandomQuizForDepartment = asyncHandler(async (req, res) => {
+  const Quiz = await getQuizModel();
+  const { deptName } = req.params;
+
+  if (!deptName) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Department slug is required" });
+  }
+
+  const matchStage = {
+    department: deptName,
+    published: true,
+    archived: false,
+  };
+
+  const result = await (await getQuizModel())
+    .aggregate([{ $match: matchStage }, { $sample: { size: 1 } }])
+    .exec();
+
+  if (!result.length) {
+    return res.status(404).json({
+      success: false,
+      message: "No quiz found for this department",
+    });
+  }
+
+  const quizDoc = result[0];
+
+  const quiz = {
+    ...quizDoc,
+    questions: [...(quizDoc.questions || [])],
+  };
+
+  if (quiz.shuffleQuestions && Array.isArray(quiz.questions)) {
+    for (let i = quiz.questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [quiz.questions[i], quiz.questions[j]] = [
+        quiz.questions[j],
+        quiz.questions[i],
+      ];
+    }
+  }
+  return res.status(200).json({
+    success: true,
+    quiz: {
+      _id: quiz._id,
+      title: quiz.title,
+      description: quiz.description,
+      department: quiz.department,
+      difficulty: quiz.difficulty,
+      questions: quiz.questions.map((q) => ({
+        question: q.question,
+        options: (q.options || []).map((o) => ({ text: o.text || "" })),
+        correct: q.correct, // index or array of indices (we'll use this on frontend)
+        explanation: q.explanation || q.hint || "",
+        points: q.points || 10,
+      })),
+    },
+  });
 });

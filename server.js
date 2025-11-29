@@ -46,6 +46,7 @@ import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
 import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js";
 import userEmailRoutes from "./routes/trainingPlatform/userEmailRoutes.js";
 import quizRoutes from "./routes/trainingPlatform/quizRoutes.js";
+import gamificationRoutes from "./routes/trainingPlatform/gamificationRoutes.js";
 
 import tenantRoutes from "./routes/tenantRoutes.js";
 import superAdminRoutes from "./routes/superAdmin/superAdminRoutes.js";
@@ -234,6 +235,8 @@ app.use("/api/userCourse", userCourseRoutes);
 app.use("/api/userEmail", userEmailRoutes);
 
 app.use("/api/quiz", quizRoutes);
+
+app.use("/api/gamification", gamificationRoutes);
 
 app.use("/api/tenant", tenantRoutes);
 
