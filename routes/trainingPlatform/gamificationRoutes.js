@@ -3,6 +3,7 @@ import authenticateToken from "../../middlewares/authenticateToken.js";
 import {
   getCtfStatus,
   getLeaderboard,
+  getMissionStatus,
   logGamificationEvent,
 } from "../../controllers/trainingPlatform/gamificationController.js";
 
@@ -15,5 +16,7 @@ router.post("/event", authenticateToken, logGamificationEvent);
 router.get("/leaderboard", authenticateToken, getLeaderboard);
 
 router.get("/ctf/status", authenticateToken, getCtfStatus);
+
+router.get("/mission/status", authenticateToken, getMissionStatus);
 
 export default router;

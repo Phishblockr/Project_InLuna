@@ -244,3 +244,35 @@ export const getCtfStatus = asyncHandler(async (req, res) => {
 
   return res.status(200).json({ success: true, data: result });
 });
+
+export const getMissionStatus = asyncHandler(async (req, res) => {
+  const { orgId, userId } = req.user || {};
+
+  if (!orgId || !userId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+
+  const GamificationEvent = await getGamificationEventModel(orgId);
+
+  const docs = await GamificationEvent.find({
+    userId,
+    category: "mission",
+  })
+    .select("refId label completed score maxScore meta")
+    .lean();
+
+  const result = docs.map((d) => ({
+    refId: d.refId,
+    label: d.label || "",
+    completed: !!d.completed,
+    score: d.score || 0,
+    maxScore: d.maxScore || 0,
+    attempts: d.meta?.attempts || 1,
+    lastScore: d.meta?.lastScore || d.score || 0,
+  }));
+
+  return res.status(200).json({ success: true, data: result });
+});

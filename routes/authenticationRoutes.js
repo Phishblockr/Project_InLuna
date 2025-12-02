@@ -64,6 +64,8 @@ router.route("/loginExt").post(loginRateLimiter, loginUser);
  *                 type: string
  *               password:
  *                 type: string
+ *               recaptchaToken:
+ *                 type: string
  *     responses:
  *       "200":
  *         description: Successful login, returns token and user info
@@ -139,6 +141,8 @@ router.route("/refreshTokenExt").post(refreshTokenExt);
  *               username:
  *                 type: string
  *               password:
+ *                 type: string
+ *               recaptchaToken:
  *                 type: string
  *     responses:
  *       "200":
