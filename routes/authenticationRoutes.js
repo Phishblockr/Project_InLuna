@@ -11,6 +11,35 @@ import {
 import { loginRateLimiter } from "../middlewares/rateLimiters.js";
 
 const router = express.Router();
+/**
+ * @openapi
+ * /api/auth/loginExt:
+ *   post:
+ *     summary: InLuna Browser Extension user login
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       "200":
+ *         description: Successful login, returns token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ */
 router.route("/loginExt").post(loginRateLimiter, loginUser);
 router.route("/refreshTokenExt").post(refreshTokenExt);
 router.route("/loginDas").post(loginRateLimiter, loginAdmin);

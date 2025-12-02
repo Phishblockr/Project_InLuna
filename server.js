@@ -69,6 +69,8 @@ import rolesDepartmentsRoutes from "./routes/rolesDepartmentsRoutes.js";
 import billingRoutes from "./routes/billingRoutes.js";
 import rzpWebhook from "./routes/rzp-webhook.js";
 import rzpRoutes from "./routes/rzp.js";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./swaggerSpec.js";
 
 import dotenv from "dotenv";
 dotenv.config({ override: true });
@@ -273,6 +275,15 @@ app.use("/api/recaptcha", recaptchaRoutes);
 app.use("/api/meta", rolesDepartmentsRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/rzp", rzpRoutes); // subscription & sync routes (JSON parsed)
+
+// Swagger UI - API docs
+// OpenAPI JSON (debug) - returns generated spec
+app.get("/api/openapi.json", (req, res) => {
+  res.json(swaggerSpec);
+});
+
+// Swagger UI - API docs
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Error handling middleware
 app.use(errorHandler);

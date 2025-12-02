@@ -28,6 +28,8 @@
     "oidc-provider": "^8.8.1",
     "razorpay": "^2.9.6",
     "socket.io": "^4.7.5",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.13.0"
   },
   "name": "backend-node",
