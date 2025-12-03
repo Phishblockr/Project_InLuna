@@ -1,9 +1,6 @@
-import express from "express";
-import { getRazorpay, rzpWrap } from "../lib/razorpay.js";
-import { getOrgModel } from "../models/organisationModel.js";
-import { closeCycleAndCompute } from "../services/billing.js";
-
-const router = express.Router();
+import { getRazorpay, rzpWrap } from "../../lib/razorpay.js";
+import { getOrgModel } from "../../models/organisationModel.js";
+import { closeCycleAndCompute } from "../../services/billing.js";
 
 // Default number of billing cycles if Razorpay requires a positive total_count.
 // Monthly * 120 = 10 years which is effectively "indefinite" for most SaaS lifetimes.
@@ -12,9 +9,7 @@ const DEFAULT_SUB_TOTAL_COUNT = parseInt(
   10
 );
 
-// POST /api/rzp/subscribe { orgId }
-// Auto-generates a Razorpay plan from perMemberPriceInPaise if planId not yet stored.
-router.post("/subscribe", async (req, res, next) => {
+export async function subscribe(req, res, next) {
   const debug = { stage: "init" };
   try {
     const Orgs = await getOrgModel();
@@ -200,10 +195,9 @@ router.post("/subscribe", async (req, res, next) => {
       stage: debug.stage,
     });
   }
-});
+}
 
-// PATCH /api/rzp/sync-quantity { orgId, schedule: "now"|"cycle_end" }
-router.patch("/sync-quantity", async (req, res, next) => {
+export async function syncQuantity(req, res, next) {
   try {
     const Orgs = await getOrgModel();
     const { orgId, schedule = "now", proRate = false } = req.body || {};
@@ -300,11 +294,9 @@ router.patch("/sync-quantity", async (req, res, next) => {
   } catch (e) {
     next(e);
   }
-});
+}
 
-// POST /api/rzp/bill/close { orgId }
-// Closes internal billing cycle, syncs next cycle base quantity, and adds usage add-on
-router.post("/bill/close", async (req, res, next) => {
+export async function billClose(req, res, next) {
   try {
     const Orgs = await getOrgModel();
     const { orgId } = req.body || {};
@@ -363,11 +355,9 @@ router.post("/bill/close", async (req, res, next) => {
   } catch (e) {
     next(e);
   }
-});
+}
 
-// GET /api/rzp/subscription-status?orgId=1234
-// Live fetch of subscription status & minimal plan/customer info for dashboard.
-router.get("/subscription-status", async (req, res) => {
+export async function subscriptionStatus(req, res) {
   try {
     const { orgId } = req.query || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
@@ -438,11 +428,9 @@ router.get("/subscription-status", async (req, res) => {
       stage: "fetch",
     });
   }
-});
+}
 
-// GET /api/rzp/payment-history?orgId=1234&limit=20
-// Returns recent subscription invoices (each represents a billing event/payment) for history display.
-router.get("/payment-history", async (req, res) => {
+export async function paymentHistory(req, res) {
   try {
     const { orgId, limit } = req.query || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
@@ -494,6 +482,4 @@ router.get("/payment-history", async (req, res) => {
     console.error("[rzp.payment-history] failure", e.message);
     res.status(500).json({ error: e.message || "Payment history error" });
   }
-});
-
-export default router;
+}

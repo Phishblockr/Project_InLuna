@@ -66,9 +66,9 @@ import razorpayRoutes from "./routes/paymentRoutes/razorpayRoutes.js";
 import contactUsRoutes from "./routes/contactUsRoutes.js";
 import recaptchaRoutes from "./routes/recaptchaRoutes.js";
 import rolesDepartmentsRoutes from "./routes/rolesDepartmentsRoutes.js";
-import billingRoutes from "./routes/billingRoutes.js";
-import rzpWebhook from "./routes/rzp-webhook.js";
-import rzpRoutes from "./routes/rzp.js";
+import billingRoutes from "./routes/paymentRoutes/billingRoutes.js";
+import rzpWebhook from "./routes/paymentRoutes/rzp-webhook.js";
+import rzpRoutes from "./routes/paymentRoutes/rzp.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swaggerSpec.js";
 
@@ -277,13 +277,16 @@ app.use("/api/billing", billingRoutes);
 app.use("/api/rzp", rzpRoutes); // subscription & sync routes (JSON parsed)
 
 // Swagger UI - API docs
-// OpenAPI JSON (debug) - returns generated spec
-app.get("/api/openapi.json", (req, res) => {
-  res.json(swaggerSpec);
-});
+// Only enable OpenAPI JSON and Swagger UI in development to avoid exposing API surface in production
+if (process.env.NODE_ENV === "development") {
+  app.get("/api/openapi.json", (req, res) => {
+    res.json(swaggerSpec);
+  });
 
-// Swagger UI - API docs
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  // Swagger UI - API docs
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.log("Swagger UI available at /api/docs (development only)");
+}
 
 // Error handling middleware
 app.use(errorHandler);

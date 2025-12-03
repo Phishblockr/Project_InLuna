@@ -1,12 +1,8 @@
-import express from "express";
 import crypto from "crypto";
-import { getOrgModel } from "../models/organisationModel.js";
-import { getBillingEventModel } from "../models/billingEventModel.js";
+import { getOrgModel } from "../../models/organisationModel.js";
+import { getBillingEventModel } from "../../models/billingEventModel.js";
 
-const router = express.Router();
-
-// IMPORTANT: raw body middleware for signature verification only on this route
-router.post("/webhook", express.raw({ type: "*/*" }), async (req, res) => {
+export default async function rzpWebhook(req, res) {
   try {
     const signature = req.headers["x-razorpay-signature"];
     const secret = process.env.RZP_WEBHOOK_SECRET;
@@ -93,6 +89,4 @@ router.post("/webhook", express.raw({ type: "*/*" }), async (req, res) => {
     console.error("Webhook error", e);
     res.status(500).send("error");
   }
-});
-
-export default router;
+}

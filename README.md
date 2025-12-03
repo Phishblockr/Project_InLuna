@@ -2,6 +2,8 @@
 
 This repository contains the InLuna Node.js backend server. This README documents how to run the server and provides an API overview for the routes mounted in `server.js`.
 
+- You can test API at http://localhost:5000/api/docs
+
 **Quick Links**
 
 - **Repo root**: `server.js`

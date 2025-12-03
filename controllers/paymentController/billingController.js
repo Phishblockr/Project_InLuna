@@ -1,21 +1,15 @@
-import express from "express";
-import dashboardAdminMiddleware from "../middlewares/dashboardAdminMiddleware.js";
+import { cycleBounds } from "../../lib/billingMath.js";
 import {
-  previewCycle,
-  closeCycleAndCompute,
-  updatePerMemberPrice,
-} from "../services/billing.js";
-import { cycleBounds } from "../lib/billingMath.js";
+  previewCycle as servicePreviewCycle,
+  closeCycleAndCompute as serviceCloseCycleAndCompute,
+  updatePerMemberPrice as serviceUpdatePerMemberPrice,
+} from "../../services/billing.js";
 
-const router = express.Router();
-
-// GET /api/billing/summary?orgId=1234
-// Lightweight summary for dashboard card.
-router.get("/summary", dashboardAdminMiddleware, async (req, res) => {
+export async function summary(req, res) {
   try {
     const { orgId } = req.query || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
-    const { getOrgModel } = await import("../models/organisationModel.js");
+    const { getOrgModel } = await import("../../models/organisationModel.js");
     const Orgs = await getOrgModel();
     const org = await Orgs.findOne({ orgId });
     if (!org) return res.status(404).json({ error: "Org not found" });
@@ -86,14 +80,13 @@ router.get("/summary", dashboardAdminMiddleware, async (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
-});
+}
 
-// POST /api/billing/preview
-router.post("/preview", dashboardAdminMiddleware, async (req, res) => {
+export async function preview(req, res) {
   try {
     const { orgId, asOf } = req.body || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
-    const result = await previewCycle(
+    const result = await servicePreviewCycle(
       orgId,
       asOf ? new Date(asOf) : new Date()
     );
@@ -101,14 +94,13 @@ router.post("/preview", dashboardAdminMiddleware, async (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
-});
+}
 
-// POST /api/billing/close
-router.post("/close", dashboardAdminMiddleware, async (req, res) => {
+export async function close(req, res) {
   try {
     const { orgId, asOf } = req.body || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
-    const closed = await closeCycleAndCompute(
+    const closed = await serviceCloseCycleAndCompute(
       orgId,
       asOf ? new Date(asOf) : new Date()
     );
@@ -127,10 +119,9 @@ router.post("/close", dashboardAdminMiddleware, async (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
-});
+}
 
-// PATCH /api/billing/price
-router.patch("/price", dashboardAdminMiddleware, async (req, res) => {
+export async function updatePrice(req, res) {
   try {
     const { orgId, perMemberPriceInPaise, effective = "now" } = req.body || {};
     if (!orgId) return res.status(400).json({ error: "orgId required" });
@@ -142,11 +133,9 @@ router.patch("/price", dashboardAdminMiddleware, async (req, res) => {
         error: "perMemberPriceInPaise must be a positive integer (paise)",
       });
     }
-    const result = await updatePerMemberPrice(orgId, numeric, effective);
+    const result = await serviceUpdatePerMemberPrice(orgId, numeric, effective);
     res.json(result);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
-});
-
-export default router;
+}
