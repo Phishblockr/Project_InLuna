@@ -1,9 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./utils/AuthProvider";
 import ForgotDetails from "./components/forgotDetails/ForgotDetails";
 import PasswordReset from "./components/forgotDetails/PasswordReset";
@@ -28,96 +23,152 @@ import ListAppointments from "./components/Appointments/ListAppointments.jsx";
 import AddOrganisations from "./components/Organisation/AddOrganisations.jsx";
 import OrgLayout from "./components/Organisation/OrgLayout.jsx";
 import UserDetails from "./components/Users/UserDetails.jsx";
+import useThemeSync from "./hook/useThemeSync.js";
+import Settings from "./pages/settings.jsx";
 // import Settings from './components/Organisation/Settings.jsx';
 
 function App() {
-  const theme = useSelector((state) => state.theme);
-  return (
-    <>
-      <Toaster richColors />
-      <div className={`${theme}`}>
-        <div className="w-full h-full min-h-[100svh] bg-[#F7F4F4] dark:bg-[#001733] flex justify-center">
-          <div className="w-full">
-            <Router>
-              <AuthProvider>
-                <Routes>
-                  <Route
-                    path="*"
-                    element={
-                      <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/logout" element={<Logout />} />
-                        <Route
-                          path="/forgotDetails"
-                          element={<ForgotDetails />}
-                        />
-                        <Route
-                          path="/resetPassword/:token"
-                          element={<PasswordReset />}
-                        />
+    useThemeSync();
+    const { preference, effective } = useSelector((s) => s.theme);
+    return (
+        <>
+            <Toaster richColors />
+            <div className={`${effective}`}>
+                <div className="w-full h-full min-h-[100svh] bg-[#F7F4F4] dark:bg-[#001733] flex justify-center">
+                    <div className="w-full">
+                        <Router>
+                            <AuthProvider>
+                                <Routes>
+                                    <Route
+                                        path="*"
+                                        element={
+                                            <Routes>
+                                                <Route
+                                                    path="/login"
+                                                    element={<Login />}
+                                                />
+                                                <Route
+                                                    path="/logout"
+                                                    element={<Logout />}
+                                                />
+                                                <Route
+                                                    path="/forgotDetails"
+                                                    element={<ForgotDetails />}
+                                                />
+                                                <Route
+                                                    path="/resetPassword/:token"
+                                                    element={<PasswordReset />}
+                                                />
 
-                        {/* Protected Routes */}
-                        <Route element={<Layout />}>
-                          <Route element={<ProtectedRoute />}>
-                            <Route path="/" element={<Overview />} />
-                            <Route path="/courses" element={<Course />} />
-                            <Route
-                              path="/courses/courseCreator"
-                              element={<CourseCreator />}
-                            />
-                            <Route
-                              path="/courses/courseEditor/:id"
-                              element={<CourseEditor />}
-                            />
+                                                {/* Protected Routes */}
+                                                <Route element={<Layout />}>
+                                                    <Route
+                                                        element={
+                                                            <ProtectedRoute />
+                                                        }
+                                                    >
+                                                        <Route
+                                                            path="/"
+                                                            element={
+                                                                <Overview />
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/settings"
+                                                            element={
+                                                                <Settings />
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/courses"
+                                                            element={<Course />}
+                                                        />
+                                                        <Route
+                                                            path="/courses/courseCreator"
+                                                            element={
+                                                                <CourseCreator />
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/courses/courseEditor/:id"
+                                                            element={
+                                                                <CourseEditor />
+                                                            }
+                                                        />
 
-                            <Route path="/emails" element={<Email />} />
-                            <Route
-                              path="/emails/emailCreator"
-                              element={<EmailCreator />}
-                            />
-                            <Route
-                              path="/emails/emailEditor/:id"
-                              element={<EditEditor />}
-                            />
-                            <Route
-                              path="/appointments"
-                              element={<ListAppointments />}
-                            ></Route>
-                            <Route
-                              path="/organisations"
-                              element={<ListOrganisations />}
-                            ></Route>
-                            <Route
-                              path="/organisations/:orgName"
-                              element={<OrgLayout />}
-                            ></Route>
-                            <Route
-                              path="/organisations/:orgName/userDetails/:userId"
-                              element={<UserDetails />}
-                            ></Route>
-                            <Route path="/quizzes" element={<QuizzesList />} />
-                            {/* <Route
+                                                        <Route
+                                                            path="/emails"
+                                                            element={<Email />}
+                                                        />
+                                                        <Route
+                                                            path="/emails/emailCreator"
+                                                            element={
+                                                                <EmailCreator />
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/emails/emailEditor/:id"
+                                                            element={
+                                                                <EditEditor />
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path="/appointments"
+                                                            element={
+                                                                <ListAppointments />
+                                                            }
+                                                        ></Route>
+                                                        <Route
+                                                            path="/organisations"
+                                                            element={
+                                                                <ListOrganisations />
+                                                            }
+                                                        ></Route>
+                                                        <Route
+                                                            path="/organisations/:orgName"
+                                                            element={
+                                                                <OrgLayout />
+                                                            }
+                                                        ></Route>
+                                                        <Route
+                                                            path="/organisations/:orgName/userDetails/:userId"
+                                                            element={
+                                                                <UserDetails />
+                                                            }
+                                                        ></Route>
+                                                        <Route
+                                                            path="/quizzes"
+                                                            element={
+                                                                <QuizzesList />
+                                                            }
+                                                        />
+                                                        {/* <Route
                               path="/organisations/:orgName/settings"
                               element={<Settings />}
                             ></Route> */}
-                            <Route
-                              path="/organisations/addOrganisation"
-                              element={<AddOrganisations />}
-                            ></Route>
-                          </Route>
-                        </Route>
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    }
-                  />
-                </Routes>
-              </AuthProvider>
-            </Router>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+                                                        <Route
+                                                            path="/organisations/addOrganisation"
+                                                            element={
+                                                                <AddOrganisations />
+                                                            }
+                                                        ></Route>
+                                                    </Route>
+                                                </Route>
+                                                <Route
+                                                    path="*"
+                                                    element={<NotFound />}
+                                                />
+                                            </Routes>
+                                        }
+                                    />
+                                </Routes>
+                            </AuthProvider>
+                        </Router>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
 }
 
 export default App;

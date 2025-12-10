@@ -1,23 +1,22 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../utils/AuthProvider';
-import { setPerPageRec } from '../../features/PerPageRec/perPageRecSlice';
-import debounce from 'debounce';
-import Pagination from '../Pagination';
-import { toast } from 'sonner';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../utils/AuthProvider";
+import { setPerPageRec } from "../../features/PerPageRec/perPageRecSlice";
+import debounce from "debounce";
+import Pagination from "../Pagination";
+import { toast } from "sonner";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const ListAppointments = () => {
-
     const apiUrl = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
     const { getToken } = useAuth();
     const token = getToken();
 
-    const month = 3
-    const year = 2025
+    const month = 3;
+    const year = 2025;
 
     const perPageRec = useSelector((state) => state.perPageRec);
     const dispatch = useDispatch();
@@ -38,20 +37,28 @@ const ListAppointments = () => {
     const [dataLoading, setDataLoading] = useState(true);
     const [showLoading, setShowLoading] = useState(false);
 
-
-    const fetchAppointments = async ({ page, limit, search, status, token, selectedDate }) => {
-
+    const fetchAppointments = async ({
+        page,
+        limit,
+        search,
+        status,
+        token,
+        selectedDate,
+    }) => {
         const month = selectedDate.getMonth() + 1;
         const year = selectedDate.getFullYear();
 
         try {
-            const res = await fetch(`${apiUrl}/bookADemo/fetchAppointments?page=${page}&limit=${limit}&search=${search}&status=${status}&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const res = await fetch(
+                `${apiUrl}/bookADemo/fetchAppointments?page=${page}&limit=${limit}&search=${search}&status=${status}&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                },
+            );
             const data = await res.json();
 
             if (res.ok) {
@@ -61,47 +68,84 @@ const ListAppointments = () => {
                 toast.error(data.message || "Error fetching appointments");
             }
         } catch (error) {
-            toast.error("Error fetching appointments:", error.message)
+            toast.error("Error fetching appointments:", error.message);
         }
-    }
+    };
 
     const approveAppointmentHandler = async (id) => {
-        const res = await fetch(`${apiUrl}/bookADemo/approveAppointment/${id}`, {
-            method: "PUT",
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-
-        });
+        const res = await fetch(
+            `${apiUrl}/bookADemo/approveAppointment/${id}`,
+            {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            },
+        );
         const data = await res.json();
         if (!res.ok) {
-            return toast.error(data.error)
+            return toast.error(data.error);
         }
-        toast.success("Appointmnet Approved")
-        fetchAppointments({ page: currentPage, limit: perPageRec, search: query, status, token, selectedDate });
+        toast.success("Appointmnet Approved");
+        fetchAppointments({
+            page: currentPage,
+            limit: perPageRec,
+            search: query,
+            status,
+            token,
+            selectedDate,
+        });
         return data;
-    }
+    };
 
     const handleSetPerPageRec = (value) => {
         dispatch(setPerPageRec(value));
-        fetchAppointments({ page: currentPage, limit: value, search: query, status, token, selectedDate });
+        fetchAppointments({
+            page: currentPage,
+            limit: value,
+            search: query,
+            status,
+            token,
+            selectedDate,
+        });
     };
 
     const handleSearch = debounce((value) => {
-        setQuery(value)
-        fetchAppointments({ page: 1, limit: perPageRec, search: value, status, token, selectedDate });
+        setQuery(value);
+        fetchAppointments({
+            page: 1,
+            limit: perPageRec,
+            search: value,
+            status,
+            token,
+            selectedDate,
+        });
     }, 300);
 
     const handleDateChange = (date) => {
         setSelectedDate(date);
-        fetchAppointments({ page: currentPage, limit: perPageRec, search: query, status, token, selectedDate: date });
+        fetchAppointments({
+            page: currentPage,
+            limit: perPageRec,
+            search: query,
+            status,
+            token,
+            selectedDate: date,
+        });
     };
 
     const handleStatus = (value) => {
-        setStatus(value)
-        fetchAppointments({ page: 1, limit: perPageRec, search: query, status: value, token, selectedDate });
-    }
+        setStatus(value);
+        fetchAppointments({
+            page: 1,
+            limit: perPageRec,
+            search: query,
+            status: value,
+            token,
+            selectedDate,
+        });
+    };
 
     useEffect(() => {
         /*setDataLoading(true)
@@ -116,22 +160,29 @@ const ListAppointments = () => {
                 setDataLoading(false);
             })
         */
-        fetchAppointments({ page: currentPage, limit: perPageRec, search: query, status, token, selectedDate });
+        fetchAppointments({
+            page: currentPage,
+            limit: perPageRec,
+            search: query,
+            status,
+            token,
+            selectedDate,
+        });
         // dispatch(startListeningToSocket(token));
     }, []);
 
-
     return (
-        <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
+        <div className=" dark:text-white z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
             <div>
-
                 <div className="bg-white p-4 flex justify-between items-center rounded-xl shadow-xl dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
                     <div>
-                        <h1 className="text-2xl font-medium tracking-tight">Appointments (Demo)</h1>
+                        <h1 className="text-2xl font-medium tracking-tight">
+                            Appointments (Demo)
+                        </h1>
                     </div>
                     <div className="flex items-center gap-x-3">
                         <DatePicker
-                            title='Records are seprated by month click to view per month'
+                            title="Records are seprated by month click to view per month"
                             selected={selectedDate}
                             onChange={handleDateChange}
                             showMonthYearPicker
@@ -146,7 +197,7 @@ const ListAppointments = () => {
                         />
 
                         <select
-                            title='Filter records according to Status'
+                            title="Filter records according to Status"
                             name="filters"
                             id="filters"
                             className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
@@ -161,7 +212,9 @@ const ListAppointments = () => {
                             name="perPageRec"
                             id="perPageRec"
                             className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0"
-                            onChange={(e) => handleSetPerPageRec(e.target.value)}
+                            onChange={(e) =>
+                                handleSetPerPageRec(e.target.value)
+                            }
                             value={perPageRec}
                         >
                             <option value="5">5</option>
@@ -190,7 +243,9 @@ const ListAppointments = () => {
                             <tbody>
                                 {appointments.map((appointment) => {
                                     // Create date objects and set time to midnight (0:0:0:0)
-                                    const appointmentDateOnly = new Date(appointment.appointmentDate);
+                                    const appointmentDateOnly = new Date(
+                                        appointment.appointmentDate,
+                                    );
                                     appointmentDateOnly.setHours(0, 0, 0, 0);
 
                                     const currentDateOnly = new Date();
@@ -202,7 +257,9 @@ const ListAppointments = () => {
                                             className="odd:bg-white even:bg-gray-100 dark:odd:bg-[#002451] dark:even:bg-[#001C40]"
                                         >
                                             <td className="py-2 pl-2">
-                                                <span className="font-medium">{appointment.name}</span>
+                                                <span className="font-medium">
+                                                    {appointment.name}
+                                                </span>
                                             </td>
                                             <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
                                                 {appointment.email}
@@ -214,13 +271,21 @@ const ListAppointments = () => {
                                                 {appointment.timeslot}
                                             </td>
                                             <td className="font-medium text-left text-gray-500 dark:text-[#F4F4F4]">
-                                                {appointment.approved ? "Approved" : "Pending"}
+                                                {appointment.approved
+                                                    ? "Approved"
+                                                    : "Pending"}
                                             </td>
                                             <td>
-                                                {appointmentDateOnly >= currentDateOnly && (
-                                                    appointment.approved ? (
+                                                {appointmentDateOnly >=
+                                                    currentDateOnly &&
+                                                    (appointment.approved ? (
                                                         <button
-                                                            onClick={() => window.open(appointment.meetUrl, '_blank')}
+                                                            onClick={() =>
+                                                                window.open(
+                                                                    appointment.meetUrl,
+                                                                    "_blank",
+                                                                )
+                                                            }
                                                             title="Click to view details"
                                                             className="bg-[#0364BD] hover:bg-[#14528b] text-white px-2 py-1 rounded-lg transition-colors"
                                                         >
@@ -228,14 +293,17 @@ const ListAppointments = () => {
                                                         </button>
                                                     ) : (
                                                         <button
-                                                            onClick={() => approveAppointmentHandler(appointment._id)}
+                                                            onClick={() =>
+                                                                approveAppointmentHandler(
+                                                                    appointment._id,
+                                                                )
+                                                            }
                                                             title="Click to view details"
                                                             className="bg-[#0364BD] hover:bg-[#14528b] text-white px-2 py-1 rounded-lg transition-colors"
                                                         >
                                                             Accept
                                                         </button>
-                                                    )
-                                                )}
+                                                    ))}
                                             </td>
                                         </tr>
                                     );
@@ -251,12 +319,19 @@ const ListAppointments = () => {
                     totalPages={totalPages}
                     onPageChange={(page) => {
                         setCurrentPage(page);
-                        fetchAppointments({ page, limit: perPageRec, search: query, status, token, selectedDate });
+                        fetchAppointments({
+                            page,
+                            limit: perPageRec,
+                            search: query,
+                            status,
+                            token,
+                            selectedDate,
+                        });
                     }}
                 />
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default ListAppointments
+export default ListAppointments;

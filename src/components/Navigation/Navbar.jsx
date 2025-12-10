@@ -9,14 +9,18 @@ import { FaRegUserCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from "../../features/userProfile/userProfileSlice";
+import {
+    fetchUserStart,
+    fetchUserSuccess,
+    fetchUserFailure,
+} from "../../features/userProfile/userProfileSlice";
 import { FaEthernet } from "react-icons/fa6";
 import LoadingOverlay from "../../utils/LoadingOverlay";
 import { useAuth } from "../../utils/AuthProvider";
 
 const profileBtnStyle =
     "rounded-lg dark:text-[#f4f4f4] transition hover:bg-white dark:hover:bg-[#00285A]";
-const dropdownTheme = "bg-[#f7f4f4] dark:bg-[#182A46]"
+const dropdownTheme = "bg-[#f7f4f4] dark:bg-[#182A46]";
 const profileSettings = [
     {
         id: 1,
@@ -27,16 +31,15 @@ const profileSettings = [
     {
         id: 2,
         title: "Settings",
-        url: "settings",
+        url: "/settings",
         style: profileBtnStyle,
     },
     {
         id: 3,
         title: "Log Out",
         url: "/logout",
-        style:
-            "rounded-lg text-red-500 transition hover:bg-white dark:hover:bg-[#00285A]",
-    }
+        style: "rounded-lg text-red-500 transition hover:bg-white dark:hover:bg-[#00285A]",
+    },
 ];
 
 const HelpOptions = [
@@ -66,10 +69,12 @@ const HelpOptions = [
     },
 ];
 
-const Navbar = ({expanded}) => {
+const Navbar = ({ expanded }) => {
     const { getToken } = useAuth();
     const dispatch = useDispatch();
-    const { details, loading, error } = useSelector((state) => state.userProfile);
+    const { details, loading, error } = useSelector(
+        (state) => state.userProfile,
+    );
 
     const [dropdown, setDropdown] = useState(false);
     const [helpDropdown, setHelpDropdown] = useState(false);
@@ -93,36 +98,36 @@ const Navbar = ({expanded}) => {
     };
 
     const fetchUser = async () => {
-        setDataLoading(true)
+        setDataLoading(true);
         let loadingTimer = setTimeout(() => {
             setShowLoading(true); // Only show loading overlay after delay
         }, 500);
-        dispatch(fetchUserStart())
+        dispatch(fetchUserStart());
         try {
-            const apiUrl = import.meta.env.VITE_API_URL
+            const apiUrl = import.meta.env.VITE_API_URL;
             // const user = JSON.parse(localStorage.getItem("user"));
             // const token = user.token;
             const token = getToken();
             const response = await fetch(`${apiUrl}/superadmin/profile`, {
                 method: "GET",
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
             });
             const data = await response.json();
-            dispatch(fetchUserSuccess(data))
+            dispatch(fetchUserSuccess(data));
             clearTimeout(loadingTimer);
             setShowLoading(false);
             setDataLoading(false);
         } catch (error) {
-            dispatch(fetchUserFailure(error.message))
-            console.error(error)
+            dispatch(fetchUserFailure(error.message));
+            console.error(error);
             clearTimeout(loadingTimer);
             setShowLoading(false);
             setDataLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
         fetchUser();
@@ -131,7 +136,9 @@ const Navbar = ({expanded}) => {
     const navbarMarginClass = expanded ? "ml-64" : "ml-20";
 
     return (
-        <nav className={`bg-white px-4 py-3 flex justify-between sticky left-0 right-0 top-0 z-10 dark:bg-[#002451] transition-all ${navbarMarginClass}`}>
+        <nav
+            className={`bg-white px-4 py-3 flex justify-between sticky left-0 right-0 top-0 z-10 dark:bg-[#002451] transition-all ${navbarMarginClass}`}
+        >
             <LoadingOverlay loading={dataLoading} />
             <div className="flex items-center text-x1">
                 <div className="relative w-[40svw] max-w-xl md:w-65 rounded-lg hidden md:block">
@@ -161,10 +168,15 @@ const Navbar = ({expanded}) => {
                             className="fixed inset-0 z-10"
                             onClick={closeHelpDropdown}
                         ></div>
-                        <div className={`z-20 absolute rounded-lg shadow w-32 top-full right-40 ${dropdownTheme}`}>
+                        <div
+                            className={`z-20 absolute rounded-lg shadow w-32 top-full right-40 ${dropdownTheme}`}
+                        >
                             <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                                 {HelpOptions.map((option) => (
-                                    <li key={option.id} className={option.style}>
+                                    <li
+                                        key={option.id}
+                                        className={option.style}
+                                    >
                                         <Link
                                             title={option.title}
                                             onClick={closeHelpDropdown}
@@ -183,7 +195,15 @@ const Navbar = ({expanded}) => {
                     <RiNotificationBadgeLine className="w-6 h-6" />
                 </div>
                 <div className="relative text-black flex items-center gap-x-3 dark:text-[#F4F4F4]">
-                    {details?.img ? <img className="w-[24px] h-[24px] rounded-full" src={details?.img} alt="profile pic" /> : <FaRegUserCircle className="w-6 h-6 mt-1" />}
+                    {details?.img ? (
+                        <img
+                            className="w-[24px] h-[24px] rounded-full"
+                            src={details?.img}
+                            alt="profile pic"
+                        />
+                    ) : (
+                        <FaRegUserCircle className="w-6 h-6 mt-1" />
+                    )}
 
                     <div className="flex flex-col">
                         <span>{loading ? "loading..." : details?.name}</span>
@@ -199,11 +219,19 @@ const Navbar = ({expanded}) => {
                 </div>
                 {dropdown && (
                     <>
-                        <div className="fixed inset-0 z-10" onClick={closeDropdown}></div>
-                        <div className={`z-20 absolute rounded-lg shadow w-32 top-full right-0 ${dropdownTheme}`}>
+                        <div
+                            className="fixed inset-0 z-10"
+                            onClick={closeDropdown}
+                        ></div>
+                        <div
+                            className={`z-20 absolute rounded-lg shadow w-32 top-full right-0 ${dropdownTheme}`}
+                        >
                             <ul className="p-2 text-sm text-gray-950 gap-1 flex flex-col">
                                 {profileSettings.map((setting) => (
-                                    <li key={setting.id} className={setting.style}>
+                                    <li
+                                        key={setting.id}
+                                        className={setting.style}
+                                    >
                                         <Link
                                             title={setting.title}
                                             onClick={closeDropdown}
