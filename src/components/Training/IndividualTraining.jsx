@@ -41,7 +41,8 @@ const IndividualTraining = () => {
   const [selectedEmails, setSelectedEmails] = useState([]);
 
   const [assignStatus, setAssignStatus] = useState(false);
-  const isDarkMode = true;
+  // derive dark mode from the global theme (string 'dark' used in App.jsx)
+  const isDarkMode = theme === "dark";
   const customStyles = {
     control: (provided, state) => ({
       ...provided,
@@ -79,31 +80,32 @@ const IndividualTraining = () => {
   };
 
   const assignCourseHandler = async () => {
-    const courseIds = selectedCourses.map(course => course.value);
-    const emailIds = selectedEmails.map(email => email.value);
+    const courseIds = selectedCourses.map((course) => course.value);
+    const emailIds = selectedEmails.map((email) => email.value);
     const userId = user._id;
 
     for (const courseId of courseIds) {
-        const result = await dispatch(assignCourse({ token, userId, courseId }));
-        if (assignCourse.fulfilled.match(result)) {
-            toast.success(`Course ${courseId} assigned successfully`);
-        } else {
-            toast.error(`Error assigning course ${courseId}`);
-        }
+      const result = await dispatch(assignCourse({ token, userId, courseId }));
+      if (assignCourse.fulfilled.match(result)) {
+        toast.success(`Course ${courseId} assigned successfully`);
+      } else {
+        toast.error(`Error assigning course ${courseId}`);
+      }
     }
 
     for (const emailId of emailIds) {
-        const result = await dispatch(assignEmail({ token, userId, emailTemplateId: emailId }));
-        if (assignEmail.fulfilled.match(result)) {
-            toast.success(`Email ${emailId} assigned successfully`);
-        } else {
-            toast.error(`Error assigning email ${emailId}`);
-        }
+      const result = await dispatch(
+        assignEmail({ token, userId, emailTemplateId: emailId })
+      );
+      if (assignEmail.fulfilled.match(result)) {
+        toast.success(`Email ${emailId} assigned successfully`);
+      } else {
+        toast.error(`Error assigning email ${emailId}`);
+      }
     }
 
     navigate(`/users/userDetails/${userId}`);
-}
-
+  };
 
   const handleMultiSelectChange = (selected) => {
     setSelectedCourses(selected);
