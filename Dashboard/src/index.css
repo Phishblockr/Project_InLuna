@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Spinner for organization verification */
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 5px solid #e5e7eb; /* gray-200 */
+    border-top-color: #6366f1; /* indigo-500 */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

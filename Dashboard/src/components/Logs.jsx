@@ -1,0 +1,367 @@
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+// import Log from "./Log";
+import {
+    MdOutlineArrowBackIos,
+    MdOutlineArrowForwardIos,
+} from "react-icons/md";
+import { BsFileEarmarkArrowDown } from "react-icons/bs";
+import { useDispatch, useSelector } from "react-redux";
+import { getLogs, downloadLogsCsv } from "../features/Logs/logsSlice";
+import { setPerPageRec } from "../features/PerPageRec/perPageRecSlice";
+import debounce from "debounce";
+import LoadingOverlay from "../utils/LoadingOverlay";
+import { formatDate } from "../utils/formatDate.jsx"
+import { useAuth } from '../utils/AuthProvider.jsx';
+
+const LogDetailsModal = ({ show, onClose, logData }) => {
+    if (!show || !logData) return null;
+
+    const { userDetails = {}, entityDetails = {}, entityId, entityType, operationType, operationsPerformed, createdAt } = logData;
+
+    return (
+        <div className="fixed bg-black/50 top-0 left-0 right-0 bottom-0 flex justify-center items-center z-50">
+            <div className="bg-white dark:bg-[#002451] dark:text-[#F4F4F4] p-5 rounded-lg w-full max-w-[60%] relative">
+                <h1 className="text-2xl font-semibold mb-2">Detailed Info</h1>
+                <button onClick={onClose} className="absolute top-3 right-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <div className="rounded-lg p-4 mt-2">
+                    <h2 className="font-medium text-xl mb-2">Updates made by</h2>
+                    {userDetails.name ? (
+                        <Link to={`/users/userDetails/${userDetails._id}`} title="Click to view details">
+                            <p className="font-medium text-blue-500 underline">{userDetails.name}</p>
+                        </Link>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-300">No user details available</p>
+                    )}
+                    <div className="flex flex-row gap-2">
+                        <p>Email:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{userDetails.email || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Department:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{userDetails.department || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Operation Type:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{operationType || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Operations Performed:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{operationsPerformed || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>On:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{createdAt ? formatDate(createdAt, "24hours") : "N/A"}</p>
+                    </div>
+                </div>
+                <div className="rounded-lg p-4 mt-2">
+                    <h2 className="font-medium text-xl mb-2">Updates made to</h2>
+                    <div className="flex flex-row gap-2">
+                        <p>ID:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{entityId || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Type:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{entityType || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>From:</p>
+                        {entityDetails?.from ? (
+                            <Link to={`/users/userDetails/${entityDetails.from}`} title="Click to view details">
+                                <p className="text-blue-500 underline">{entityDetails.from}</p>
+                            </Link>
+                        ) : (
+                            <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                        )}
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Identifier:</p>
+                        <p className="text-gray-500 dark:text-gray-400 break-words overflow-hidden w-full">{entityDetails?.identifier || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Status:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{entityDetails?.status || "N/A"}</p>
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <p>Extra info:</p>
+                        <p className="text-gray-500 dark:text-gray-400">{entityDetails?.extraInfo || "N/A"}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+function Log({ blog, setBlog, showBlog }) {
+    return (
+        <div className="flex rounded-lg shadow-md bg-white justify-between items-center dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+            <div className="flex">
+                <div
+                    className={`${blog.operationType === "delete" ? "bg-[#C62828]" : "bg-[#00695C]"
+                        } rounded-s-lg p-3`}
+                ></div>
+                <div className="p-5 text-right flex gap-5">
+                    <span className="pr-8 border-r-2 border-gray-500">
+                        {/* TODO: Add hour Type in settings Page */}
+                        {formatDate(blog.createdAt, "24hours")}
+                    </span>
+                    <span className="pr-8 border-r-2 border-gray-500">
+                        {blog.operationType}
+                    </span>
+                    <span className="pr-8 border-r-2 border-gray-500">
+                        {blog.operationsPerformed}
+                    </span>
+                </div>
+            </div>
+            <div className="flex justify-center items-center pr-3">
+                <button onClick={() => setBlog(!showBlog)}>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="w-6 h-6"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                        />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+}
+
+const Logs = () => {
+
+    const { getToken } = useAuth();
+    const token = getToken();
+    console.log("token",token)
+    const perPageRec = useSelector((state) => state.perPageRec)
+    const logsData = useSelector((state) => state.logs.logs);
+    const totalPages = useSelector((state) => state.logs.totalPages);
+    const { csvDownloadLoading, csvDownloadError } = useSelector((state) => state.logs);
+
+    const dispatch = useDispatch();
+    const [showModal, setShowModal] = useState(false);
+    const [selectedLog, setSelectedLog] = useState(null);
+
+    // For Loading Overlay
+    const [dataLoading, setDataLoading] = useState(true);
+    const [showLoading, setShowLoading] = useState(false);
+
+    // For Handling errors
+    const [error, setErrors] = useState(null);
+
+    // Start of Search Logic
+    const [query, setQuery] = useState("");
+
+    const handleSearch = debounce((value) => {
+        setQuery(value);
+        dispatch(getLogs({ page: 1, limit: perPageRec, search: value, operationType, dateRangeFilter, token }));
+    }, 300);
+    // End of Search Logic
+
+    // Start of Filter Logic
+    const [operationType, setOperationType] = useState("all")
+
+    const handleOperationType = (value) => {
+        setOperationType(value);
+        dispatch(getLogs({ page: 1, limit: perPageRec, search: query, operationType: value, dateRangeFilter, token }));
+    }
+    // End of Filter Logic
+
+    // Start of DateRangeFilter Logic
+    const [dateRangeFilter, setDateRangeFilter] = useState("all")
+
+    const handleDateRangeFilter = (value) => {
+        setDateRangeFilter(value);
+        dispatch(getLogs({ page: 1, limit: perPageRec, search: query, operationType, dateRangeFilter: value, token }));
+    }
+    // End of DateRangeFilter Logic
+
+    // Start of Pagination Logic
+    const [currentPage, setCurrentPage] = useState(1);
+
+    function nextPage() {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    }
+
+    function prePage() {
+        if (currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
+        }
+    }
+
+    function changeCPage(n) {
+        setCurrentPage(n);
+    }
+    const handleSetPerPageRec = (value) => {
+        dispatch(setPerPageRec(value))
+    }
+    // End of Pagination Logic
+
+    const openLogDetails = (log) => {
+        setSelectedLog(log);
+        setShowModal(true);
+    };
+
+    useEffect(() => {
+        setDataLoading(true)
+        let loadingTimer = setTimeout(() => {
+            setShowLoading(true);
+        }, 500);
+        dispatch(getLogs({ page: currentPage, limit: perPageRec, search: query, operationType, dateRangeFilter, token }))
+            .unwrap()
+            .finally(() => {
+                clearTimeout(loadingTimer);
+                setShowLoading(false);
+                setDataLoading(false);
+            })
+    }, [dispatch, perPageRec, currentPage]);
+
+    const handleDownload = () => {
+
+        dispatch(downloadLogsCsv({token}));
+    };
+
+    function getVisiblePages(totalPages, currentPage) {
+        const maxVisibleAround = 6;
+        const pages = [];
+
+        if (totalPages === 1) {
+            pages.push(1);
+            return pages;
+        }
+
+        pages.push(1);
+
+        if (currentPage > maxVisibleAround + 2) {
+            pages.push("...");
+        }
+
+        const start = Math.max(2, currentPage - maxVisibleAround);
+        const end = Math.min(totalPages - 1, currentPage + maxVisibleAround);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        if (currentPage < totalPages - (maxVisibleAround + 1)) {
+            pages.push("...");
+        }
+
+        pages.push(totalPages);
+
+        return pages;
+    }
+
+    const visiblePages = getVisiblePages(totalPages, currentPage);
+
+    function changeCPage(n) {
+        if (typeof n === "number") {
+            setCurrentPage(n);
+        }
+    }
+
+    return (
+        <div className="z-1 min-h-[calc(100vh-65px)] flex flex-col justify-between relative right-0 bottom-0 p-4 gap-4">
+            {showLoading && <LoadingOverlay loading={dataLoading} />}
+            <LogDetailsModal show={showModal} onClose={() => setShowModal(false)} logData={selectedLog} />
+            <div>
+                <header className="bg-white dark:bg-[#002451] dark:text-[#F4F4F4] p-4 rounded-xl shadow flex justify-between items-center">
+                    <h1 className="text-2xl font-medium">Logs</h1>
+                    <div className="flex gap-3 items-center">
+                        <input onChange={(e) => handleSearch(e.target.value)} type="text" placeholder="Search Logs" className="rounded-lg border-gray-300 border-2 text-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:border-0" />
+                        <select onChange={(e) => handleOperationType(e.target.value)} defaultValue="all" className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0">
+                            <option value="all">Operation Type</option>
+                            <option value="update">Update</option>
+                            <option value="delete">Delete</option>
+                            <option value="add">Add</option>
+                            <option value="approved">Approved</option>
+                            <option value="account recovery">Account Recovery</option>
+                        </select>
+                        <select onChange={(e) => handleDateRangeFilter(e.target.value)} defaultValue="this_month" className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0">
+                            <option value="this_week">This Week</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="this_month">This Month</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="this_quarter">This Quarter</option>
+                            <option value="last_quarter">Last Quarter</option>
+                            <option value="this_year">This Year</option>
+                            <option value="last_year">Last Year</option>
+                        </select>
+                        <select value={perPageRec} onChange={(e) => handleSetPerPageRec(e.target.value)} className="rounded-lg border-gray-300 border-2 text-gray-600 bg-white p-[10px] focus:outline-none focus:ring-2 focus:ring-[#0364BD] dark:bg-[#001733] dark:text-gray-400 dark:border-0">
+                            {[5, 10, 25, 50, 100].map((val) => (
+                                <option key={val} value={val}>
+                                    {val}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={handleDownload}
+                            disabled={csvDownloadLoading}
+                            className="flex justify-center items-center gap-3 px-4 w-[200px] h-[45px] rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-300 dark:dark:bg-[#001733] dark:hover:bg-[#001733] dark:text-gray-400 transition"
+                        >
+                            {csvDownloadLoading ? 'Downloading...' : `Download Logs CSV`}
+                        </button>
+                    </div>
+                </header>
+                <section className="mt-5 flex flex-col gap-2">
+                    {logsData.map((log) => (
+                        <Log key={log._id} blog={log} setBlog={() => openLogDetails(log)} showBlog={showModal} />
+                    ))}
+                </section>
+            </div>
+            <div className="z-1 w-full bg-white rounded-xl shadow-xl p-3 h-max dark:bg-[#002451] dark:text-[#F4F4F4] dark:shadow-none">
+                <nav className="flex gap-x-1 justify-between">
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                        <MdOutlineArrowBackIos className="w-6 h-6" /> Previous
+                    </button>
+                    <div className="flex gap-x-2 items-center">
+                        {visiblePages.map((page, index) =>
+                            typeof page === "number" ? (
+                                <button
+                                    key={index}
+                                    className={`rounded px-2 py-1 hover:bg-[#0364BD] hover:text-[#f4f4f4] transition dark:hover:bg-[#0364BD] ${currentPage === page
+                                        ? "bg-[#0364BD] text-[#f4f4f4] dark:bg-[#0364BD]"
+                                        : "bg-gray-200 dark:bg-[#001C40]"
+                                        }`}
+                                    onClick={() => changeCPage(page)}
+                                >
+                                    {page}
+                                </button>
+                            ) : (
+                                <span key={index} className="px-2 py-1">
+                                    {page}
+                                </span>
+                            )
+                        )}
+                    </div>
+                    <button
+                        className="bg-gray-200 p-2 rounded-lg hover:bg-[#0364BD] hover:text-[#f4f4f4] flex flex-row transition dark:bg-[#001C40] dark:hover:bg-[#0364BD] disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    >
+                        Next <MdOutlineArrowForwardIos className="w-6 h-6" />
+                    </button>
+                </nav>
+            </div>
+        </div>
+    );
+};
+
+export default Logs;
