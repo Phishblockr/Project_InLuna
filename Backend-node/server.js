@@ -1,0 +1,294 @@
+import http from "http";
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import { Server } from "socket.io";
+import winston from "winston";
+
+import authenticationRoutes from "./routes/authenticationRoutes.js";
+import indAuthRoutes from "./routes/IndividualRoutes/indAuthRoutes.js";
+import indRegistrationRoutes from "./routes/IndividualRoutes/indRegistrationRoutes.js";
+
+import organizationRoutes from "./routes/organizationRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+
+import urlRoutes from "./routes/urlRoutes.js";
+import indUrlRoutes from "./routes/IndividualRoutes/indUrlRoutes.js";
+
+import RequestRoutes from "./routes/RequestRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
+import overviewRoutes from "./routes/overviewRoutes.js";
+import logsRoute from "./routes/logsRoute.js";
+import campaignRoutes from "./routes/campaignRoutes.js";
+import phishtankRoutes from "./routes/phishtankRoutes.js";
+import urlhausRoutes from "./routes/urlhausRoutes.js";
+// import templateRoutes from "./routes/templateRoutes.js";
+// import blogRoutes from "./routes/blogRoutes.js";
+import errorHandler from "./middlewares/errorHandler.js";
+import authenticateToken from "./middlewares/authenticateToken.js";
+import dashboardAdminMiddleware from "./middlewares/dashboardAdminMiddleware.js";
+
+import forgotDetailsRoutes from "./routes/forgotDetailsRoutes.js";
+import indForgotDetailsRoutes from "./routes/IndividualRoutes/indForgotDetailsRoutes.js";
+
+import heartBeatRoutes from "./routes/heartBeatRoutes.js";
+
+import cookieParser from "cookie-parser";
+
+import fetchAndSavePhishtankData from "./cronJobs/phishtankJob.js";
+import fetchAndSaveUrlhausData from "./cronJobs/urlhausService.js";
+import runMonthlyUserPurge from "./cronJobs/userCleanupJob.js";
+import runCreatePendingSubscriptions from "./cronJobs/createSubscriptionJob.js";
+
+// Training Platform
+import emailTemplateRoutes from "./routes/trainingPlatform/emailTemplateRoutes.js";
+import courseRoutes from "./routes/trainingPlatform/courseRoutes.js";
+import userCourseRoutes from "./routes/trainingPlatform/userCourseRoutes.js";
+import userEmailRoutes from "./routes/trainingPlatform/userEmailRoutes.js";
+import quizRoutes from "./routes/trainingPlatform/quizRoutes.js";
+import gamificationRoutes from "./routes/trainingPlatform/gamificationRoutes.js";
+
+import tenantRoutes from "./routes/tenantRoutes.js";
+import superAdminRoutes from "./routes/superAdmin/superAdminRoutes.js";
+
+import bookADemoRoutes from "./routes/superAdmin/bookADemoRoutes.js";
+
+import SOverviewRoutes from "./routes/superAdmin/overview.js";
+
+// import Provider from "oidc-provider";
+// import { findAccount } from './controllers/individual/indAuthController.js';
+// import oidcRoutes from './routes/oidcRoutes.js';
+// import oidcConfiguration from "./oidcConfiguration.js"
+
+import ccaRoutes from "./routes/paymentRoutes/ccaRoutes.js";
+import TransactionRoutes from "./routes/paymentRoutes/transactionRoutes.js";
+import razorpayRoutes from "./routes/paymentRoutes/razorpayRoutes.js";
+import contactUsRoutes from "./routes/contactUsRoutes.js";
+import recaptchaRoutes from "./routes/recaptchaRoutes.js";
+import rolesDepartmentsRoutes from "./routes/rolesDepartmentsRoutes.js";
+import billingRoutes from "./routes/paymentRoutes/billingRoutes.js";
+import rzpWebhook from "./routes/paymentRoutes/rzp-webhook.js";
+import rzpRoutes from "./routes/paymentRoutes/rzp.js";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./swaggerSpec.js";
+
+import dotenv from "dotenv";
+dotenv.config({ override: true });
+
+import "./utils/tokenEncryption.js";
+
+const app = express();
+// Mount Razorpay webhook BEFORE body parsers (needs raw body)
+app.use("/api/rzp", rzpWebhook);
+// Increase the size limit for JSON and URL-encoded bodies
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// CORS Configuration
+const isDevelopment = process.env.NODE_ENV === "development";
+const allowedOrigins = isDevelopment
+  ? [
+      "http://localhost:5173",
+      "chrome-extension://",
+      "moz-extension://",
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "http://localhost:5177",
+      "http://localhost:5137",
+      "http://localhost:5000",
+      "http://127.0.0.1:5175",
+      "https://test.ccavenue.com",
+      /^https?:\/\/.*\.lvh\.me(?::\d+)?$/,
+    ]
+  : [
+      // "chrome-extension://ilipomonpoifiljejfngempgpibngkmc",
+      // "chrome-extension://blcmmmkhbjlminfjgdfgohbehagoclho",
+      "chrome-extension://",
+      "moz-extension://",
+      "https://theinluna.com",
+      "https://dashboard.theinluna.com",
+      "https://training.theinluna.com",
+      "https://superdashboard.theinluna.com",
+      "https://payment.theinluna.com",
+    ];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., curl, Postman)
+      if (!origin) return callback(null, true);
+
+      const isAllowed = allowedOrigins.some((allowed) => {
+        if (typeof allowed === "string") {
+          return origin.startsWith(allowed);
+        }
+        if (allowed instanceof RegExp) {
+          return allowed.test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Extension-ID"],
+  })
+);
+
+app.use(cookieParser());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // ALl Origin for dev purposes
+  },
+});
+
+app.set("socketio", io);
+
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: "error.log", level: "error" }),
+  ],
+});
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => {
+    console.log(err);
+    logger.error(err.message);
+  });
+
+const PORT = process.env.PORT || 5000;
+// oidcConfiguration.findAccount = findAccount;
+// const ISSUER = process.env.ISSUER || `http://localhost:${PORT}`;
+
+// const oidc = new Provider(ISSUER, oidcConfiguration);
+
+// Organization Routes
+app.use("/api/org", organizationRoutes);
+
+// Authentication Routes
+app.use("/api/auth", authenticationRoutes);
+
+app.use("/api/indAuth", indAuthRoutes);
+app.use("/api/indRegister", indRegistrationRoutes);
+
+// Users Routes
+// Individual middleware to added specific routes for user
+app.use("/api/user", userRoutes);
+
+// Url Routes
+app.use("/api/url", authenticateToken, urlRoutes);
+
+app.use("/api/indUrl", indUrlRoutes);
+
+// Whitelist URL Request Routes
+app.use("/api/Request", authenticateToken, RequestRoutes);
+
+// Feedback Routes
+app.use("/api/feedback", authenticateToken, feedbackRoutes);
+
+// Dashboard Routes
+
+// Overview Page Routes
+app.use("/api/overview", dashboardAdminMiddleware, overviewRoutes);
+
+// Logs Route
+app.use("/api/logs/", dashboardAdminMiddleware, logsRoute);
+
+// forgot Details Route
+app.use("/api/forgot", forgotDetailsRoutes);
+app.use("/api/forgotInd", indForgotDetailsRoutes);
+
+// HeartBeat Route
+app.use("/api/heartBeat", authenticateToken, heartBeatRoutes);
+
+// Campaign Routes
+app.use("/api/campaign", dashboardAdminMiddleware, campaignRoutes);
+
+// Phishtank Routes
+app.use("/api/phishtank", phishtankRoutes);
+
+// Urlhaus (abuse) Routes
+app.use("/api/urlhaus", urlhausRoutes);
+
+// Template Route
+// app.use('/api/template', dashboardAdminMiddleware, templateRoutes);
+
+// blog Route
+// app.use('/api/template', dashboardAdminMiddleware, blogRoutes);
+
+// Training Platform Routes
+app.use("/api/emailTemplate", emailTemplateRoutes);
+
+app.use("/api/course", courseRoutes);
+
+app.use("/api/userCourse", userCourseRoutes);
+
+app.use("/api/userEmail", userEmailRoutes);
+
+app.use("/api/quiz", quizRoutes);
+
+app.use("/api/gamification", gamificationRoutes);
+
+app.use("/api/tenant", tenantRoutes);
+
+app.use("/api/superadmin", superAdminRoutes);
+
+app.use("/api/supermetrics", SOverviewRoutes);
+
+app.use("/api/bookADemo", bookADemoRoutes);
+
+// OIDC
+// app.use('/oidc', oidcRoutes(oidc));
+
+// app.use('/oidc', oidc.callback());
+
+// Start cron job (Testing only do not uncomment in production)
+// fetchAndSavePhishtankData();
+// fetchAndSaveUrlhausData();
+// runMonthlyUserPurge(); // Uncomment to test immediately
+
+// Contact Users
+app.use("/api/contactUs", contactUsRoutes);
+
+// CCA
+app.use("/api/ccavenue", ccaRoutes);
+// Razorpay
+app.use("/api/razorpay", razorpayRoutes);
+
+//Transaction Routes
+app.use("/api/transactions", TransactionRoutes);
+
+// reCAPTCHA verification (REST)
+app.use("/api/recaptcha", recaptchaRoutes);
+// Roles & Departments (select options)
+app.use("/api/meta", rolesDepartmentsRoutes);
+app.use("/api/billing", billingRoutes);
+app.use("/api/rzp", rzpRoutes); // subscription & sync routes (JSON parsed)
+
+// Swagger UI - API docs
+// Only enable OpenAPI JSON and Swagger UI in development to avoid exposing API surface in production
+if (process.env.NODE_ENV === "development") {
+  app.get("/api/openapi.json", (req, res) => {
+    res.json(swaggerSpec);
+  });
+
+  // Swagger UI - API docs
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.log("Swagger UI available at /api/docs (development only)");
+}
+
+// Error handling middleware
+app.use(errorHandler);
+
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

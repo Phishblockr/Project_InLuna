@@ -1,0 +1,141 @@
+import { cycleBounds } from "../../lib/billingMath.js";
+import {
+  previewCycle as servicePreviewCycle,
+  closeCycleAndCompute as serviceCloseCycleAndCompute,
+  updatePerMemberPrice as serviceUpdatePerMemberPrice,
+} from "../../services/billing.js";
+
+export async function summary(req, res) {
+  try {
+    const { orgId } = req.query || {};
+    if (!orgId) return res.status(400).json({ error: "orgId required" });
+    const { getOrgModel } = await import("../../models/organisationModel.js");
+    const Orgs = await getOrgModel();
+    const org = await Orgs.findOne({ orgId });
+    if (!org) return res.status(404).json({ error: "Org not found" });
+
+    // Coerce legacy string price if present
+    if (
+      org.perMemberPriceInPaise &&
+      typeof org.perMemberPriceInPaise === "string"
+    ) {
+      const parsed = Math.round(parseFloat(org.perMemberPriceInPaise));
+      if (!Number.isNaN(parsed)) {
+        org.perMemberPriceInPaise = parsed; // in paise already
+        await org.save();
+      }
+    }
+
+    const pricePaise = org.perMemberPriceInPaise || null;
+    const currentSeats = org.seatMeter?.currentSeats ?? org.usersCount ?? 0;
+    let projectedBaseMonthlyPaise = null;
+    if (pricePaise && currentSeats >= 0) {
+      projectedBaseMonthlyPaise = pricePaise * currentSeats;
+    }
+
+    // Compute display cycle (end exclusive -> convert to inclusive by subtracting 1 second)
+    let displayCycleStart = null;
+    let displayCycleEndInclusive = null;
+    try {
+      const anchor = org.billingCycleAnchor || org.createdAt;
+      const { start, end } = cycleBounds(anchor, new Date());
+      displayCycleStart = start;
+      displayCycleEndInclusive = new Date(end.getTime() - 1000);
+    } catch (err) {
+      // ignore display error
+    }
+
+    res.json({
+      orgId: org.orgId,
+      name: org.name,
+      billingStatus: org.billingStatus,
+      subscriptionId: org.subscriptionId || null,
+      perMemberPriceInPaise: pricePaise,
+      perMemberPriceInRupees: pricePaise ? (pricePaise / 100).toFixed(2) : null,
+      currentSeats,
+      usersCount: org.usersCount,
+      seatMeter: org.seatMeter || null,
+      projectedBaseMonthlyPaise,
+      projectedBaseMonthlyRupees: projectedBaseMonthlyPaise
+        ? (projectedBaseMonthlyPaise / 100).toFixed(2)
+        : null,
+      currency: org.currency || "INR",
+      displayCycleStart,
+      displayCycleEndInclusive,
+      displayCycleStartMinusOneMonth: displayCycleStart
+        ? (() => {
+            const d = new Date(displayCycleStart);
+            d.setMonth(d.getMonth() - 1);
+            return d;
+          })()
+        : null,
+      displayCycleEndInclusiveMinusOneMonth: displayCycleEndInclusive
+        ? (() => {
+            const d = new Date(displayCycleEndInclusive);
+            d.setMonth(d.getMonth() - 1);
+            return d;
+          })()
+        : null,
+    });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+}
+
+export async function preview(req, res) {
+  try {
+    const { orgId, asOf } = req.body || {};
+    if (!orgId) return res.status(400).json({ error: "orgId required" });
+    const result = await servicePreviewCycle(
+      orgId,
+      asOf ? new Date(asOf) : new Date()
+    );
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+}
+
+export async function close(req, res) {
+  try {
+    const { orgId, asOf } = req.body || {};
+    if (!orgId) return res.status(400).json({ error: "orgId required" });
+    const closed = await serviceCloseCycleAndCompute(
+      orgId,
+      asOf ? new Date(asOf) : new Date()
+    );
+    const invoiceDraft = {
+      cycleStart: closed.cycleStart,
+      cycleEnd: closed.cycleEnd,
+      amountPaise: closed.amountPaise,
+      lineItems: [
+        {
+          desc: `Seats (${closed.seatDays.toFixed(3)} seat-days)`,
+          paise: closed.amountPaise,
+        },
+      ],
+    };
+    res.json({ invoiceDraft });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+}
+
+export async function updatePrice(req, res) {
+  try {
+    const { orgId, perMemberPriceInPaise, effective = "now" } = req.body || {};
+    if (!orgId) return res.status(400).json({ error: "orgId required" });
+    if (perMemberPriceInPaise == null)
+      return res.status(400).json({ error: "perMemberPriceInPaise required" });
+    const numeric = Number(perMemberPriceInPaise);
+    if (!Number.isInteger(numeric) || numeric <= 0) {
+      return res.status(400).json({
+        error: "perMemberPriceInPaise must be a positive integer (paise)",
+      });
+    }
+    const result = await serviceUpdatePerMemberPrice(orgId, numeric, effective);
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+}
