@@ -91,4 +91,4 @@ Bug Bounty Hall of Fame: Microsoft, Adobe, Atlassian, US Department of Defence
 **Aditya Paluskar**
 ## License
 
-MIT — swap for whatever you're actually using.
+MIT
