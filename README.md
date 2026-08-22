@@ -49,7 +49,7 @@ flowchart TD
 
 Deployed behind a Flask REST API with a Chrome extension delivering real-time verdicts.
 
-**Phase 2 — Independent extension.** Rebuilt as a full MERN-stack platform. Replaced the Random Forest classifier with an LLM-based reasoning engine to test contextual inference against the original supervised baseline, then layered in the risk-scoring and compliance-debt mechanics that turn a single detection event into an organization-wide feedback loop.
+**Phase 2 — Cooperative extension.** Rebuilt as a full MERN-stack platform. Replaced the Random Forest classifier with an LLM-based reasoning engine to test contextual inference against the original supervised baseline, then layered in the risk-scoring and compliance-debt mechanics that turn a single detection event into an organization-wide feedback loop.
 
 ## Tech stack
 
